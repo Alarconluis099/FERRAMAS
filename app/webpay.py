@@ -1,10 +1,10 @@
 from flask import Flask, jsonify, request
 from transbank.webpay import Webpay, Transaction, Options
-from src import src 
+from app import app 
 
 Webpay.configure_for_testing()
 
-@src.route('/init_transaction', methods=['POST'])
+@app.route('/init_transaction', methods=['POST'])
 def init_transaction():
     amount = request.json['amount']
     buy_order = '123456'  # Reemplaza '123456' con tu propio número de orden de compra
@@ -14,14 +14,14 @@ def init_transaction():
     response = tx.create(buy_order, session_id, amount, return_url)
     return jsonify(response)
 
-@src.route('/commit', methods=['POST'])
+@app.route('/commit', methods=['POST'])
 def commit():
     token = request.json['token_ws']
     tx = Transaction(Options(123456, '123456789', 'TEST'))  # Reemplaza los valores con tus propias credenciales
     response = tx.commit(token)
     return jsonify(response)
 
-@src.route('/abort', methods=['POST'])
+@app.route('/abort', methods=['POST'])
 def abort():
     token = request.json['token_ws']
     tx = Transaction(Options(123456, '123456789', 'TEST'))  # Reemplaza los valores con tus propias credenciales

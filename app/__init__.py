@@ -2,9 +2,9 @@ from flask import Flask
 from flask_mysqldb import MySQL
 from config import appConfig
 
-src = Flask(__name__)
-src.config.from_object(appConfig)
+app = Flask(__name__)
+app.config.from_object(appConfig)
 
-mysql = MySQL(src)
+mysql = MySQL(app)
 
 from .routes import *

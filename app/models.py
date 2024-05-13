@@ -1,4 +1,4 @@
-from src import mysql
+from app import mysql
 from flask import current_app
 
 def fetch_all_tools():
