@@ -3,5 +3,4 @@ class appConfig():
     MYSQL_PASSWORD = ''
     MYSQL_DB = 'ferramas'
     MYSQL_HOST = 'localhost'
-    DEBUG=True
 
