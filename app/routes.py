@@ -1,6 +1,9 @@
 from flask import request, jsonify
 from app import app 
 from .models import fetch_all_tools, fetch_tools_by_code, insert_tools
+from flask_mysqldb import MySQL
+
+conexion = MySQL(app)
 
 @app.route('/tools', methods=['GET'])
 def get_tools():
@@ -19,6 +22,13 @@ def create_tools():
     insert_tools(tools_data)
     return jsonify({'message': 'Herramienta creado exitosamente'}), 201
 
-@app.route('/hola')
-def index():
-    return "hola soy un texto"
+@app.route('/herramientas')
+def listar_herramientas():
+    return "Aquí van herramientas"
+
+
+def error_page(error):
+    return "PÁGINA NO ENCONTRADA..."
+app.register_error_handler(404, error_page)
+
+
