@@ -31,8 +31,8 @@ def fetch_tools_by_code(code):
 def insert_tools(tools_data):
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("INSERT INTO tools (code, name, price, category) VALUES (%s, %s, %s, %s)",
-                       (tools_data['code'], tools_data['name'], tools_data['price'], tools_data['category']))
+        cursor.execute("INSERT INTO tools (id, id_tools_type, name, description, stock) VALUES (%s, %s, %s, %s, %s)",
+                       (tools_data['id'], tools_data['id_tools_type'], tools_data['name'], tools_data['description'], tools_data['stock']))
         mysql.connection.commit()
         return True
     except Exception as e:
@@ -41,3 +41,38 @@ def insert_tools(tools_data):
         return False
     finally:
         cursor.close()
+
+
+def delete_tools(id):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("DELETE FROM tools WHERE id=%s", (id,))
+        mysql.connection.commit()
+        if cursor.rowcount > 0:
+            return True
+        else:
+            return False
+    except Exception as e:
+        mysql.connection.rollback()
+        current_app.logger.error(f"Error deleting tool by code {id}: {e}")
+        return False
+    finally:
+        cursor.close()
+
+
+def update_tools(id, tools_data):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute(""" UPDATE tools SET id_tools_type=%s, name=%s, description=%s, stock=%s WHERE id=%s
+                       """, (tools_data['id_tools_type'], tools_data['name'], tools_data['description'], tools_data['stock'], id))
+        mysql.connection.commit()
+        if cursor.rowcount > 0:
+            return True
+        else:
+            return False
+    except Exception as e:
+        current_app.logger.error(f"Error updating tool by id {id}: {e}")
+        return False
+    finally:
+        cursor.close()
+    
