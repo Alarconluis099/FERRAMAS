@@ -136,7 +136,14 @@ footer a:hover {
   box-sizing: border-box; /* Incluye el padding en el ancho */
   margin-bottom: 20px; /* Espacio entre productos verticales */
   margin: 5px;
+  
 }
+
+.producto img{
+  width: 100%;
+  max-width: 90%;
+}
+
 
 /* Media query para pantallas más pequeñas (ej: tablets) */
 @media (max-width: 768px) {
