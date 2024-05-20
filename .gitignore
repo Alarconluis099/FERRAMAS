@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 __pycache__/
 *.py[cod]
 
 node_modules
+=======
+node_modules
+>>>>>>> main

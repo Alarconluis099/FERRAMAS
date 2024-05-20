@@ -1,0 +1,8 @@
+PRODUCTO - COMPOSICION
+
+(PRODUCTO)
+- IMAGEN
+(CONTENIDO)
+- Categoria del producto	---> *Clickleable, me lleva a la categoria que corresponde* (p)
+- Nombre del producto		---> (a)
+- Valor 			---> (p)

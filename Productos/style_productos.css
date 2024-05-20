@@ -1,0 +1,162 @@
+
+/* Herramientas manuales - Footer */
+
+.footer{
+  background-color: rgb(248, 240, 226);
+  padding: 20px;
+  text-align: center;
+}
+
+footer .copyright {
+  background-color: sk;
+  padding: 10px 0;
+  text-align: center;
+  border-top: 1px solid #ddd;
+}
+
+footer .secciones-footer{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+footer .section-contactos,
+footer .section-redes-sociales,
+footer .section-metodos-pago {
+  flex: 1; 
+  padding: 10px;
+  text-align: left; 
+}
+
+footer h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+footer p {
+  margin: 0;
+}
+
+footer a {
+  color: #333;
+  text-decoration: none;
+  margin: 0 5px;
+  display: block; 
+  margin-bottom: 5px;
+}
+
+footer a:hover {
+  color: #007bff;
+} 
+
+
+
+/* Herramientas manuales - Categorias */
+
+.banner-categoria{
+  text-align: center;
+  margin: 10px;
+  min-width: 100%;
+  max-width: 30px;
+}
+
+.banner-categoria img{
+  width: 1150px;
+  height: 200px;
+}
+
+.seccion-categorias {
+  margin: 20px;
+}
+
+.seccion-categorias h2{
+  margin-bottom: 10px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.categoria {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.categoria h2 {
+  margin-bottom: 10px;
+}
+
+.sub-producto {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 128px;
+  height: 128px;
+  margin: 10px;
+}
+
+.sub-producto img {
+  margin: 10px;
+  margin-left: 30px;
+  margin-right: 30px;
+  min-width: 32px;
+  max-width: 64px;
+  width: 64px;
+  height: 64px;
+}
+
+.sub-producto h3{
+  justify-content: center;
+  text-align: center;
+  font-size: large
+}
+
+/* Herramientas manuales - productos */
+
+.seccion-productos {
+  width: 90%; /* Ancho máximo para centrar la sección */
+  margin: 0 auto; /* Centra la sección horizontalmente */
+  padding: 20px; /* Agrega espacio alrededor del contenido */
+}
+
+.seccion-productos h2{
+  text-align: center;
+  font-weight: bold;
+  margin: 10px;
+}
+
+.contenedor-productos {
+  display: flex; /* Activa el comportamiento flexbox */
+  flex-wrap: wrap; /* Permite que los productos se envuelvan en varias filas */
+  justify-content: space-between; /* Distribuye el espacio entre productos */
+}
+
+.producto {
+  width: 25%; /* Ancho de cada producto (25% para 4 por fila) */
+  box-sizing: border-box; /* Incluye el padding en el ancho */
+  margin-bottom: 20px; /* Espacio entre productos verticales */
+  margin: 5px;
+  
+}
+
+.producto img{
+  width: 100%;
+  max-width: 90%;
+}
+
+
+/* Media query para pantallas más pequeñas (ej: tablets) */
+@media (max-width: 768px) {
+  .producto {
+    width: 50%; /* 2 productos por fila en tablets */
+  }
+}
+
+/* Media query para pantallas aún más pequeñas (ej: móviles) */
+@media (max-width: 480px) {
+  .producto {
+    width: 100%; /* 1 producto por fila en móviles */
+  }
+}
+
+

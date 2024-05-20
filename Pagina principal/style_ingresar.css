@@ -1,0 +1,252 @@
+
+/* Inicio - Footer */
+
+.footer{
+  background-color: rgb(248, 240, 226);
+  padding: 20px;
+  text-align: center;
+}
+
+footer .copyright {
+  background-color: sk;
+  padding: 10px 0;
+  text-align: center;
+  border-top: 1px solid #ddd;
+}
+
+footer .secciones-footer{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+footer .section-contactos,
+footer .section-redes-sociales,
+footer .section-metodos-pago {
+  flex: 1; 
+  padding: 10px;
+  text-align: left; 
+}
+
+footer h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+footer p {
+  margin: 0;
+}
+
+footer a {
+  color: #333;
+  text-decoration: none;
+  margin: 0 5px;
+  display: block; 
+  margin-bottom: 5px;
+}
+
+footer a:hover {
+  color: #007bff;
+} 
+
+/* Inicio - Marcas */
+
+.seccion-marcas {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.seccion-marcas h2 {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.contenedor-marcas {
+  display: block;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.contenedor-marcas img {
+  margin: 50px;
+  max-width: 150px;
+  width: 100%;
+  height: 100%;
+}
+
+/* Inicio - Lanzamientos */
+
+.seccion-lanzamientos{
+  margin: 20px;
+  text-align: center;
+}
+
+.seccion-lanzamientos h2{
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+  
+}
+
+.contenedor-productos-lanz{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  min-height: 10px;
+}
+
+.producto{ 
+  width: 200px;
+  text-align: center;
+  margin: 20px;
+}
+
+.producto img {
+  width: 100%;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.producto a{
+  color: #333;
+}
+
+.producto a:hover {
+  color: coral;
+}
+
+/* Inicio - Promociones*/
+
+.seccion-promociones{
+  margin: 20px;
+  text-align: center;
+}
+
+.seccion-promociones h2{
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+  
+}
+
+.carousel-item{
+  height: 500px;
+  min-width: 300px; 
+}
+
+
+/* formulario - inicio de sesion */
+
+.login{
+  height: 100%;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 20px;
+  font-family: "Montserrat", "Arial", sans-serif;
+}
+
+h1{
+  color: black;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 32px;
+}
+
+.form-background{
+  background: rgb(240, 238, 236);
+  width: 420px;
+  border-radius: 10px;
+  padding: 32px;
+  align-self: center;
+  align-items: center;
+} 
+
+form{
+  text-transform: capitalize;
+  text-align: center;
+  font-weight: bold;
+}
+
+.login input{
+  width: 100%;
+  margin-bottom: 15px;
+  border-radius: 30px;
+  border: lightgray;
+  padding: 15px 20px;
+  color:#8498AF;
+  font-size: .9rem;
+  transition: .4s;
+}
+
+.login label{
+  margin: 5px;
+}
+
+.login a {
+  color: orange;
+}
+
+
+[type=submit] {
+  background: orange;
+  border-radius: 30px;
+  padding: 16px 30px;
+  width: 100%;
+  color: white;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  transition: 0.4s;
+  border: none;
+  box-shadow: none;
+  margin-top: 5px;
+}
+
+.separador{
+
+  text-align: center;
+  color: #C4C8D4;
+  font-size: .8rem;
+  letter-spacing: .5px;
+  padding: 12px 0;
+  
+  &::before{
+  content: '';
+  display: inline-block;
+  width: 50%;
+  margin-right: 5%;
+  height: 1px;
+  background: lightgray;
+  vertical-align: middle;
+  }
+
+}
+
+.login a {
+  background: orange;
+  border-radius: 30px;
+  padding: 16px 30px;
+  width: 100%;
+  color: white;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  transition: 0.4s;
+  border: none;
+  box-shadow: none;
+  margin-top: 10px;
+  
+}
+
+.text-center a{
+  background: none;
+  color: orange;
+}
+
+
+
+
+
