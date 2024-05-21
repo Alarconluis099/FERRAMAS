@@ -59,7 +59,19 @@ def update_tool_route(id):
 
 @app.route('/Cliente')
 def cliente():
-    return render_template('../static/Views/Cliente.html')
+    return render_template('Cliente.html')
+
+@app.route('/Carrito')
+def carrito():
+    return render_template('carrito.html')
+
+@app.route('/Inicio')
+def inicio():
+    return render_template('inicio.html')
+
+@app.route('/Login')
+def login():
+    return render_template('login.html')
     
 
 
