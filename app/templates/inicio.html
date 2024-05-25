@@ -129,68 +129,33 @@
         <div class="contenedor-productos-lanz">
           <div class="producto">
             <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
-            <p>Categoria</p>
-            <a href="">nombre producto</a> 
-            <p>$ 29.990</p>
+            {% for tool in tools %}
+                {% if tool.id == 100 %}
+                    <h3>{{tool ["name"]}}</h3>
+                    <p>{{tool ["description"]}}</p>
+                    <p>${{tool ["precio"]}}</p>
+                {% endif %}
+            {% endfor %}
           </div>
           <div class="producto">
             <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
-            <p>Categoria</p>
-            <a href="">nombre producto</a> 
-            <p>$ 29.990</p>
+            {% for tool in tools %}
+                {% if tool.id == 110 %}
+                    <h3>{{tool ["name"]}}</h3>
+                    <p>{{tool ["description"]}}</p>
+                    <p>${{tool ["precio"]}}</p>
+                {% endif %}
+            {% endfor %}
           </div>
-          <div class="producto">
-            <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
-            <p>Categoria</p>
-            <a href="">nombre producto</a> 
-            <p>$ 29.990</p>
-          </div>
-          <div class="producto">
-            <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
-            <p>Categoria</p>
-            <a href="">nombre producto</a> 
-            <p>$ 29.990</p>
-          </div>
-        
-            <!-- Fila 2 - productos lanzamiento-->
-
-          <div class="producto">
-            <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
-            <p>Categoria</p>
-            <a href="">nombre producto</a> 
-            <p>$ 29.990</p>
-          </div>
-          <div class="producto">
-            <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
-            <p>Categoria</p>
-            <a href="">nombre producto</a> 
-            <p>$ 29.990</p>
-          </div><div class="producto">
-            <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
-            <p>Categoria</p>
-            <a href="">nombre producto</a> 
-            <p>$ 29.990</p>
-          </div><div class="producto">
-            <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
-            <p>Categoria</p>
-            <a href="">nombre producto</a> 
-            <p>$ 29.990</p>
-          </div><div class="producto">
-            <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
-            <p>Categoria</p>
-            <a href="">nombre producto</a> 
-            <p>$ 29.990</p>
-          </div><div class="producto">
-            <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
-            <p>Categoria</p>
-            <a href="">nombre producto</a> 
-            <p>$ 29.990</p>
-          </div>
+          
 
             
         </div>
           
       </section>
+      
+    
+    
 
       <!-- Marcas -->
       <section class="seccion-marcas">

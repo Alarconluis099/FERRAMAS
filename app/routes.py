@@ -1,4 +1,4 @@
-from flask import request, jsonify, render_template, url_for
+from flask import request, jsonify, render_template, redirect
 from app import app 
 from .models import fetch_all_tools, fetch_tools_by_code, insert_tools, delete_tools, update_tools, get_all_users, fetch_users_by_id
 
@@ -65,6 +65,9 @@ def update_tool_route(id):
     except Exception:
         return jsonify({'Error': 'Error del servidor'}), 500
     
+@app.route('/')
+def main():
+    return redirect('Inicio')
 
 @app.route('/Cliente')
 def cliente():
@@ -76,11 +79,16 @@ def carrito():
 
 @app.route('/Inicio')
 def inicio():
-    return render_template('inicio.html')
+    tools = fetch_all_tools()
+    return render_template('inicio.html', tools=tools)
 
 @app.route('/Login')
 def login():
     return render_template('login.html')
+
+@app.route('/Registro')
+def registro():
+    return render_template('registro.html')
 
 @app.route('/Equipos_medicion')
 def equipos_medicion():
