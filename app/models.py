@@ -76,3 +76,30 @@ def update_tools(id, tools_data):
     finally:
         cursor.close()
     
+
+def get_all_users():
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("SELECT id_users, correo, contraseña, verificar_contraseña FROM users")
+        rows = cursor.fetchall()
+        columns = [column[0] for column in cursor.description]
+        data = [dict(zip(columns, row)) for row in rows]
+        return data
+    except Exception as e:
+        current_app.logger.error(f"Error fetching users: {e}")
+        return []
+    finally:
+        cursor.close()
+        cursor.execute()
+
+def fetch_users_by_id(id_users):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("SELECT * FROM users WHERE code=%s", (id_users,))
+        data = cursor.fetchone()
+        return data
+    except Exception as e:
+        current_app.logger.error(f"Error fetching users by id {id_users}: {e}")
+        return None
+    finally:
+        cursor.close()

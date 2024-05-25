@@ -1,6 +1,6 @@
-from flask import request, jsonify, render_template
+from flask import request, jsonify, render_template, url_for
 from app import app 
-from .models import fetch_all_tools, fetch_tools_by_code, insert_tools, delete_tools, update_tools
+from .models import fetch_all_tools, fetch_tools_by_code, insert_tools, delete_tools, update_tools, get_all_users, fetch_users_by_id
 
 import random
 
@@ -9,6 +9,16 @@ import random
 # from flask_mysqldb import MySQL
 
 # conexion = MySQL(app)
+
+@app.route('/users', methods=['GET'])
+def get_users():
+    users = get_all_users()
+    return jsonify(users)
+
+@app.route('/users', methods=['GET'])
+def get_users_by_id():
+    users = fetch_users_by_id()
+    return jsonify(users)
 
 @app.route('/tools', methods=['GET'])
 def get_tools():
@@ -19,7 +29,6 @@ def get_tools():
 @app.route('/tools/<code>', methods=['GET'])
 def get_tool(code):
     tool = fetch_tools_by_code(code)
-
     return jsonify(tool)
 
 
