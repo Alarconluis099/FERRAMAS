@@ -89,26 +89,38 @@ def update_tools(id, tools_data):
 def get_all_users():
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("SELECT id_users, correo, contraseña, verificar_contraseña FROM users")
+        cursor.execute("SELECT DISTINCT id_users, correo FROM users")
         rows = cursor.fetchall()
-        columns = [column[0] for column in cursor.description]
-        data = [dict(zip(columns, row)) for row in rows]
-        return data
-    except Exception as e:
-        current_app.logger.error(f"Error fetching users: {e}")
+        columns = [desc[0] for desc in cursor.description]
+        
+        # Diccionario para almacenar usuarios únicos: ID -> {correo: ...}
+        unique_users = {}
+        for row in rows:
+            unique_users[row[0]] = dict(zip(columns, row))
+
+        return list(unique_users.values())  # Convertir a lista de diccionarios
+
+    except mysql.connector.OperationalError as e:
+        current_app.logger.error(f"Error de base de datos al obtener usuarios: {e}")
         return []
     finally:
-        cursor.close()
-        cursor.execute()
+        cursor.close() 
+
 
 def fetch_users_by_id(id_users):
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("SELECT * FROM users WHERE code=%s", (id_users,))
-        data = cursor.fetchone()
-        return data
-    except Exception as e:
-        current_app.logger.error(f"Error fetching users by id {id_users}: {e}")
-        return None
+        cursor.execute("SELECT id_users, correo,  FROM users WHERE id_users = %s", (id_users,))  
+        user_data = cursor.fetchone()
+
+        if user_data:
+            columns = [desc[0] for desc in cursor.description]
+            return dict(zip(columns, user_data))
+        else:
+            return {} 
+    except mysql.connector.OperationalError as e:
+        current_app.logger.error(f"Error de base de datos al obtener usuario por ID {id_users}: {e}")
+        return {}
     finally:
         cursor.close()
+
