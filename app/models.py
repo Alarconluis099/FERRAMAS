@@ -1,6 +1,27 @@
 from app import mysql
 from flask import current_app
 
+def fetch_all_pedidos_ready():
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("""
+            SELECT id_pedido, nom_pedido, desc_pedido, precio_pedido,
+                   SUM(precio_pedido * cantidad) AS precio_total, 
+                   SUM(cantidad) AS cantidad_total
+            FROM pedido
+            GROUP BY id_pedido 
+        """)
+        rows = cursor.fetchall()
+        columns = [column[0] for column in cursor.description]
+
+        data = [dict(zip(columns, row)) for row in rows]
+        return data
+    except Exception as e:
+        current_app.logger.error(f"Error fetching pedidos: {e}")
+        return []
+    finally:
+        cursor.close()
+
 def fetch_all_tools():
     cursor = mysql.connection.cursor()
     try:

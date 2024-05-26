@@ -76,78 +76,58 @@
 
       <!--Carro de compras-->
       <div class="card"> <!--Columna productos-->
-            <div class="row">
-                <div class="col-md-8 cart">
-                  <div class="title">
-                      <div class="row">
-                          <div class="col"><h4><b>Carro de compras</b></h4></div>
-                          <div class="col align-self-center text-right text-muted">3 items</div> <!--cantidad productos en carro-->
-                      </div>
-                  </div>
-                  <div class="row border-top border-bottom">
-                    <div class="row main align-items-center">
-                        <div class="col-2"><img class="img-fluid" src="https://sodimac.scene7.com/is/image/SodimacCL/8820104_26?wid=800&hei=800&qlt=70"></div>
-                        <div class="col">
-                            <div class="row text-muted">Herramientas manuales</div> <!--categoria-->
-                            <div class="row">Set de herramientas 53 piezas</div> <!--Nombre del producto-->
-                        </div>
-                        <div class="col">
-                            <a href="#">-</a><a href="#" class="border">1</a><a href="#">+</a> <!--cantidad-->
-                        </div>
-                        <div class="col">&dollar; 50.000 <span class="close">&#10005;</span></div> <!--valor-->
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="row main align-items-center">
-                        <div class="col-2"><img class="img-fluid" src="https://sodimac.scene7.com/is/image/SodimacCL/2053888_01?wid=800&hei=800&qlt=70"></div>
-                        <div class="col">
-                            <div class="row text-muted">Equipos de medicion</div>
-                            <div class="row">Medidor de distacia láser 40m</div>
-                        </div>
-                        <div class="col">
-                            <a href="#">-</a><a href="#" class="border">1</a><a href="#">+</a>
-                        </div>
-                        <div class="col">&dollar; 25.000 <span class="close">&#10005;</span></div>
-                    </div>
-                  </div>
-                  <div class="row border-top border-bottom">
-                    <div class="row main align-items-center">
-                        <div class="col-2"><img class="img-fluid" src="https://sodimac.scene7.com/is/image/SodimacCL/2725436_01?wid=800&hei=800&qlt=70"></div>
-                        <div class="col">
-                            <div class="row text-muted">Equipos de seguridad</div>
-                            <div class="row">Mascara soldar luz led fotosensible</div>
-                        </div>
-                        <div class="col">
-                            <a href="#">-</a><a href="#" class="border">1</a><a href="#">+</a>
-                        </div>
-                        <div class="col">&dollar; 75.000 <span class="close">&#10005;</span></div>
-                    </div>
-                  </div>
-                  <div class="back-to-shop"><a href="Inicio">&leftarrow;</a><span class="text-muted">Seguir comprando</span></div>
-                </div>
-                <div class="col-md-4 summary">
-                    <div><h5><b>Resumen de compra</b></h5></div>
-                    <hr>
-                    <div class="row">
-                        <div class="col" style="padding-left:0;">ITEMS: 3</div>
-                        <div class="col text-right">&dollar; 150.000</div>
-                    </div>
-                    <form>
-                        <p>DESPACHO</p>
-                        <select>
-                            <option class="text-muted">Bluexpress - &dollar;7.000</option>
-                            <option class="text-muted">Retiro en tienda - &dollar;0</option>
-                        </select>
-                        <p>CODIGO DE DESCUENTO</p>
-                        <input id="code" placeholder="Ingrese el codigo">
-                    </form>
-                    <div class="row" style="border-top: 1px solid rgba(0,0,0,.1); padding: 2vh 0;">
-                        <div class="col">TOTAL DE SU COMPRA</div>
-                        <div class="col text-right">&dollar; 157.000</div>
-                    </div>  
-                    <button class="btn">CONTINUAR COMPRA</button> <!--Boton a TRANSBANK-->
+        <div class="row">
+          <div class="col-md-8 cart">
+            <div class="title">
+              <div class="row">
+                <div class="col"><h4><b>Carro de compras</b></h4></div>
+                <div class="col align-self-center text-right text-muted">{{ pedidos|length }} items</div>
+                <div>
+                    <ul>
+                        {% for pedido in pedidos %}
+                            <li>
+                                <p>{{ pedido['nom_pedido'] }}</p>
+                                <p> {{ pedido['desc_pedido'] }}</p>
+                                <p> ${{ pedido['precio_total'] }}</p>
+                                <p> {{ pedido['cantidad_total'] }}</p>
+                                <form method="POST" action="{{ url_for('disminuir_cantidad', product_id=pedido['id_pedido']) }}">
+                                  <button type="submit">-</button>
+                              </form>
+                            </li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
+            </div>
+          </div>
+          <div class="col-md-4 summary">
+            <div><h5><b>Resumen de compra</b></h5></div>
+              <hr>
+              <div class="row">
+                {% for pedido in pedidos %}
+                  <div class="col" style="padding-left:0;">Item: {{ pedidos|length }}</div><br>
+                  <div class="col text-right"></div>
+                    
+                    Valor: ${{pedido['precio_pedido']}}
+                  
+                
+                <div>
+
+                </div>
+                Cantidad: {{pedido['cantidad_total']}}
+              </div>
+                
+                
+              
+              <div class="row" style="border-top: 1px solid rgba(0,0,0,.1); padding: 2vh 0;">
+                  <div class="col">TOTAL DE SU COMPRA</div>
+                  <div class="col text-right">&dollar; {{ pedido['precio_total'] }}</div>
+                  {% endfor %}
+              </div>  
+              <button class="btn">CONTINUAR COMPRA</button> <!--Boton a TRANSBANK-->
+            </div>
+          </div>
+        </div>
       </div>
 
     </body>

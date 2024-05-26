@@ -125,18 +125,31 @@
 
       <!--Lanzamientos recientes--> <!-- 8 productos -->
       <section class="seccion-lanzamientos">
-        <h2>Lanzamientos recientes</h2>
-        <div class="contenedor-productos-lanz">
-          <div class="producto">
-            <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
-            {% for tool in tools %}
+
+          <h2>Lanzamientos recientes</h2>
+          <div class="contenedor-productos-lanz">
+            <div class="producto">
+              <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
+              {% for tool in tools %}
                 {% if tool.id == 100 %}
-                    <h3>{{tool ["name"]}}</h3>
-                    <p>{{tool ["description"]}}</p>
-                    <p>${{tool ["precio"]}}</p>
+                  <h3>{{ tool["name"] }}</h3>
+                  <p>{{ tool["description"] }}</p>
+                  <p>${{ tool["precio"] }}</p>
+                  
+                  
+                  <form method="POST" action="{{ url_for('guardar_pedido') }}"> 
+                      <input type="hidden" name="product_id" value="{{ tool['id'] }}">
+                      <input type="hidden" name="product_name" value="{{ tool['name'] }}">
+                      <input type="hidden" name="product_description" value="{{ tool['description'] }}">
+                      <input type="hidden" name="product_price" value="{{ tool['precio'] }}">
+                      <input type="number" name="cantidad"  min="1" placeholder="Ingrese cantidad">
+                      <button type="submit">Guardar en Pedido</button>
+                  </form>
                 {% endif %}
-            {% endfor %}
-          </div>
+              {% endfor %}
+            </div>
+
+
           <div class="producto">
             <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
             {% for tool in tools %}
@@ -161,10 +174,10 @@
       <section class="seccion-marcas">
         <h2>Marcas asociadas</h2>
         <div class="contenedor-marcas">
-          <img src="/Imagenes/Marcas/Bosch-logo.png" alt="Bosch">
-          <img src="/Imagenes/Marcas/250px-Makita_Logo.png" alt="Makita">
-          <img src="/Imagenes/Marcas/220px-Stanley_Hand_Tools_logo.png" alt="Stanley">
-          <img src="/Imagenes/Marcas/Logo_Sika_AG.png" alt="Sika">
+          <img src="{{ url_for ('static', filename='Imagenes/Marcas/Bosch-logo.png') }}" alt="Bosch">
+          <img src="{{ url_for ('static', filename='Imagenes/Marcas/250px-Makita_Logo.png') }}" alt="Makita">
+          <img src="{{ url_for ('static', filename='Imagenes/Marcas/220px-Stanley_Hand_Tools_logo.png') }}" alt="Stanley">
+          <img src="{{ url_for ('static', filename='Imagenes/Marcas/Logo_Sika_AG.png') }}" alt="Sika">
         </div>
       </section>
 

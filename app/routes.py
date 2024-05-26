@@ -1,12 +1,91 @@
-from flask import Blueprint, request, jsonify, render_template, redirect
-from app import app 
-from .models import fetch_all_tools, fetch_tools_by_code, insert_tools, delete_tools, update_tools, get_all_users, fetch_users_by_id
-
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for, session
+from app import app
+from .models import fetch_all_tools, fetch_tools_by_code, insert_tools, delete_tools, update_tools, get_all_users, fetch_users_by_id, fetch_all_pedidos_ready
+from . import mysql
 import random
+
 
 # from flask_mysqldb import MySQL
 
 # conexion = MySQL(app)
+@app.route('/Carrito')
+def carrito():
+    pedidos = fetch_all_pedidos_ready()
+    return render_template('carrito.html', pedidos=pedidos)
+
+@app.route('/Pedido', methods=['GET'])
+def pedido():
+    pedido = fetch_all_pedidos_ready()
+    return jsonify(pedido)
+
+@app.route('/Pedidos')
+def ver_pedidos():
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM pedido")  # Obtener todos los pedidos
+    pedido = cursor.fetchall()
+    cursor.close()
+
+    # Convertir los resultados a una lista de diccionarios
+    pedidos_dict = []
+    for pedidos in pedido:
+        columns = [column[0] for column in cursor.description]
+        pedidos_dict.append(dict(zip(columns, pedidos)))
+
+    return render_template('pedidos.html', pedido=pedidos_dict)
+
+
+@app.route('/disminuir_cantidad/<int:product_id>', methods=['POST'])
+def disminuir_cantidad(product_id):
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT cantidad FROM pedido WHERE id_pedido = %s", (product_id,))
+    result = cursor.fetchone()
+
+    if result:
+        cantidad = result[0]
+        if cantidad > 1:
+            nueva_cantidad = cantidad - 1
+            cursor.execute(
+                "UPDATE pedido SET cantidad = %s WHERE id_pedido = %s",
+                (nueva_cantidad, product_id)
+            )
+        else:
+            cursor.execute("DELETE FROM pedido WHERE id_pedido = %s", (product_id,))
+
+        mysql.connection.commit()
+
+    cursor.close()
+    return redirect(url_for('carrito'))
+
+
+@app.route('/guardar_pedido', methods=['POST'])
+def guardar_pedido():
+    product_id = request.form['product_id']
+    product_name = request.form['product_name']
+    product_description = request.form['product_description']
+    product_price = request.form['product_price']
+    product_quantity = int(request.form['cantidad'])
+
+    cursor = mysql.connection.cursor()
+    cursor.execute(
+        "SELECT * FROM pedido WHERE id_pedido = %s", (product_id,)
+    )
+    existing_order = cursor.fetchone()
+
+    if existing_order:
+        new_quantity = existing_order[4] + product_quantity
+        cursor.execute(
+            "UPDATE pedido SET cantidad = %s WHERE id_pedido = %s",
+            (new_quantity, product_id)
+        )
+    else:
+        cursor.execute(
+            "INSERT INTO pedido (id_pedido, nom_pedido, desc_pedido, precio_pedido, cantidad) VALUES (%s, %s, %s, %s, %s)",
+            (product_id, product_name, product_description, product_price, product_quantity)
+        )
+    mysql.connection.commit()
+    cursor.close()
+    return redirect(url_for('inicio'))
+
 
 @app.route('/users', methods=['GET'])
 def get_users():
@@ -71,9 +150,7 @@ def main():
 def cliente():
     return render_template('Cliente.html')
 
-@app.route('/Carrito')
-def carrito():
-    return render_template('carrito.html')
+
 
 @app.route('/Inicio')
 def inicio():
