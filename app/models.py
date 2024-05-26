@@ -4,10 +4,19 @@ from flask import current_app
 def fetch_all_tools():
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("SELECT id, id_tools_type, name, description, stock FROM tools")
+        cursor.execute("SELECT DISTINCT id, id_tools_type, name, description, stock, precio FROM tools")
         rows = cursor.fetchall()
         columns = [column[0] for column in cursor.description]
-        data = [dict(zip(columns, row)) for row in rows]
+
+        # Crear un conjunto para almacenar IDs únicos
+        unique_ids = set()
+        data = []
+        for row in rows:
+            tool_id = row[0]  # Obtener el ID de la herramienta
+            if tool_id not in unique_ids:  # Verificar si el ID ya está en el conjunto
+                unique_ids.add(tool_id)
+                data.append(dict(zip(columns, row)))  # Agregar solo si es único
+
         return data
     except Exception as e:
         current_app.logger.error(f"Error fetching tools: {e}")
@@ -76,3 +85,30 @@ def update_tools(id, tools_data):
     finally:
         cursor.close()
     
+
+def get_all_users():
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("SELECT id_users, correo, contraseña, verificar_contraseña FROM users")
+        rows = cursor.fetchall()
+        columns = [column[0] for column in cursor.description]
+        data = [dict(zip(columns, row)) for row in rows]
+        return data
+    except Exception as e:
+        current_app.logger.error(f"Error fetching users: {e}")
+        return []
+    finally:
+        cursor.close()
+        cursor.execute()
+
+def fetch_users_by_id(id_users):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("SELECT * FROM users WHERE code=%s", (id_users,))
+        data = cursor.fetchone()
+        return data
+    except Exception as e:
+        current_app.logger.error(f"Error fetching users by id {id_users}: {e}")
+        return None
+    finally:
+        cursor.close()
