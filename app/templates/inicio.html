@@ -89,22 +89,9 @@
           <div class="carousel-inner">
               <div class="carousel-item active">
                   <img src="{{ url_for ('static', filename='imagenes/marcas/FERREMAS - BANNER INICIO.png') }}" class="d-block w-100" alt="">
-                  <div class="carousel-caption">
-                      <h5 > Tienda</h5>
-                      <p class="p1">
-                          Tienda dedicada a la venta de articulos <br> para nuestros expertos ferremas
-                      </p>
-                  </div>
               </div>
               <div class="carousel-item ">
                   <img src="{{ url_for ('static', filename='imagenes/marcas/banner-seguridad.png') }}" class="d-block w-100" alt="">
-                  <div class="carousel-caption">
-                      <h5> Tienda</h5>
-                      <p class="p1">
-                          Tienda dedicada a la venta de articulos <br> para nuestros expertos ferremas
-                      </p>
-                      <a href="#" class="btn btn-outline-primary btn-sm">Mas Informacion</a>
-                  </div>
               </div>
           
           </div>
@@ -141,8 +128,8 @@
                       <input type="hidden" name="product_name" value="{{ tool['name'] }}">
                       <input type="hidden" name="product_description" value="{{ tool['description'] }}">
                       <input type="hidden" name="product_price" value="{{ tool['precio'] }}">
-                      <input type="number" name="cantidad"  min="1" placeholder="Ingrese cantidad">
-                      <button type="submit">Guardar en Pedido</button>
+                      <input type="number" name="cantidad" value="1"  min="1" placeholder="Ingrese cantidad">
+                      <button type="submit">Agregar al carrito</button>
                   </form>
                 {% endif %}
               {% endfor %}

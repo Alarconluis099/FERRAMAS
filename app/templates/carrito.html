@@ -93,6 +93,9 @@
                                   <form method="POST" action="{{ url_for('disminuir_cantidad', product_id=pedido['id_pedido']) }}">
                                     <button type="submit">-</button>
                                 </form>
+                                <form method="POST" action="{{ url_for('aumentar_cantidad', product_id=pedido['id_pedido']) }}">
+                                  <button type="submit">+</button>
+                              </form>
                               </li>
                           {% endfor %}
                       </ul>
