@@ -105,10 +105,11 @@ footer a:hover {
   height: 64px;
 }
 
-.sub-producto h3{
+.sub-producto a{
   justify-content: center;
   text-align: center;
-  font-size: large
+  font-size: large;
+  color: orangered;
 }
 
 /* Herramientas manuales - productos */

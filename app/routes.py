@@ -191,6 +191,39 @@ def materiales_basicos():
 def tornillos_anclajes():
     return render_template('tornillos-anclajes.html')
 
+# Herramientas manuales - Subcategorias
+
+@app.route('/martillos')
+def martillos():
+    return render_template('HM-martillos.html')
+
+@app.route('/destornillador')
+def destornillador():
+    return render_template('HM-destornillador.html')
+
+@app.route('/llaves')
+def llaves():
+    return render_template('HM-llaves.html')
+
+@app.route('/electricas')
+def electricas():
+    return render_template('HM-electricas.html')
+
+app.route('/taladros')
+def taladros():
+    return render_template('HM-taladros.html')
+
+app.route('/sierras')
+def sierras():
+    return render_template('HM-sierras.html')
+
+app.route('/lijadoras')
+def lijadoras():
+    return render_template('HM-lijadoras.html')
+
+app.route('/materiales')
+def materiales():
+    return render_template('HM-materiales.html')
 
     
 # TRANSBANK

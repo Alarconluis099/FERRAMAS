@@ -129,9 +129,9 @@
           <div class="contenedor-productos-lanz">
             <div class="producto">
               <img src="{{ url_for ('static', filename='imagenes/marcas/martillo.jpg') }}" alt=""> 
-              {% for tool in tools %}
-                {% if tool.id == 100 %}
-                  <h3>{{ tool["name"] }}</h3>
+              {% for tool in tools %} <!--llama a la bd-->
+                {% if tool.id == 100 %} <!--filtr por id del pedido-->
+                  <h3>{{ tool["name"] }}</h3><!--muestra pedido-->
                   <p>{{ tool["description"] }}</p>
                   <p>${{ tool["precio"] }}</p>
                   
