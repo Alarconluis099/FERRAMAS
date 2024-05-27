@@ -179,6 +179,8 @@ def webpay_plus_commit_error():
 def webpay_plus_refund():
     token = request.form.get("token_ws")
     amount = request.form.get("amount")
+    tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
+    response = tx.refund(token, amount)
     print("refund for token_ws: {} by amount: {}".format(token, amount))
 
     try:
@@ -189,6 +191,9 @@ def webpay_plus_refund():
     except TransbankError as e:
         print(e.message)
         return jsonify({"error": e.message}), 400
+    
+
+    
 
 @bp.route("/refund-form", methods=["GET"])
 def webpay_plus_refund_form():
