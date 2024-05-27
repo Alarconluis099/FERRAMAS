@@ -13,11 +13,6 @@ def carrito():
     pedidos = fetch_all_pedidos_ready()
     return render_template('carrito.html', pedidos=pedidos)
 
-@app.route('/Pedido', methods=['GET'])
-def pedido():
-    pedido = fetch_all_pedidos_ready()
-    return jsonify(pedido)
-
 @app.route('/Pedidos')
 def ver_pedidos():
     cursor = mysql.connection.cursor()
@@ -87,6 +82,12 @@ def guardar_pedido():
     return redirect(url_for('inicio'))
 
 
+
+@app.route('/Pedido', methods=['GET'])
+def pedido():
+    pedido = fetch_all_pedidos_ready()
+    return jsonify(pedido)
+
 @app.route('/users', methods=['GET'])
 def get_users():
     users = get_all_users()
@@ -154,6 +155,7 @@ def cliente():
 
 @app.route('/Inicio')
 def inicio():
+    session.pop('pedidos', None)
     tools = fetch_all_tools()
     return render_template('inicio.html', tools=tools)
 

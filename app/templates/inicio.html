@@ -88,13 +88,12 @@
           </div>
           <div class="carousel-inner">
               <div class="carousel-item active">
-                  <img src="https://bulma.io/assets/images/placeholders/1280x960.png" class="d-block w-100" alt="">
+                  <img src="{{ url_for ('static', filename='imagenes/marcas/multiproposito.png') }}" class="d-block w-100" alt="">
                   <div class="carousel-caption">
                       <h5 > Tienda</h5>
                       <p class="p1">
                           Tienda dedicada a la venta de articulos <br> para nuestros expertos ferremas
                       </p>
-                      <a href="#" class="btn btn-outline-primary btn-muted btn-sm">Mas Informacion</a>
                   </div>
               </div>
               <div class="carousel-item ">
@@ -129,7 +128,7 @@
           <h2>Lanzamientos recientes</h2>
           <div class="contenedor-productos-lanz">
             <div class="producto">
-              <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
+              <img src="{{ url_for ('static', filename='imagenes/marcas/martillo.jpg') }}" alt=""> 
               {% for tool in tools %}
                 {% if tool.id == 100 %}
                   <h3>{{ tool["name"] }}</h3>
@@ -151,7 +150,7 @@
 
 
           <div class="producto">
-            <img src="https://bulma.io/assets/images/placeholders/1280x960.png" alt=""> 
+            <img src="{{ url_for ('static', filename='imagenes/marcas/caja-clavos.webp') }}" alt=""> 
             {% for tool in tools %}
                 {% if tool.id == 110 %}
                     <h3>{{tool ["name"]}}</h3>
