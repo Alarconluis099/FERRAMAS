@@ -11,7 +11,7 @@ import random
 @app.route('/Carrito')
 def carrito():
     pedidos = fetch_all_pedidos_ready()
-    return render_template('carrito.html', pedidos=pedidos)
+    return render_template('carrito.html', pedidos=pedidos,)
 
 @app.route('/Pedidos')
 def ver_pedidos():
