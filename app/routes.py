@@ -52,6 +52,29 @@ def disminuir_cantidad(product_id):
     return redirect(url_for('carrito'))
 
 
+@app.route('/aumentar_cantidad/<int:product_id>', methods=['POST'])
+def aumentar_cantidad(product_id):
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT cantidad FROM pedido WHERE id_pedido = %s", (product_id,))
+    result = cursor.fetchone()
+
+    if result:
+        cantidad = result[0]
+        if cantidad > 1:
+            nueva_cantidad = cantidad + 1
+            cursor.execute(
+                "UPDATE pedido SET cantidad = %s WHERE id_pedido = %s",
+                (nueva_cantidad, product_id)
+            )
+        else:
+            cursor.execute("DELETE FROM pedido WHERE id_pedido = %s", (product_id,))
+
+        mysql.connection.commit()
+
+    cursor.close()
+    return redirect(url_for('carrito'))
+
+
 @app.route('/guardar_pedido', methods=['POST'])
 def guardar_pedido():
     product_id = request.form['product_id']
