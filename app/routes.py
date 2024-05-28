@@ -1,13 +1,10 @@
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for, session
+from flask import Blueprint, request, flash, get_flashed_messages, jsonify, render_template, redirect, url_for, session
 from app import app
 from .models import fetch_all_tools, fetch_tools_by_code, insert_tools, delete_tools, update_tools, get_all_users, fetch_users_by_id, fetch_all_pedidos_ready
 from . import mysql
 import random
 
 
-# from flask_mysqldb import MySQL
-
-# conexion = MySQL(app)
 @app.route('/Carrito')
 def carrito():
     pedidos = fetch_all_pedidos_ready()
@@ -249,7 +246,7 @@ def materiales():
     return render_template('HM-materiales.html')
 
     
-# TRANSBANK
+# Rutas Transbank
 
 from transbank.webpay.webpay_plus.transaction import Transaction
 from transbank.error.transbank_error import TransbankError
@@ -261,31 +258,23 @@ from transbank.common.integration_api_keys import IntegrationApiKeys
 
 bp = Blueprint('routes', __name__)
 
-@bp.route("/create", methods=["GET"])
+@bp.route("/create", methods=["POST"])
 def webpay_plus_create():
-    print("Webpay Plus Transaction.create")
+    # print("Webpay Plus Transaction.create")
     buy_order = str(random.randrange(1000000, 99999999))
     session_id = str(random.randrange(1000000, 99999999))
-    amount = random.randrange(10000, 1000000)
-    return_url = request.url_root + 'commit'
+    amount = request.form.get("amount")
+    return_url = 'http://localhost:5000/commit'
 
-    create_request = {
-        "buy_order": buy_order,
-        "session_id": session_id,
-        "amount": amount,
-        "return_url": return_url
-    }
 
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
     response = tx.create(buy_order, session_id, amount, return_url)
-    print(response)
 
-    return render_template('tbk_create.html', request=create_request, response=response)
-
+    return redirect(response['url'] + '?token_ws=' + response['token'])
 
 
 
-@bp.route("/commit", methods=["GET"])
+@bp.route("/commit", methods=["GET", "POST"])
 def webpay_plus_commit():
     token = request.args.get("token_ws")
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
@@ -294,18 +283,29 @@ def webpay_plus_commit():
     print("commit for token_ws: {}".format(token))
     print("response: {}".format(response))
 
-    return render_template('tbk_commit.html', token=token, response=response)
+    # return render_template('tbk_commit.html', token=token, response=response)
 
-@bp.route("/commit", methods=["POST"])
-def webpay_plus_commit_error():
-    token = request.form.get("token_ws")
-    print("commit error for token_ws: {}".format(token))
+    if response['status'] == 'AUTHORIZED':
+        flash('PAGO EXITOSO', 'success')
+        return redirect(url_for('inicio', status='PAGO EXITOSO'))
+    else:
+        flash('PAGO FALLIDO', 'error')
+        return redirect(url_for('inicio', status='PAGO FALLIDO'))
+    
 
-    response = {
-        "error": "Transacción con errores"
-    }
+@bp.route('/callback', methods=['POST'])
+def callback():
+    token_ws = request.form.get('token_ws')
+    response = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST)).commit(token_ws)
 
-    return render_template('tbk_commit.html', token=token, response=response)
+    
+    if response['status'] == 'AUTHORIZED':
+        flash('PAGO EXITOSO')
+        return redirect(url_for('Inicio', status='PAGO EXITOSO'))
+    else:
+        flash('PAGO FALLIDO')
+        return redirect(url_for('Inicio', status='PAGO FALLIDO'))
+
 
 
 

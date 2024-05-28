@@ -124,10 +124,13 @@
                 
                 <div class="row" style="border-top: 1px solid rgba(0,0,0,.1); padding: 2vh 0;">
                     <div class="col">TOTAL DE SU COMPRA</div>
-                    <div class="col text-right">&dollar; {{ pedido['precio_total'] }}</div>
+                    <div class="col text-right">&dollar; {{ pedidos|sum(attribute='precio_total') }}</div>
                     
                 </div>
-                <form action = "/create" method = "GET">
+                <form action="{{ url_for('routes.webpay_plus_create') }}" method="POST">
+                  <input type="hidden" name="buy_order" value="{{ buy_order }}">
+                  <input type="hidden" name="session_id" value="{{ session_id }}">
+                  <input type="hidden" name="amount" value="{{ pedidos|sum(attribute='precio_total') }}">
                 <button class="btn">IR A PAGAR</button>
                 {% endfor %}
                 </form>
