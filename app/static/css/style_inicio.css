@@ -2,7 +2,7 @@
 /* Inicio - Footer */
 
 .footer{
-  background-color: rgb(248, 240, 226);
+  background-color: hsl;/* rgb(248, 240, 226); */
   padding: 20px;
   text-align: center;
 }
@@ -18,6 +18,7 @@ footer .secciones-footer{
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  text-align: left;
 }
 
 footer .section-contactos,
@@ -26,28 +27,38 @@ footer .section-metodos-pago {
   flex: 1; 
   padding: 10px;
   text-align: left; 
+  ;
 }
+
+.footer-webpay {
+  text-align: left;
+  width: 150px;
+  height: 150px;
+}
+
+
 
 footer h2 {
   margin-top: 0;
   margin-bottom: 10px;
   font-weight: bold;
+  color: whitesmoke;
 }
 
 footer p {
   margin: 0;
+  color: #b6a9a9;
 }
 
 footer a {
-  color: #333;
+  color: #b6a9a9;
   text-decoration: none;
-  margin: 0 5px;
   display: block; 
   margin-bottom: 5px;
 }
 
 footer a:hover {
-  color: #007bff;
+  color: orange;
 } 
 
 /* Inicio - Marcas */
@@ -73,6 +84,7 @@ footer a:hover {
   max-width: 150px;
   width: 100%;
   height: 100%;
+  box-shadow: 5px 10px 5px rgba(0, 0, 0, 0.5);
 }
 
 /* Inicio - Lanzamientos */
@@ -86,24 +98,69 @@ footer a:hover {
   font-weight: bold;
   text-align: center;
   margin-bottom: 10px;
-  
+  color: black;
+  font-size: large;
 }
+
+/* Estructura productos lanzamiento */
+
+
 
 .contenedor-productos-lanz {
   display: flex;
   place-items: center;
   gap: 20px;
 }
+
+/* 
+img -> img
+Nombre producto -> h3
+Categoria       -> a
+Precio          -> p
+Cantidad        -> input
+Agregar a carro -> button
+*/
+
 .producto{ 
   width: 200px;
+  height: 412px;
   text-align: center;
   margin: 20px;
+  border: 2px solid lightgray ;
+  border-radius: 15px;
+  padding: 5px;
+  box-shadow: 5px 10px 5px rgba(0, 0, 0, 0.15);
 }
 
 .producto img {
-  width: 100%;
-  height: auto;
+  width: 186px;
+  height: 186px;
   margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #b6a9a9;
+}
+
+.producto h3{
+  color: black;
+  font-weight: 500;
+}
+
+.producto p{
+  color: black;
+  font-size: large;
+  font-weight: bold;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.producto form{
+  margin: 5px;
+  padding: 5px;
+}
+
+.producto input{
+  margin: 5px;
+  padding: 5px;
+  width: 75%;
 }
 
 .producto a{
@@ -112,6 +169,23 @@ footer a:hover {
 
 .producto a:hover {
   color: coral;
+}
+
+.producto button{
+  margin: 10px;
+  padding: 10px;
+  border-radius: 15px;
+  border: 2px solid lightgray ;
+  background-color: orange;
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: small;
+}
+
+.producto button:hover {
+  background-color: #333;
+  color: orange;
 }
 
 /* Inicio - Promociones*/
@@ -138,3 +212,34 @@ footer a:hover {
   min-width: 300px; 
 }
 
+/* Inicio - Navbar principal  */
+
+/* Buscador de productos */
+.form-inline input{
+  background-color: white;
+  margin-top: 20px;
+  width: 450px;
+  box-shadow: 5px 10px 5px rgba(0, 0, 0, 0.5);
+}
+
+/* navbar - logo ferremas */
+.navbar-item img{
+  max-height: 50px;
+}
+
+/* Botones - Ingresar y Carrito */
+.navbar-item .buttons a:hover{
+  box-shadow: 5px 10px 5px rgba(0, 0, 0, 0.5);
+}
+
+
+/* SUB-Navbar - categorias */
+.navbar-menu{
+  font-size: small;
+  font-weight: bold;
+}
+
+.navbar-menu .navbar-item{
+  font-size: small;
+  font-weight: lighter;
+}
