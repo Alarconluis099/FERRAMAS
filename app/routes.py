@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 from flask import flash, Blueprint, request, jsonify, render_template, redirect, url_for, session
-=======
-from flask import Blueprint, request, flash, get_flashed_messages, jsonify, render_template, redirect, url_for, session
->>>>>>> 865e53f779da712236330a3ca67848face82dd74
 from app import app
 from .models import fetch_all_tools, fetch_tools_by_code, insert_tools, delete_tools, update_tools, get_all_users, fetch_users_by_id, fetch_all_pedidos_ready, fetch_pedido_by_id, get_usuario_by_usuario
 from . import mysql
@@ -313,38 +309,19 @@ from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
 from transbank.common.integration_api_keys import IntegrationApiKeys
 
 bp = Blueprint('routes', __name__)
-
 @bp.route("/create", methods=["POST"])
 def webpay_plus_create():
-    pedido = get_pedido()
-    print("Webpay Plus Transaction.create")
-
-    # 1. Obtener el id_pedido (adaptar según tu implementación)
-    id_pedido = pedido
-
-    if not id_pedido:
-        return "Error: No se proporcionó el id_pedido"
-
-    # 2. Obtener el precio total del pedido
-    total_precio = fetch_pedido_by_id(id_pedido)
-    
-    if not total_precio:
-        return "Error: No se pudo obtener el precio total del pedido o el pedido no existe"
-
-    # 3. Generar buy_order y session_id aleatorios
+    # print("Webpay Plus Transaction.create")
     buy_order = str(random.randrange(1000000, 99999999))
     session_id = str(random.randrange(1000000, 99999999))
+    amount = request.form.get("amount")
+    return_url = 'http://localhost:5000/commit'
 
-    # 4. Construir la URL de retorno
-    return_url = request.url_root + 'commit'
 
-    # 5. Crear la solicitud para Transbank
-    create_request = {
-        "buy_order": buy_order,
-        "session_id": session_id,
-        "amount": total_precio,  # Usar el precio total obtenido
-        "return_url": return_url
-    }
+    tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
+    response = tx.create(buy_order, session_id, amount, return_url)
+
+    return redirect(response['url'] + '?token_ws=' + response['token'])
 
     # 6. Crear la transacción con Transbank
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
