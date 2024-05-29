@@ -61,74 +61,7 @@ footer a:hover {
   color: orange;
 } 
 
-/* Cuenta - fondo*/
 
-.background{
-  background: rgb(240, 238, 236);
-  width: 100%;
-  max-width: 1280px;
-  border-radius: 10px;
-  display: flex;
-  flex-wrap: nowrap;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: stretch;
-  margin-left: 8px;
-  margin-right: 8px;
-  margin: 50px;
-} 
-
-.background img{
-  width: 110px;  
-  height: 110px;
-  border-radius: 50%;
-  overflow-clip-margin: content-box;
-  overflow: clip;
-  margin: 20px;
-}
-
-.bienvenido {
-  display: flex;
-  -webkit-flex-wrap: nowrap;
-  -ms-flex-wrap: nowrap;
-  flex-wrap: nowrap;
-  flex-direction: row;
-  justify-content: space-evenly;
-  align-items: stretch;
-  padding-left: 8px;
-  padding-right: 8px;
-  padding-bottom: 8px;
-  padding-top: 8px;
-  margin: 20px;
-}
-
-
-/* Cuenta - navegacion*/
-
-.panel-navegacion {
-  margin: 50px;
-  width: 500px;
-}
-
-.card {
-  display: flex;
-  flex-direction: row;
-  padding: 20px;
-  height: 60px;
-  width: 500px;
-  align-items: center;
-  cursor: pointer;
-  margin-left: 10px;
-  margin-right: 10px;
-}
-
-.media-content {
-  margin: 10px;
-}
-
-.field {
-  margin-left: 500px;
-}
 
 /* Ciente - Navbar principal  */
 
@@ -161,3 +94,96 @@ footer a:hover {
   font-size: small;
   font-weight: lighter;
 }
+
+
+/* Mi Perfil - container principal */
+
+.contenedor-perfil{
+  background-color: lightgray;
+  border-radius: 15px;
+  height: 700px;
+  width: 1600px;
+  margin: 50px auto;
+  padding: 50px;
+  box-shadow: 5px 10px 5px rgba(0, 0, 0, 0.5);
+  display: flex;
+}
+
+/* Cliente - Barra lateral */
+
+.barra-lateral{
+  border-radius: 15px;
+  background-color: white;
+  padding: 20px;
+}
+
+.barra-usuario{
+  border-bottom: 2px solid lightgray ;
+  margin: 10px;
+  margin-bottom: 20px;
+  padding: 5px;
+}
+
+.barra-usuario h1{
+  font-weight: bold;
+  color: black;
+}
+
+.media-content p{
+  margin: 2 auto;
+}
+
+
+/* Cliente - datos cliente */
+
+.seccion-perfil{
+  border-radius: 15px;
+  background-color: white;
+  text-align: left;
+  width: x; /* Ajustar el ancho deseado (en píxeles) */
+  margin-top: 0 auto; 
+  margin-bottom: 0 auto; 
+  margin-left: 50px;
+  padding: 30px;
+}
+
+.seccion-perfil h2{
+  font-weight: bold;
+  color: black; 
+  border-bottom: 2px solid lightgray ;
+  padding-bottom: 5px;
+}
+
+.datos-perfil p{
+  font-weight: 400;
+  color: black;
+}
+
+
+.field{
+  margin: 10px;
+  padding: 10px;
+
+}
+
+.field label{
+  color: black;
+}
+
+.nombre-apellido {
+  display: flex; /* Activar flexbox para el contenedor de nombre y apellido */
+  justify-content: space-between; /* Distribuir espacio entre nombre y apellido */
+}
+
+.nombre-apellido p {
+  margin-right: 20px; /* Agregar espacio a la derecha del apellido */
+}
+
+
+
+
+
+
+
+
+

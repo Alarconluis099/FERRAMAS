@@ -243,87 +243,106 @@
 
       </nav>
   <!-- BODY -->
-  <div class="cuenta">
-    <div class="background">
-      <img src="{{ url_for('static', filename='Imagenes/Marcas/Default_pfp.svg.png') }}" alt="Default_pfp">
-      <div class="bienvenido">
-        {% if user %}
-        <p>Bienvenido, {{ usuario }}</p>
-        {% endif %}
-      </div>
-    </div>
-    <div class="panel-navegacion"> 
-      <div class="card"> <!--Datos personales-->
-        <div class="card-content">
-          <div class="media">
-            <div class="media-left">
-              <figure class="image is-48x48">
-                <img src="https://bulma.io/assets/images/placeholders/96x96.png" alt="Placeholder image"/>
 
-              </figure>
+
+      
+      <div class="contenedor-perfil">
+
+        <!-- Barra lateral -->
+        <div class="barra-lateral"> 
+          <div class="barra-usuario">
+            <h1>Bienvenido, usuario</h1>
+            {%if user %}
+            <p class="subtitle is-6">Nombre: {{usuario.usuario}}</p>
+            {% endif%}
+          </div>
+
+          <div class="card"> <!--Datos personales-->
+            <div class="card-content">
+              <div class="media">
+                <div class="media-left">
+                  <i class="bi bi-person-circle"></i>
+                </div>
+                <div class="media-content">
+                  <a href="Cliente" class="title is-5">Mi perfil</a>
+                </div>
+              </div>
             </div>
-            <div class="media-content">
-              <p class="title is-5">Datos personales</p>
-              {%if user %}
-              <p class="subtitle is-6">Nombre: {{usuario.usuario}}</p>
-              {% endif%}
+          </div>
+
+          <div class="card"> <!--Cerrar sesión-->
+            <div class="card-content">
+              <div class="media">
+                <div class="media-left">
+                  <i class="bi bi-power"></i>
+                </div>
+                <div class="media-content">
+                  <a href="Inicio" class="title is-5">Cerrar sesión</a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="card"> <!--Mis compras-->
-        <div class="card-content">
-          <div class="media">
-            <div class="media-left">
-              <figure class="image is-48x48">
-                <img src="https://bulma.io/assets/images/placeholders/96x96.png" alt="Placeholder image"/>
-              </figure>
+
+        <!--Mi perfil - datos personales-->
+
+        <fieldset disabled>
+
+          <div class="seccion-perfil">
+            <h2>Mi perfil</h2>
+            
+            <div class="datos-perfil">
+  
+            <div class="nombre-apellido">
+  
+              <div class="field">
+                <label class="label">Nombre</label>
+                <div class="control">
+                  <input class="input" type="text" placeholder="Juan">
+                </div>
+              </div>
+  
+              <div class="field">
+                <label class="label">Apellido</label>
+                <div class="control">
+                  <input class="input" type="text" placeholder="Perez">
+                </div>
+              </div>
+  
             </div>
-            <div class="media-content">
-              <p class="title is-5">Mis compras</p>
+              
+              <div class="field">
+                <label class="label">Email</label>
+                <div class="control">
+                  <input class="input" type="email" placeholder="ej. JuanPerez@ferremas.com">
+                </div>
+              </div>
+    
+              <div class="field">
+                <label class="label">
+                  Telefono
+                </label>
+                <div class="control">
+                  <input class="input" type="email" placeholder="+56 9 1234 5678">
+                </div>
+              </div>
+    
+              <div class="field">
+                <label class="label">RUT</label>
+                <div class="control">
+                  <input class="input" type="email" placeholder="12.345.678-2">
+                </div>
+              </div>
             </div>
+            
           </div>
-        </div>
+
+        </fieldset>
+        
       </div>
-      <div class="card"> <!--Favoritos-->
-        <div class="card-content">
-          <div class="media">
-            <div class="media-left">
-              <figure class="image is-48x48">
-                <img src="https://bulma.io/assets/images/placeholders/96x96.png" alt="Placeholder image"/>
-              </figure>
-            </div>
-            <div class="media-content">
-              <p class="title is-5">Favoritos</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card"> <!--Cerrar sesión-->
-        <div class="card-content">
-          <div class="media">
-            <div class="media-left">
-              <figure class="image is-48x48">
-                <img src="https://bulma.io/assets/images/placeholders/96x96.png" alt="Placeholder image"/>
-              </figure>
-            </div>
-            <div class="media-content">
-              <p class="title is-5">Cerrar sesión</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!--Pestaña actual, datos cuenta-->
-    <div>
-      <div class="field">
-        <label class="label">Name</label>
-        <div class="control">
-          <input class="input" type="text" placeholder="Text input">
-        </div>
-      </div>
-    </div>
-  </div>
+
+
+
 </body>
 <!-- FOOTER -->
 <footer class="footer">
