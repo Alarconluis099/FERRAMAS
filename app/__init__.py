@@ -15,6 +15,7 @@ class appConfig():
 
 app = Flask(__name__)
 app.config.from_object(appConfig)
+app.secret_key = 'clase_777'
 
 mysql = MySQL(app)
 

@@ -15,7 +15,7 @@
       <nav class="navbar is-warning" role="navigation" aria-label="main navigation">
         <div class="navbar-brand">
           <a class="navbar-item" href="Inicio">
-            <img src="{{ url_for ('static', filename='Imagenes/Marcas/Logo-Ferremas.png') }}" alt="">             
+            <img src="{{ url_for ('static', filename='Imagenes/Marcas/ferremas.png') }}" alt="">
           </a>
       
           <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
@@ -28,32 +28,9 @@
       
         <div id="navbarBasicExample" class="navbar-menu">
           <div class="navbar-start">      
-            <div class="navbar-item has-dropdown is-hoverable">
-              <a class="navbar-link">
-                Categorias
-              </a>
-      
-              <div class="navbar-dropdown">
-                <a href="Herramientas_manuales" class="navbar-item">
-                  Herramientas manuales
-                </a>
-                <a href="Materiales_basicos" class="navbar-item ">
-                  Materiales basicos
-                </a>
-                <a href="Equipos_seguridad" class="navbar-item">
-                  Equipos de seguridad
-                </a>
-                <a href="Tornillos_anclajes" class="navbar-item">
-                  Tornillos y Anclajes
-                </a>
-                <a href="Fijaciones_adhesivos" class="navbar-item"> 
-                  Fijaciones y Adhesivos
-                </a>
-                <a href="Equipos_medicion" class="navbar-item">
-                  Equipos de Medición
-                </a>
-              </div>
-            </div>
+            <form class="form-inline">
+              <input class="form-control mr-sm-2" type="search" placeholder="¡Hola! ¿Que estas buscando?" aria-label="Buscar productos">
+            </form>
           </div>
       
           <div class="navbar-end">
@@ -70,6 +47,182 @@
 
           </div>
         </div>
+      </nav>
+
+      <!-- NAVBAR - CATEGORIAS y SUBCATEGORIAS-->
+      <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
+
+      
+        <div id="navbarBasicExample" class="navbar-menu">
+          <div class="navbar-start">      
+            <div class="navbar-item has-dropdown is-hoverable">
+              <a href="Herramientas_manuales" class="navbar-link"> <!--Herramientas_manuales-->
+                Herramientas manuales
+              </a>
+      
+              <div class="navbar-dropdown">
+                <a href="" class="navbar-item">
+                  Martillos 
+                </a>
+                <a href="" class="navbar-item ">
+                  Destornilladores 
+                </a>
+                <a href="" class="navbar-item">
+                  Llaves
+                </a>
+                <a href="" class="navbar-item">
+                  Herramientas electricas
+                </a>
+                <a href="" class="navbar-item"> 
+                  Taladros
+                </a>
+                <a href="" class="navbar-item">
+                  Sierras
+                </a>
+                <a href="" class="navbar-item">
+                  Lijadoras
+                </a>
+                <a href="" class="navbar-item">
+                  Materiales Construccion
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div id="navbarBasicExample" class="navbar-menu">
+            <div class="navbar-start">      
+              <div class="navbar-item has-dropdown is-hoverable">
+                <a href="Materiales_basicos" class="navbar-link"> <!--Materiales Basicos-->
+                  Materiales basicos
+                </a>
+        
+                <div class="navbar-dropdown">
+                  <a href="" class="navbar-item">
+                    Cemento 
+                  </a>
+                  <a href="" class="navbar-item ">
+                    Arena 
+                  </a>
+                  <a href="" class="navbar-item">
+                    Ladrillos
+                  </a>
+                  <a href="" class="navbar-item">
+                    Acabados 
+                  </a>
+                  <a href="" class="navbar-item"> 
+                    Pinturas
+                  </a>
+                  <a href="" class="navbar-item">
+                    Barnices
+                  </a>
+                  <a href="" class="navbar-item">
+                    Ceramicos
+                  </a>
+                </div>
+              </div>
+            </div>
+
+
+            <div id="navbarBasicExample" class="navbar-menu">
+              <div class="navbar-start">      
+                <div class="navbar-item has-dropdown is-hoverable">
+                  <a href="Equipos_seguridad" class="navbar-link"> <!--Equipos de seguridad-->
+                    Equipos de seguridad
+                  </a>
+          
+                  <div class="navbar-dropdown">
+                    <a href="" class="navbar-item">
+                      Cascos 
+                    </a>
+                    <a href="" class="navbar-item ">
+                      Guantes 
+                    </a>
+                    <a href="" class="navbar-item">
+                      Lentes de seguridad
+                    </a>
+                    <a href="" class="navbar-item">
+                      Accesorios varios
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+
+              <div id="navbarBasicExample" class="navbar-menu">
+                <div class="navbar-start">      
+                  <div class="navbar-item has-dropdown is-hoverable">
+                    <a href="Tornillos_anclajes" class="navbar-link"> <!--Tornillos y Anclajes-->
+                      Tornillos y anclajes
+                    </a>
+            
+                    <div class="navbar-dropdown">
+                      <a href="" class="navbar-item">
+                        Fijacion madera 
+                      </a>
+                      <a href="" class="navbar-item ">
+                        Fijacion Metal 
+                      </a>
+                      <a href="" class="navbar-item">
+                        Fijaciones Adhesivas
+                      </a>
+                      <a href="" class="navbar-item">
+                        Anclajes 
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+
+                <div id="navbarBasicExample" class="navbar-menu">
+                  <div class="navbar-start">      
+                    <div class="navbar-item has-dropdown is-hoverable">
+                      <a href="Fijaciones_adhesivos" class="navbar-link"> <!--Fijaciones y Adhesivos-->
+                        Fijaciones y Adhesivos
+                      </a>
+              
+                      <div class="navbar-dropdown">
+                        <a href="" class="navbar-item">
+                          Cintas Adhesivas
+                        </a>
+                        <a href="" class="navbar-item ">
+                          Selladores 
+                        </a>
+                        <a href="" class="navbar-item">
+                          Espuma expansiva
+                        </a>
+                        <a href="" class="navbar-item">
+                          Pasta muro 
+                        </a>
+                        <a href="" class="navbar-item"> 
+                          Silicona
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+
+                  <div id="navbarBasicExample" class="navbar-menu">
+                    <div class="navbar-start">      
+                      <div class="navbar-item has-dropdown is-hoverable">
+                        <a href="Equipos_medicion" class="navbar-link"> <!--Equipos de Medicion-->
+                          Equipos de medicion
+                        </a>
+                
+                        <div class="navbar-dropdown">
+                          <a href="" class="navbar-item">
+                            Medidor laser 
+                          </a>
+                          <a href="" class="navbar-item ">
+                            Niveladores 
+                          </a>
+                          <a href="" class="navbar-item">
+                            Medidor distancia 
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+      
+
       </nav>
 
       <!-- BODY -->
@@ -103,16 +256,16 @@
 
           <div class="seccion-contactos">
             <strong><h2>Contactanos</h2></strong>
-            <p>Dirección:  Antonio Varas 666, Providencia. </p>
-            <a href="tel:+56912345678">Teléfono: +56 2 23540400</a>
-            <a href="mailto:info@miemail.com">Correo electrónico: ferremas@gmail.com</a>
+            <a href="https://maps.app.goo.gl/HwFHvTRBiNXT5yFv9"> <i class="bi bi-building-fill"></i> Antonio Varas 666, Providencia. </a>
+            <p> <i class="bi bi-envelope"></i> ferremas@gmail.com </p>
+            <p> <i class="bi bi-telephone-fill"></i> +56 2 23540400</p>
           </div>
 
           <div class="seccion-rrss">
             <h2>Redes sociales</h2>
-            <a href="" >Facebook</a>
-            <a href="" >Instagram</a>
-            <a href="" >Youtube</a>
+            <a href="" > <i class="bi bi-facebook"></i> Facebook</a>
+            <a href="" > <i class="bi bi-instagram"></i> Instagram</a>
+            <a href="" > <i class="bi bi-youtube"></i> Youtube</a>
           </div>
 
           <div class="seccion-metodos-de-pago">
@@ -120,6 +273,10 @@
             <p>Débito</p>
             <p>Crédito</p>
             <p>Transferencia</p>
+          </div>
+
+          <div class="footer-webpay">
+            <figure><img src="{{ url_for ('static', filename='imagenes/marcas/webpay.png') }}" alt=""></figure>
           </div>
         </div>
       </div>
