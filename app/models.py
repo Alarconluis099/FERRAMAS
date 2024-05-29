@@ -45,6 +45,17 @@ def fetch_all_tools():
     finally:
         cursor.close()
 
+def fetch_pedido_by_id(code):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute(f"SELECT SUM(precio_pedido * cantidad) FROM pedido WHERE id_pedido = {code}")
+        data = cursor.fetchone()
+        return data
+    except Exception as e:
+        current_app.logger.error(f"Error fetching pedido by id: {e}")
+        return None
+    finally:
+        cursor.close()
 
 def fetch_tools_by_code(code):
     cursor = mysql.connection.cursor()
@@ -110,22 +121,19 @@ def update_tools(id, tools_data):
 def get_all_users():
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("SELECT DISTINCT id_users, correo FROM users")
+        cursor.execute("SELECT * FROM users")
         rows = cursor.fetchall()
         columns = [desc[0] for desc in cursor.description]
         
-        # Diccionario para almacenar usuarios únicos: ID -> {correo: ...}
-        unique_users = {}
-        for row in rows:
-            unique_users[row[0]] = dict(zip(columns, row))
+        users = [dict(zip(columns, row)) for row in rows]
 
-        return list(unique_users.values())  # Convertir a lista de diccionarios
+        return users  # Devolver lista de diccionarios
 
-    except mysql.connector.OperationalError as e:
+    except Exception as e:
         current_app.logger.error(f"Error de base de datos al obtener usuarios: {e}")
         return []
     finally:
-        cursor.close() 
+        cursor.close()
 
 
 def fetch_users_by_id(id_users):
@@ -145,3 +153,20 @@ def fetch_users_by_id(id_users):
     finally:
         cursor.close()
 
+def get_usuario_by_usuario(usuario):
+    cursor = mysql.connection.cursor(dictionary=True)  # Para obtener resultados como diccionarios
+    try:
+        cursor.execute("SELECT correo, usuario FROM users WHERE usuario = %s", (usuario,))
+        usuario_data = cursor.fetchone()
+
+        # No incluimos la contraseña ni el hash de verificación en la respuesta
+        if usuario_data:
+            del usuario_data['contraseña'] 
+            del usuario_data['verificar_contraseña']
+
+        return usuario_data  
+    except Exception as e:
+        current_app.logger.error(f"Error de base de datos al obtener usuario: {e}")
+        return None  
+    finally:
+        cursor.close()

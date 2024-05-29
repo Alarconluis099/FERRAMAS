@@ -1,6 +1,6 @@
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for, session
+from flask import flash, Blueprint, request, jsonify, render_template, redirect, url_for, session
 from app import app
-from .models import fetch_all_tools, fetch_tools_by_code, insert_tools, delete_tools, update_tools, get_all_users, fetch_users_by_id, fetch_all_pedidos_ready
+from .models import fetch_all_tools, fetch_tools_by_code, insert_tools, delete_tools, update_tools, get_all_users, fetch_users_by_id, fetch_all_pedidos_ready, fetch_pedido_by_id, get_usuario_by_usuario
 from . import mysql
 import random
 
@@ -75,6 +75,49 @@ def aumentar_cantidad(product_id):
     return redirect(url_for('carrito'))
 
 
+@app.route('/guardar_registro', methods=['POST'])
+def guardar_registro():
+    usuario_usuario = request.form['usuario_usuario']
+    usuario_correo = request.form['usuario_correo']
+    usuario_contraseña = request.form['usuario_contraseña']
+    usuario_vercontraseña = request.form['usuario_vercontraseña']
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT correo, contraseña FROM users WHERE correo = %s", (usuario_correo,))
+    result = cursor.fetchone()
+
+    if result:
+        # El usuario ya existe
+        flash('El correo electrónico ya está registrado', 'error')
+        return redirect(url_for('registro'))  # O redirigir a la página de inicio de sesión
+    else:
+        # El usuario no existe, proceder con el registro
+        if usuario_contraseña == usuario_vercontraseña:
+            # Corregir la sintaxis SQL
+            cursor.execute("INSERT INTO users (correo, contraseña, verificar_contraseña, usuario) VALUES (%s, %s, %s, %s)", (usuario_correo, usuario_contraseña, usuario_vercontraseña, usuario_usuario))
+            mysql.connection.commit()
+            cursor.close()
+            return redirect(url_for('login'))
+        else:
+            flash('Las contraseñas no coinciden', 'error')
+            return redirect(url_for('registro'))
+        
+@app.route('/iniciar_sesion', methods=['POST'])
+def iniciar_sesion():
+    usuario_correo = request.form['usuario_correo']
+    usuario_contraseña = request.form['usuario_contraseña']
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT correo, contraseña, usuario FROM users WHERE correo = %s and contraseña = %s",(usuario_correo, usuario_contraseña))
+    result = cursor.fetchone()
+    if result:
+        cursor.fetchone = result[3]  # El índice 2 corresponde al campo 'usuario' en la consulta
+        return redirect(url_for('Cliente', result))
+    else:
+        return redirect(url_for('login'))
+
+    
+
 @app.route('/guardar_pedido', methods=['POST'])
 def guardar_pedido():
     product_id = request.form['product_id']
@@ -140,6 +183,12 @@ def create_tools():
     return jsonify({'message': 'Herramienta creada exitosamente'}), 200
 
 
+@app.route('/pedido/<id_pedido>', methods=['GET'])
+def get_pedido(id_pedido):
+    pedido = fetch_pedido_by_id(id_pedido)
+    return jsonify(pedido)
+
+
 @app.route('/tools/<id>', methods=['DELETE'])
 def delete_tool_route(id):
     try:
@@ -171,8 +220,9 @@ def main():
     return redirect('Inicio')
 
 @app.route('/Cliente')
-def cliente():
-    return render_template('Cliente.html')
+def cliente():  # Obtén el nombre de usuario de la sesión
+        return render_template('Cliente.html', )
+
 
 
 
@@ -184,11 +234,13 @@ def inicio():
 
 @app.route('/Login')
 def login():
-    return render_template('login.html')
+    user = get_all_users()
+    return render_template('login.html', user=user)
 
 @app.route('/Registro')
 def registro():
-    return render_template('registro.html')
+    user = get_all_users()
+    return render_template('registro.html', user=user)
 
 @app.route('/Equipos_medicion')
 def equipos_medicion():
@@ -263,24 +315,44 @@ bp = Blueprint('routes', __name__)
 
 @bp.route("/create", methods=["GET"])
 def webpay_plus_create():
+    pedido = get_pedido()
     print("Webpay Plus Transaction.create")
+
+    # 1. Obtener el id_pedido (adaptar según tu implementación)
+    id_pedido = pedido
+
+    if not id_pedido:
+        return "Error: No se proporcionó el id_pedido"
+
+    # 2. Obtener el precio total del pedido
+    total_precio = fetch_pedido_by_id(id_pedido)
+    
+    if not total_precio:
+        return "Error: No se pudo obtener el precio total del pedido o el pedido no existe"
+
+    # 3. Generar buy_order y session_id aleatorios
     buy_order = str(random.randrange(1000000, 99999999))
     session_id = str(random.randrange(1000000, 99999999))
-    amount = random.randrange(10000, 1000000)
+
+    # 4. Construir la URL de retorno
     return_url = request.url_root + 'commit'
 
+    # 5. Crear la solicitud para Transbank
     create_request = {
         "buy_order": buy_order,
         "session_id": session_id,
-        "amount": amount,
+        "amount": total_precio,  # Usar el precio total obtenido
         "return_url": return_url
     }
 
+    # 6. Crear la transacción con Transbank
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
-    response = tx.create(buy_order, session_id, amount, return_url)
+    response = tx.create(buy_order, session_id, total_precio, return_url)
     print(response)
 
+    # 7. Renderizar la plantilla con los datos
     return render_template('tbk_create.html', request=create_request, response=response)
+
 
 
 
