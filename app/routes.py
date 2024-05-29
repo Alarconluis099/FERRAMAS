@@ -311,31 +311,25 @@ from transbank.common.integration_api_keys import IntegrationApiKeys
 bp = Blueprint('routes', __name__)
 @bp.route("/create", methods=["POST"])
 def webpay_plus_create():
-    # print("Webpay Plus Transaction.create")
+
+    # Obtener datos de la compra
     buy_order = str(random.randrange(1000000, 99999999))
     session_id = str(random.randrange(1000000, 99999999))
     amount = request.form.get("amount")
     return_url = 'http://localhost:5000/commit'
 
 
+    # 6. Crear la transacción con Transbank
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
     response = tx.create(buy_order, session_id, amount, return_url)
 
+    # Renderizar ruta de destino
     return redirect(response['url'] + '?token_ws=' + response['token'])
 
-    # 6. Crear la transacción con Transbank
-    tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
-    response = tx.create(buy_order, session_id, total_precio, return_url)
-    print(response)
-
-    # 7. Renderizar la plantilla con los datos
-    return render_template('tbk_create.html', request=create_request, response=response)
 
 
 
-
-
-@bp.route("/commit", methods=["GET"])
+@bp.route("/commit", methods=["GET", "POST"])
 def webpay_plus_commit():
     token = request.args.get("token_ws")
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
@@ -348,10 +342,10 @@ def webpay_plus_commit():
 
     if response['status'] == 'AUTHORIZED':
         flash('PAGO EXITOSO', 'success')
-        return redirect(url_for('inicio', status='PAGO EXITOSO'))
+        return redirect(url_for('inicio'))
     else:
         flash('PAGO FALLIDO', 'error')
-        return redirect(url_for('inicio', status='PAGO FALLIDO'))
+        return redirect(url_for('inicio'))
     
 
 @bp.route('/callback', methods=['POST'])
@@ -362,10 +356,10 @@ def callback():
     
     if response['status'] == 'AUTHORIZED':
         flash('PAGO EXITOSO')
-        return redirect(url_for('Inicio', status='PAGO EXITOSO'))
+        return redirect(url_for('Inicio'))
     else:
         flash('PAGO FALLIDO')
-        return redirect(url_for('Inicio', status='PAGO FALLIDO'))
+        return redirect(url_for('Inicio'))
 
 
 
