@@ -316,7 +316,6 @@ bp = Blueprint('routes', __name__)
 
 @bp.route("/create", methods=["POST"])
 def webpay_plus_create():
-<<<<<<< HEAD
     pedido = get_pedido()
     print("Webpay Plus Transaction.create")
 
@@ -346,18 +345,9 @@ def webpay_plus_create():
         "amount": total_precio,  # Usar el precio total obtenido
         "return_url": return_url
     }
-=======
-    # print("Webpay Plus Transaction.create")
-    buy_order = str(random.randrange(1000000, 99999999))
-    session_id = str(random.randrange(1000000, 99999999))
-    amount = request.form.get("amount")
-    return_url = 'http://localhost:5000/commit'
-
->>>>>>> 865e53f779da712236330a3ca67848face82dd74
 
     # 6. Crear la transacción con Transbank
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
-<<<<<<< HEAD
     response = tx.create(buy_order, session_id, total_precio, return_url)
     print(response)
 
@@ -369,15 +359,6 @@ def webpay_plus_create():
 
 
 @bp.route("/commit", methods=["GET"])
-=======
-    response = tx.create(buy_order, session_id, amount, return_url)
-
-    return redirect(response['url'] + '?token_ws=' + response['token'])
-
-
-
-@bp.route("/commit", methods=["GET", "POST"])
->>>>>>> 865e53f779da712236330a3ca67848face82dd74
 def webpay_plus_commit():
     token = request.args.get("token_ws")
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
