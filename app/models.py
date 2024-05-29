@@ -25,7 +25,7 @@ def fetch_all_pedidos_ready():
 def fetch_all_tools():
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("SELECT DISTINCT id, id_tools_type, name, description, stock, precio FROM tools")
+        cursor.execute("SELECT DISTINCT id_tool, id_tools_type, name, description, stock, precio FROM tools")
         rows = cursor.fetchall()
         columns = [column[0] for column in cursor.description]
 

@@ -251,10 +251,7 @@
         <!-- Barra lateral -->
         <div class="barra-lateral"> 
           <div class="barra-usuario">
-            <h1>Bienvenido, usuario</h1>
-            {%if user %}
-            <p class="subtitle is-6">Nombre: {{usuario.usuario}}</p>
-            {% endif%}
+            <h1>Bienvenido, {{ usuario }}</h1>
           </div>
 
           <div class="card"> <!--Datos personales-->

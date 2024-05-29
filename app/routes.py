@@ -57,7 +57,7 @@ def aumentar_cantidad(product_id):
 
     if result:
         cantidad = result[0]
-        if cantidad > 1:
+        if cantidad >= 1:
             nueva_cantidad = cantidad + 1
             cursor.execute(
                 "UPDATE pedido SET cantidad = %s WHERE id_pedido = %s",
@@ -80,7 +80,7 @@ def guardar_registro():
     usuario_vercontraseña = request.form['usuario_vercontraseña']
 
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT correo, contraseña FROM users WHERE correo = %s", (usuario_correo,))
+    cursor.execute("SELECT correo FROM users WHERE correo = %s", (usuario_correo,))
     result = cursor.fetchone()
 
     if result:
@@ -91,27 +91,40 @@ def guardar_registro():
         # El usuario no existe, proceder con el registro
         if usuario_contraseña == usuario_vercontraseña:
             # Corregir la sintaxis SQL
-            cursor.execute("INSERT INTO users (correo, contraseña, verificar_contraseña, usuario) VALUES (%s, %s, %s, %s)", (usuario_correo, usuario_contraseña, usuario_vercontraseña, usuario_usuario))
+            cursor.execute("INSERT INTO users (correo, contraseña, usuario) VALUES (%s, %s, %s)", (usuario_correo, usuario_contraseña, usuario_usuario))
             mysql.connection.commit()
             cursor.close()
-            return redirect(url_for('login'))
+            return redirect(url_for('iniciar_sesion'))
         else:
             flash('Las contraseñas no coinciden', 'error')
             return redirect(url_for('registro'))
         
-@app.route('/iniciar_sesion', methods=['POST'])
+@app.route('/iniciar_sesion', methods=['POST', 'GET'])
 def iniciar_sesion():
-    usuario_correo = request.form['usuario_correo']
-    usuario_contraseña = request.form['usuario_contraseña']
+    if request.method == 'POST':
+        usuario_correo = request.form.get('usuario_correo')
+        usuario_contraseña = request.form.get('usuario_contraseña')
 
-    cursor = mysql.connection.cursor()
-    cursor.execute("SELECT correo, contraseña, usuario FROM users WHERE correo = %s and contraseña = %s",(usuario_correo, usuario_contraseña))
-    result = cursor.fetchone()
-    if result:
-        cursor.fetchone = result[3]  # El índice 2 corresponde al campo 'usuario' en la consulta
-        return redirect(url_for('Cliente', result))
-    else:
-        return redirect(url_for('login'))
+        if not usuario_correo or not usuario_contraseña:
+            flash('Por favor, ingrese tanto el correo como la contraseña.', 'error')
+            return redirect(url_for('iniciar_sesion'))
+
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "SELECT correo, contraseña, usuario FROM users WHERE correo = %s AND contraseña = %s",
+            (usuario_correo, usuario_contraseña)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+
+        if result:
+            session['usuario'] = result[2]
+            return redirect(url_for('cliente'))
+        else:
+            flash('Correo y/o contraseña inválidos.', 'error')
+            return redirect(url_for('iniciar_sesion'))
+    
+    return render_template('login.html')
 
     
 
@@ -217,15 +230,17 @@ def main():
     return redirect('Inicio')
 
 @app.route('/Cliente')
-def cliente():  # Obtén el nombre de usuario de la sesión
-        return render_template('Cliente.html', )
+def cliente():
+    usuario = session.get('usuario')
+    if not usuario:
+        return redirect(url_for('iniciar_sesion'))
+    return render_template('Cliente.html', usuario=usuario)
 
 
 
 
 @app.route('/Inicio')
 def inicio():
-    session.pop('pedidos', None)
     tools = fetch_all_tools()
     return render_template('inicio.html', tools=tools)
 

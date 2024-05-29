@@ -7,400 +7,331 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
   <meta name="flash-message" content="{{ get_flashed_messages()[0] if get_flashed_messages() else '' }}">
-  <link rel="stylesheet" href="{{ url_for ( 'static', filename = 'css/style_inicio.css')}}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style_inicio.css') }}">
 </head>
-    <body >
+<body>
 
-      <!-- NAVBAR -->
+  <!-- NAVBAR -->
+  <nav class="navbar is-warning" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="{{ url_for('inicio') }}">
+        <img src="{{ url_for('static', filename='Imagenes/Marcas/ferremas.png') }}" alt="">
+      </a>
+      <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
 
-      <nav class="navbar is-warning" role="navigation" aria-label="main navigation">
-        <div class="navbar-brand">
-          <a class="navbar-item" href="Inicio">
-            <img src="{{ url_for ('static', filename='Imagenes/Marcas/ferremas.png') }}" alt="">
-          </a>
-      
-          <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-          </a>
-        </div>
-      
-        <div id="navbarBasicExample" class="navbar-menu">
-          <div class="navbar-start">      
-            <form class="form-inline">
-              <input class="form-control mr-sm-2", id="label_search" type="search" placeholder="¡Hola! ¿Que estas buscando?" aria-label="Buscar productos">
-            </form>
-          </div>
-      
-          <div class="navbar-end">
-            <div class="navbar-item">
-              <div class="buttons">
-                <a href="Login" class="button is-light is-rounded">
-                  Ingresar
-                </a>
-                <a href="Carrito" class="button is-light is-rounded">
-                  <i class="bi bi-cart"></i>
-                </a>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </nav>
-
-
-      <!-- Modal PAGO -->
-    <div class="modal fade" id="paymentStatusModal" tabindex="-1" aria-labelledby="paymentStatusModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-          <div class="modal-content">
-              <div class="modal-header">
-                  <h5 class="modal-title" id="paymentStatusModalLabel">Estado del Pago</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                  {{ message }}
-              </div>
-              <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-              </div>
-          </div>
+    <div id="navbarBasicExample" class="navbar-menu">
+      <div class="navbar-start">
+        <form class="form-inline">
+          <input class="form-control mr-sm-2" id="label_search" type="search" placeholder="¡Hola! ¿Que estas buscando?" aria-label="Buscar productos">
+        </form>
       </div>
+
+      <div class="navbar-end">
+        <div class="navbar-item">
+          <div class="buttons">
+            <a href="{% if session.get('usuario') %} {{ url_for('cliente') }} {% else %} {{ url_for('iniciar_sesion') }} {% endif %}" class="button is-light is-rounded">
+              Ingresar
+            </a>
+            <a href="Carrito" class="button is-light is-rounded">
+              <i class="bi bi-cart"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Modal PAGO -->
+  <div class="modal fade" id="paymentStatusModal" tabindex="-1" aria-labelledby="paymentStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="paymentStatusModalLabel">Estado del Pago</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {{ message }}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
-      <!-- NAVBAR - CATEGORIAS y SUBCATEGORIAS-->
-      <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
-
-      
-        <div id="navbarBasicExample" class="navbar-menu">
-          <div class="navbar-start">      
-            <div class="navbar-item has-dropdown is-hoverable">
-              <a href="Herramientas_manuales" class="navbar-link"> <!--Herramientas_manuales-->
-                Herramientas manuales
-              </a>
-      
-              <div class="navbar-dropdown">
-                <a href="" class="navbar-item">
-                  Martillos 
-                </a>
-                <a href="" class="navbar-item ">
-                  Destornilladores 
-                </a>
-                <a href="" class="navbar-item">
-                  Llaves
-                </a>
-                <a href="" class="navbar-item">
-                  Herramientas electricas
-                </a>
-                <a href="" class="navbar-item"> 
-                  Taladros
-                </a>
-                <a href="" class="navbar-item">
-                  Sierras
-                </a>
-                <a href="" class="navbar-item">
-                  Lijadoras
-                </a>
-                <a href="" class="navbar-item">
-                  Materiales Construccion
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div id="navbarBasicExample" class="navbar-menu">
-            <div class="navbar-start">      
-              <div class="navbar-item has-dropdown is-hoverable">
-                <a href="Materiales_basicos" class="navbar-link"> <!--Materiales Basicos-->
-                  Materiales basicos
-                </a>
-        
-                <div class="navbar-dropdown">
-                  <a href="" class="navbar-item">
-                    Cemento 
-                  </a>
-                  <a href="" class="navbar-item ">
-                    Arena 
-                  </a>
-                  <a href="" class="navbar-item">
-                    Ladrillos
-                  </a>
-                  <a href="" class="navbar-item">
-                    Acabados 
-                  </a>
-                  <a href="" class="navbar-item"> 
-                    Pinturas
-                  </a>
-                  <a href="" class="navbar-item">
-                    Barnices
-                  </a>
-                  <a href="" class="navbar-item">
-                    Ceramicos
-                  </a>
-                </div>
-              </div>
-            </div>
-
-
-            <div id="navbarBasicExample" class="navbar-menu">
-              <div class="navbar-start">      
-                <div class="navbar-item has-dropdown is-hoverable">
-                  <a href="Equipos_seguridad" class="navbar-link"> <!--Equipos de seguridad-->
-                    Equipos de seguridad
-                  </a>
-          
-                  <div class="navbar-dropdown">
-                    <a href="" class="navbar-item">
-                      Cascos 
-                    </a>
-                    <a href="" class="navbar-item ">
-                      Guantes 
-                    </a>
-                    <a href="" class="navbar-item">
-                      Lentes de seguridad
-                    </a>
-                    <a href="" class="navbar-item">
-                      Accesorios varios
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-
-              <div id="navbarBasicExample" class="navbar-menu">
-                <div class="navbar-start">      
-                  <div class="navbar-item has-dropdown is-hoverable">
-                    <a href="Tornillos_anclajes" class="navbar-link"> <!--Tornillos y Anclajes-->
-                      Tornillos y anclajes
-                    </a>
-            
-                    <div class="navbar-dropdown">
-                      <a href="" class="navbar-item">
-                        Fijacion madera 
-                      </a>
-                      <a href="" class="navbar-item ">
-                        Fijacion Metal 
-                      </a>
-                      <a href="" class="navbar-item">
-                        Fijaciones Adhesivas
-                      </a>
-                      <a href="" class="navbar-item">
-                        Anclajes 
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-
-                <div id="navbarBasicExample" class="navbar-menu">
-                  <div class="navbar-start">      
-                    <div class="navbar-item has-dropdown is-hoverable">
-                      <a href="Fijaciones_adhesivos" class="navbar-link"> <!--Fijaciones y Adhesivos-->
-                        Fijaciones y Adhesivos
-                      </a>
-              
-                      <div class="navbar-dropdown">
-                        <a href="" class="navbar-item">
-                          Cintas Adhesivas
-                        </a>
-                        <a href="" class="navbar-item ">
-                          Selladores 
-                        </a>
-                        <a href="" class="navbar-item">
-                          Espuma expansiva
-                        </a>
-                        <a href="" class="navbar-item">
-                          Pasta muro 
-                        </a>
-                        <a href="" class="navbar-item"> 
-                          Silicona
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-
-
-                  <div id="navbarBasicExample" class="navbar-menu">
-                    <div class="navbar-start">      
-                      <div class="navbar-item has-dropdown is-hoverable">
-                        <a href="Equipos_medicion" class="navbar-link"> <!--Equipos de Medicion-->
-                          Equipos de medicion
-                        </a>
-                
-                        <div class="navbar-dropdown">
-                          <a href="" class="navbar-item">
-                            Medidor laser 
-                          </a>
-                          <a href="" class="navbar-item ">
-                            Niveladores 
-                          </a>
-                          <a href="" class="navbar-item">
-                            Medidor distancia 
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-      
-
-      </nav>
-
-      <!-- BODY -->
-
-      <!--Productos en promocion--> <!--Slide de imagenes-->
-      <section class="seccion-promociones">
-        <div id="carouselE" class="carousel slide" data-bs-ride="carousel">
-
-          <div class="carousel-indicators">
-              <button type="button" data-bs-target="#carouselE" data-bs-slide-to="0" class="active" aria-current="true"
-                  aria-label="Slide 1"></button>
-              <button type="button" data-bs-target="#carouselE" data-bs-slide-to="1" aria-current="active"
-                  aria-label="Slide 2"></button>
-  
-          </div>
-          <div class="carousel-inner">
-              <div class="carousel-item active">
-                  <img src="{{ url_for ('static', filename='imagenes/marcas/FERREMAS - BANNER INICIO.png') }}" class="d-block w-100" alt="">
-              </div>
-              <div class="carousel-item ">
-                  <img src="{{ url_for ('static', filename='imagenes/marcas/banner-seguridad.png') }}" class="d-block w-100" alt="">
-              </div>
-          
-          </div>
-          <button class="carousel-control-prev" type="button" data-bs-target="#carouselE" data-bs-slide="prev">
-              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-              <span class="visually-hidden"> Previous</span>
-          </button>
-          <button class="carousel-control-next" type="button" data-bs-target="#carouselE" data-bs-slide="next">
-              <span class="carousel-control-next-icon" aria-hidden="true"></span>
-              <span class="visually-hidden"> Next</span>
-          </button>
-  
-      </div>
-      </section>
-
-      <!-- Categorias - distribuir en fila con texto + logo arriba --> 
-
-      <!--Lanzamientos recientes--> <!-- 8 productos -->
-      <section class="seccion-lanzamientos">
-
-          <h2>Lanzamientos recientes</h2>
-          <div class="contenedor-productos-lanz">
-            <div class="producto">
-              <img src="{{ url_for ('static', filename='imagenes/marcas/martillo.jpg') }}" alt=""> 
-              {% for tool in tools %} <!--llama a la bd-->
-                {% if tool.id == 100 %} <!--filtra por id del pedido-->
-                  <h3>{{ tool["name"] }}</h3><!--muestra pedido-->
-                  <a>{{ tool["description"] }}</a>
-                  <p>$ {{ tool["precio"] }}</p>
-                  
-                  
-                  <form method="POST" action="{{ url_for('guardar_pedido') }}"> 
-                      <input type="hidden" name="product_id" value="{{ tool['id'] }}">
-                      <input type="hidden" name="product_name" value="{{ tool['name'] }}">
-                      <input type="hidden" name="product_description" value="{{ tool['description'] }}">
-                      <input type="hidden" name="product_price" value="{{ tool['precio'] }}">
-                      <input type="number" name="cantidad" value="1"  min="1" placeholder="Ingrese cantidad">
-                      <button type="submit">añadir al carro</button>
-                  </form>
-                {% endif %}
-              {% endfor %}
-            </div>
-
-            <div class="producto">
-              <img src="{{ url_for ('static', filename='imagenes/Herramientas manuales/destornillador.png') }}" alt=""> 
-              {% for tool in tools %} <!--llama a la bd-->
-                {% if tool.id == 101 %} <!--filtra por id del pedido-->
-                  <h3>{{ tool["name"] }}</h3><!--muestra pedido-->
-                  <a>{{ tool["description"] }}</a>
-                  <p>${{ tool["precio"] }}</p>
-                  
-                  
-                  <form method="POST" action="{{ url_for('guardar_pedido') }}"> 
-                      <input type="hidden" name="product_id" value="{{ tool['id'] }}">
-                      <input type="hidden" name="product_name" value="{{ tool['name'] }}">
-                      <input type="hidden" name="product_description" value="{{ tool['description'] }}">
-                      <input type="hidden" name="product_price" value="{{ tool['precio'] }}">
-                      <input type="number" name="cantidad" value="1"  min="1" placeholder="Ingrese cantidad">
-                      <button type="submit">añadir al carro</button>
-                  </form>
-                {% endif %}
-              {% endfor %}
-            </div>
-
-            <!--
-            <div class="producto">
-              <img src="{{ url_for ('static', filename='imagenes/marcas/caja-clavos.webp') }}" alt=""> 
-              {% for tool in tools %}
-                  {% if tool.id == 110 %}
-                      <h3>{{tool ["name"]}}</h3>
-                      <p>{{tool ["description"]}}</p>
-                      <p>${{tool ["precio"]}}</p>
-                  {% endif %}
-              {% endfor %}
-            </div>
-            -->
-              
-          </div>
-          
-      </section>
-      
-    
-    
-
-      <!-- Marcas -->
-      <section class="seccion-marcas">
-        <h2>Marcas asociadas</h2>
-        <div class="contenedor-marcas">
-          <img src="{{ url_for ('static', filename='Imagenes/Marcas/Bosch-logo.png') }}" alt="Bosch">
-          <img src="{{ url_for ('static', filename='Imagenes/Marcas/250px-Makita_Logo.png') }}" alt="Makita">
-          <img src="{{ url_for ('static', filename='Imagenes/Marcas/220px-Stanley_Hand_Tools_logo.png') }}" alt="Stanley">
-          <img src="{{ url_for ('static', filename='Imagenes/Marcas/Logo_Sika_AG.png') }}" alt="Sika">
-        </div>
-      </section>
-
-    </body>
-
-    <!-- FOOTER -->
-
-    <footer class="footer">
-      <div class="container">
-        <div class="secciones-footer"> 
-
-          <div class="seccion-contactos">
-            <strong><h2>Contactanos</h2></strong>
-            <a href="https://maps.app.goo.gl/HwFHvTRBiNXT5yFv9"> <i class="bi bi-building-fill"></i> Antonio Varas 666, Providencia. </a>
-            <p> <i class="bi bi-envelope"></i> ferremas@gmail.com </p>
-            <p> <i class="bi bi-telephone-fill"></i> +56 2 23540400</p>
-          </div>
-
-          <div class="seccion-rrss">
-            <h2>Redes sociales</h2>
-            <a href="" > <i class="bi bi-facebook"></i> Facebook</a>
-            <a href="" > <i class="bi bi-instagram"></i> Instagram</a>
-            <a href="" > <i class="bi bi-youtube"></i> Youtube</a>
-          </div>
-
-          <div class="seccion-metodos-de-pago">
-            <h2>Métodos de pago</h2>
-            <p>Débito</p>
-            <p>Crédito</p>
-            <p>Transferencia</p>
-          </div>
-
-          <div class="footer-webpay">
-            <figure><img src="{{ url_for ('static', filename='imagenes/marcas/webpay.png') }}" alt=""></figure>
+  <!-- NAVBAR - CATEGORIAS y SUBCATEGORIAS -->
+  <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
+    <div id="navbarBasicExample" class="navbar-menu">
+      <div class="navbar-start">
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a href="Herramientas_manuales" class="navbar-link"> <!--Herramientas_manuales-->
+            Herramientas manuales
+          </a>
+          <div class="navbar-dropdown">
+            <a href="" class="navbar-item">
+              Martillos
+            </a>
+            <a href="" class="navbar-item ">
+              Destornilladores
+            </a>
+            <a href="" class="navbar-item">
+              Llaves
+            </a>
+            <a href="" class="navbar-item">
+              Herramientas electricas
+            </a>
+            <a href="" class="navbar-item">
+              Taladros
+            </a>
+            <a href="" class="navbar-item">
+              Sierras
+            </a>
+            <a href="" class="navbar-item">
+              Lijadoras
+            </a>
+            <a href="" class="navbar-item">
+              Materiales Construccion
+            </a>
           </div>
         </div>
       </div>
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a href="Materiales_basicos" class="navbar-link"> <!--Materiales Basicos-->
+          Materiales basicos
+        </a>
+        <div class="navbar-dropdown">
+          <a href="" class="navbar-item">
+            Cemento
+          </a>
+          <a href="" class="navbar-item ">
+            Arena
+          </a>
+          <a href="" class="navbar-item">
+            Ladrillos
+          </a>
+          <a href="" class="navbar-item">
+            Acabados
+          </a>
+          <a href="" class="navbar-item">
+            Pinturas
+          </a>
+          <a href="" class="navbar-item">
+            Barnices
+          </a>
+          <a href="" class="navbar-item">
+            Ceramicos
+          </a>
+        </div>
+      </div>
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a href="Equipos_seguridad" class="navbar-link"> <!--Equipos de seguridad-->
+          Equipos de seguridad
+        </a>
+        <div class="navbar-dropdown">
+          <a href="" class="navbar-item">
+            Cascos
+          </a>
+          <a href="" class="navbar-item ">
+            Guantes
+          </a>
+          <a href="" class="navbar-item">
+            Lentes de seguridad
+          </a>
+          <a href="" class="navbar-item">
+            Accesorios varios
+          </a>
+        </div>
+      </div>
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a href="Tornillos_anclajes" class="navbar-link"> <!--Tornillos y Anclajes-->
+          Tornillos y anclajes
+        </a>
+        <div class="navbar-dropdown">
+          <a href="" class="navbar-item">
+            Fijacion madera
+          </a>
+          <a href="" class="navbar-item ">
+            Fijacion Metal
+          </a>
+          <a href="" class="navbar-item">
+            Fijaciones Adhesivas
+          </a>
+          <a href="" class="navbar-item">
+            Anclajes
+          </a>
+        </div>
+      </div>
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a href="Fijaciones_adhesivos" class="navbar-link"> <!--Fijaciones y Adhesivos-->
+          Fijaciones y Adhesivos
+        </a>
+        <div class="navbar-dropdown">
+          <a href="" class="navbar-item">
+            Cintas Adhesivas
+          </a>
+          <a href="" class="navbar-item ">
+            Selladores
+          </a>
+          <a href="" class="navbar-item">
+            Espuma expansiva
+          </a>
+          <a href="" class="navbar-item">
+            Pasta muro
+          </a>
+          <a href="" class="navbar-item">
+            Silicona
+          </a>
+        </div>
+      </div>
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a href="Equipos_medicion" class="navbar-link"> <!--Equipos de Medicion-->
+          Equipos de medicion
+        </a>
+        <div class="navbar-dropdown">
+          <a href="" class="navbar-item">
+            Medidor laser
+          </a>
+          <a href="" class="navbar-item ">
+            Niveladores
+          </a>
+          <a href="" class="navbar-item">
+            Medidor distancia
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
 
+  <!-- BODY -->
+
+  <!--Productos en promocion--> <!--Slide de imagenes-->
+  <section class="seccion-promociones">
+    <div id="carouselE" class="carousel slide" data-bs-ride="carousel">
+      <div class="carousel-indicators">
+        <button type="button" data-bs-target="#carouselE" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+        <button type="button" data-bs-target="#carouselE" data-bs-slide-to="1" aria-current="active" aria-label="Slide 2"></button>
       </div>
-      <div class="copyright">
-        <p>Copyright &copy; 2024 Ferremas</p>
+      <div class="carousel-inner">
+        <div class="carousel-item active">
+          <img src="{{ url_for('static', filename='imagenes/marcas/FERREMAS - BANNER INICIO.png') }}" class="d-block w-100" alt="">
+        </div>
+        <div class="carousel-item">
+          <img src="{{ url_for('static', filename='imagenes/marcas/banner-seguridad.png') }}" class="d-block w-100" alt="">
+        </div>
       </div>
-    </footer>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='JavaScript/Estado_de_pago.js') }}"></script>
+      <button class="carousel-control-prev" type="button" data-bs-target="#carouselE" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden"> Previous</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselE" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden"> Next</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Categorias - distribuir en fila con texto + logo arriba -->
+
+  <!--Lanzamientos recientes--> <!-- 8 productos -->
+  <section class="seccion-lanzamientos">
+    <h2>Lanzamientos recientes</h2>
+    <div class="contenedor-productos-lanz">
+      <div class="producto">
+        <img src="{{ url_for('static', filename='imagenes/marcas/martillo.jpg') }}" alt="">
+        {% for tool in tools %}
+        {% if tool.id_tool == 100 %}
+        <h3>{{ tool["name"] }}</h3>
+        <a>{{ tool["description"] }}</a>
+        <p>$ {{ tool["precio"] }}</p>
+        <form method="POST" action="{{ url_for('guardar_pedido') }}">
+          <input type="hidden" name="product_id" value="{{ tool['id_tool'] }}">
+          <input type="hidden" name="product_name" value="{{ tool['name'] }}">
+          <input type="hidden" name="product_description" value="{{ tool['description'] }}">
+          <input type="hidden" name="product_price" value="{{ tool['precio'] }}">
+          <input type="number" name="cantidad" value="1" min="1" placeholder="Ingrese cantidad">
+          <button type="submit">añadir al carro</button>
+        </form>
+        {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="producto">
+        <img src="{{ url_for('static', filename='imagenes/Herramientas manuales/destornillador.png') }}" alt="">
+        {% for tool in tools %}
+        {% if tool.id == 101 %}
+        <h3>{{ tool["name"] }}</h3>
+        <a>{{ tool["description"] }}</a>
+        <p>${{ tool["precio"] }}</p>
+        <form method="POST" action="{{ url_for('guardar_pedido') }}">
+          <input type="hidden" name="product_id" value="{{ tool['id'] }}">
+          <input type="hidden" name="product_name" value="{{ tool['name'] }}">
+          <input type="hidden" name="product_description" value="{{ tool['description'] }}">
+          <input type="hidden" name="product_price" value="{{ tool['precio'] }}">
+          <input type="number" name="cantidad" value="1" min="1" placeholder="Ingrese cantidad">
+          <button type="submit">añadir al carro</button>
+        </form>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Marcas -->
+  <section class="seccion-marcas">
+    <h2>Marcas asociadas</h2>
+    <div class="contenedor-marcas">
+      <img src="{{ url_for('static', filename='Imagenes/Marcas/Bosch-logo.png') }}" alt="Bosch">
+      <img src="{{ url_for('static', filename='Imagenes/Marcas/250px-Makita_Logo.png') }}" alt="Makita">
+      <img src="{{ url_for('static', filename='Imagenes/Marcas/220px-Stanley_Hand_Tools_logo.png') }}" alt="Stanley">
+      <img src="{{ url_for('static', filename='Imagenes/Marcas/Logo_Sika_AG.png') }}" alt="Sika">
+    </div>
+  </section>
+
+</body>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="secciones-footer">
+      <div class="seccion-contactos">
+        <strong>
+          <h2>Contactanos</h2>
+        </strong>
+        <a href="https://maps.app.goo.gl/HwFHvTRBiNXT5yFv9"> <i class="bi bi-building-fill"></i> Antonio Varas 666, Providencia. </a>
+        <p> <i class="bi bi-envelope"></i> ferremas@gmail.com </p>
+        <p> <i class="bi bi-telephone-fill"></i> +56 2 23540400</p>
+      </div>
+
+      <div class="seccion-rrss">
+        <h2>Redes sociales</h2>
+        <a href=""> <i class="bi bi-facebook"></i> Facebook</a>
+        <a href=""> <i class="bi bi-instagram"></i> Instagram</a>
+        <a href=""> <i class="bi bi-youtube"></i> Youtube</a>
+      </div>
+
+      <div class="seccion-metodos-de-pago">
+        <h2>Métodos de pago</h2>
+        <p>Débito</p>
+        <p>Crédito</p>
+        <p>Transferencia</p>
+      </div>
+
+      <div class="footer-webpay">
+        <figure><img src="{{ url_for('static', filename='imagenes/marcas/webpay.png') }}" alt=""></figure>
+      </div>
+    </div>
+  </div>
+  <div class="copyright">
+    <p>Copyright &copy; 2024 Ferremas</p>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='JavaScript/Estado_de_pago.js') }}"></script>
 </html>
-

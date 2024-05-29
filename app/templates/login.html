@@ -232,17 +232,23 @@
         <div class="form-background">
           <h1>INGRESAR</h1>
           <form method='POST' action="{{ url_for('iniciar_sesion')}}">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alerta {{ category }}">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
             <label for="email">Correo electronico</label>
-            <input type="email" name="usuario_correo"   id="email" placeholder="Ejemplo: ferremas@gmail.com">
+            <input type="email" name="usuario_correo" placeholder="Ejemplo: ferremas@gmail.com" required>
             <br>
             <label for="password">Contraseña</label>
-            <input type="password" name="usuario_contraseña"   id="password" placeholder="***********">
+            <input type="password" name="usuario_contraseña" placeholder="***********" required>
             <br>
-            <!-- <input type="submit" value="INGRESAR" style="color: white;"> --> 
-            <a href="Cliente">Ingresar</a>
+            <input type="submit" value="INGRESAR" style="color: white;"> 
           </form>
           <p class="separador"></p>
-            <p class="text-center"> ¿No tienes cuenta? <a href="Registro">PINCHA AQUI</a></p> 
+          <p class="text-center"> ¿No tienes cuenta? <a href="Registro">PINCHA AQUI</a></p> 
         </div>
       </div>
 

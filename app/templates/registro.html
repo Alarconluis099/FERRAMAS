@@ -228,28 +228,35 @@
       <!-- BODY -->
 
       <!-- Inicio de sesion -->
-        <div class="login">
-          <div class="form-background">
+      <div class="login">
+        <div class="form-background">
             <h1>Registrar</h1>
             <form method="POST" action="{{ url_for('guardar_registro') }}">
-              <label for="text">usuario</label>
-              <input type="text" name="usuario_usuario" value="{{ user['usuario']}}"   placeholder=" Crear usuario">
-              <br>
-              <label for="email">Correo electronico</label>
-              <input type="email" name="usuario_correo" value="{{ user['correo']}}"   placeholder=" ferremas@gmail.com">
-              <br>
-              <label for="password">Contraseña</label>
-              <input type="password" name="usuario_contraseña" value="{{ user['contraseña']}}"  placeholder="***********">
-              <br>
-              <label for="password">Repetir Contraseña</label>
-              <input type="password" name="usuario_vercontraseña" value="{{ user['verificar_contraseña']}}"  placeholder="***********">
-              <br>
-              <input type="submit" value="INGRESAR" style="color: white;">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alerta {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                <label for="text">Usuario</label>
+                <input type="text" name="usuario_usuario" placeholder="Crear usuario" required>
+                <br>
+                <label for="email">Correo electronico</label>
+                <input type="email" name="usuario_correo" placeholder="Ejemplo: ferremas@gmail.com" required>
+                <br>
+                <label for="password">Contraseña</label>
+                <input type="password" name="usuario_contraseña" placeholder="***********" required>
+                <br>
+                <label for="password">Repetir Contraseña</label>
+                <input type="password" name="usuario_vercontraseña" placeholder="***********" required>
+                <br>
+                <input type="submit" value="Registrar" style="color: white;">
             </form>
             <p class="separador"></p>
-              <p class="text-center"> ¿Ya tienes cuenta? <a href="Login">PINCHA AQUI</a></p> 
-          </div>
+            <p class="text-center"> ¿Ya tienes cuenta? <a href="{{ url_for('iniciar_sesion') }}">PINCHA AQUI</a></p> 
         </div>
+    </div>
         
 
     </body>
