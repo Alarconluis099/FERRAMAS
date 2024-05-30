@@ -234,21 +234,29 @@
               <div class="title">
                 <div class="row">
                   <div class="col"><h4><b>Carro de compras</b></h4></div>
-                  <div class="col align-self-center text-right text-muted">{{ pedidos|length }} items</div>
-                  <div>
+                  <div class="col align-self-center text-right text-muted">{{ pedidos|length }} Productos</div>
+                  <div class="info-producto">
                       <ul>
                           {% for pedido in pedidos %}
                               <li>
-                                  <p>{{ pedido['nom_pedido'] }}</p>
-                                  <p> {{ pedido['desc_pedido'] }}</p>
-                                  <p> ${{ pedido['precio_total'] }}</p>
-                                  <p> {{ pedido['cantidad_total'] }}</p>
+                                <div class="informacion-producto">
+                                  <p>{{ pedido['nom_pedido'] }}</p> <!-- Nombre -->
+                                  <a> {{ pedido['desc_pedido'] }}</a> <!-- Categoria -->
+                                </div>
+
+                                <div class="acciones-producto">
+                                  <p> ${{ pedido['precio_total'] }}</p> <!-- Precio -->
+                                  
                                   <form method="POST" action="{{ url_for('disminuir_cantidad', product_id=pedido['id_pedido']) }}">
                                     <button type="submit">-</button>
-                                </form>
-                                <form method="POST" action="{{ url_for('aumentar_cantidad', product_id=pedido['id_pedido']) }}">
-                                  <button type="submit">+</button>
-                              </form>
+                                  </form>
+                                  <p> {{ pedido['cantidad_total'] }}</p>  <!-- Cantidad -->
+                                  <form method="POST" action="{{ url_for('aumentar_cantidad', product_id=pedido['id_pedido']) }}">
+                                    <button type="submit">+</button>
+                                  </form>
+
+                                  
+                                </div>
                               </li>
                           {% endfor %}
                       </ul>
@@ -257,7 +265,7 @@
               </div>
             </div>
             <div class="col-md-4 summary">
-              <div><h5><b>Resumen de compra</b></h5></div>
+              <div><h5><b>Resumen de compra</b></h5></div> <!-- Resumen de compra -->
                 <hr>
                 <div class="row">
                   {% for pedido in pedidos %}
@@ -278,8 +286,13 @@
                 <div class="row" style="border-top: 1px solid rgba(0,0,0,.1); padding: 2vh 0;">
                     <div class="col">TOTAL DE SU COMPRA</div>
                     <div class="col text-right">&dollar; {{ pedidos|sum(attribute='precio_total') }}</div>
-                    
                 </div>
+
+                <div class="row" style="border-top: 1px solid rgba(0,0,0,.1); padding: 2vh 0;">
+                  <div class="col">DESCUENTO</div>
+                  <div class="col text-right">&dollar; {{ pedidos|sum(attribute='precio_total') }}</div>
+              </div>
+
                 <form action="{{ url_for('routes.webpay_plus_create') }}" method="POST">
                   <input type="hidden" name="buy_order" value="{{ buy_order }}">
                   <input type="hidden" name="session_id" value="{{ session_id }}">
