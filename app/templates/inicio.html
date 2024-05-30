@@ -265,7 +265,7 @@
       <div class="producto">
         <img src="{{ url_for('static', filename='imagenes/Herramientas manuales/destornillador.png') }}" alt="">
         {% for tool in tools %}
-        {% if tool.id == 101 %}
+        {% if tool.id_tool == 101 %}
         <h3>{{ tool["name"] }}</h3>
         <a>{{ tool["description"] }}</a>
         <p>${{ tool["precio"] }}</p>

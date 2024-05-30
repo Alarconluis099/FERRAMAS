@@ -80,16 +80,67 @@ body{
 
 .title{
   margin-bottom: 5vh;
+  color: black;
 }
 
 .card{
   margin: auto;
+  margin-top: 20px;
   max-width: 1250px;
   width: 90%;
   box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   border-radius: 1rem;
   border: transparent;
 }
+
+.info-producto{
+
+  border-top: 2px solid lightgray;
+}
+
+.info-producto li {
+  display: flex; /* Activar flexbox para el elemento li */
+  align-items: center; /* Alinear verticalmente el contenido */
+  border-bottom: 1px solid #ccc; /* Agregar una línea divisoria entre elementos */
+  padding: 10px; /* Agregar espacio alrededor del contenido */
+}
+
+.informacion-producto{
+  flex: 1;
+}
+
+.informacion-producto p{
+  color: black;
+  font-weight: 100;
+}
+
+.informacion-producto a{
+  color: red;
+  font-weight: lighter;
+  margin: 0;
+}
+
+
+.acciones-producto{
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 auto;
+}
+
+.acciones-producto p{
+  color: #333;
+  padding: 2vh 0;
+  margin-left: 5px;
+}
+
+.acciones-producto button{
+  margin-left: 10px;
+  margin-right: 10px;
+  
+  width: 30px;
+  height: 30px;
+}
+
 
 /* Carro de compras - Productos
 ------------------------------------------*/
@@ -103,6 +154,9 @@ body{
 
 /* Carro de compras - Resumen de compra
 ------------------------------------------*/
+
+
+
 
 .summary{
   background-color: #ddd;
@@ -208,6 +262,9 @@ a:hover{
   color: black;
   text-decoration: none;
 }
+
+/* carrito de compras  */
+
 
 /* Carrito - Navbar principal  */
 
