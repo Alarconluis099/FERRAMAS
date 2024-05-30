@@ -315,27 +315,34 @@ def registro():
 
 @app.route('/Equipos_medicion')
 def equipos_medicion():
-    return render_template('equipos-medicion.html')
+    usuario=session.get('usuarios') 
+    return render_template('equipos-medicion.html',usuario=usuario)  
+    
 
 @app.route('/Equipos_seguridad')
 def equipos_seguridad():
-    return render_template('equipos-seguridad.html')
+    usuario=session.get('usuarios')
+    return render_template('equipos-seguridad.html',usuario=usuario)
 
 @app.route('/Fijaciones_adhesivos')
 def fijaciones_adhesivos():
-    return render_template('fijaciones-adhesivos.html')
+    usuario=session.get('usuarios')
+    return render_template('fijaciones-adhesivos.html',usuario=usuario)
 
 @app.route('/Herramientas_manuales')
 def herramientas_manuales():
-    return render_template('herramientas-manuales.html')
+    usuario=session.get('usuarios')
+    return render_template('herramientas-manuales.html',usuario=usuario)
 
 @app.route('/Materiales_basicos')
 def materiales_basicos():
-    return render_template('materiales-basicos.html')
+    usuario=session.get('usuarios')
+    return render_template('materiales-basicos.html',usuario=usuario)
 
 @app.route('/Tornillos_anclajes')
 def tornillos_anclajes():
-    return render_template('tornillos-anclajes.html')
+    usuario=session.get('usuarios')
+    return render_template('tornillos-anclajes.html',usuario=usuario)
 
 # Herramientas manuales - Subcategorias
 
