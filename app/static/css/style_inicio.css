@@ -232,6 +232,20 @@ Agregar a carro -> button
   box-shadow: 5px 10px 5px rgba(0, 0, 0, 0.5);
 }
 
+/* Usuario logeado */
+.usuario-navbar{
+  margin: 10px;
+  margin-top: 20px;
+  padding: 10px;
+  text-align: center;
+  font-size: medium;
+}
+
+.usuario-navbar h1{
+  color: black;
+  font-weight: bold;
+
+}
 
 /* SUB-Navbar - categorias */
 .navbar-menu{
@@ -242,4 +256,8 @@ Agregar a carro -> button
 .navbar-menu .navbar-item{
   font-size: small;
   font-weight: lighter;
+}
+
+.modal-backdrop {
+  opacity: 0;
 }

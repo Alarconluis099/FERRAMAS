@@ -202,3 +202,18 @@ footer a:hover {
   font-size: small;
   font-weight: lighter;
 }
+
+/* Usuario logeado */
+.usuario-navbar{
+  margin: 10px;
+  margin-top: 20px;
+  padding: 10px;
+  text-align: center;
+  font-size: medium;
+}
+
+.usuario-navbar h1{
+  color: black;
+  font-weight: bold;
+
+}

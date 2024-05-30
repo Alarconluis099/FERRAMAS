@@ -29,11 +29,14 @@
       <div class="navbar-start">
         <form class="form-inline">
           <input class="form-control mr-sm-2" id="label_search" type="search" placeholder="¡Hola! ¿Que estas buscando?" aria-label="Buscar productos">
-          <h1>Bienvenido, {{ usuario }}</h1>
         </form>
+
       </div>
 
       <div class="navbar-end">
+        <div class="usuario-navbar">
+          <h1>Bienvenido, {{ usuario }}</h1>
+        </div>
         <div class="navbar-item">
           <div class="buttons">
             <a href="{% if session.get('usuario') %} {{ url_for('cliente') }} {% else %} {{ url_for('iniciar_sesion') }} {% endif %}" class="button is-light is-rounded">
@@ -101,111 +104,112 @@
             </a>
           </div>
         </div>
-      </div>
-      <div class="navbar-item has-dropdown is-hoverable">
-        <a href="Materiales_basicos" class="navbar-link"> <!--Materiales Basicos-->
-          Materiales basicos
-        </a>
-        <div class="navbar-dropdown">
-          <a href="" class="navbar-item">
-            Cemento
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a href="Materiales_basicos" class="navbar-link"> <!--Materiales Basicos-->
+            Materiales basicos
           </a>
-          <a href="" class="navbar-item ">
-            Arena
+          <div class="navbar-dropdown">
+            <a href="" class="navbar-item">
+              Cemento
+            </a>
+            <a href="" class="navbar-item ">
+              Arena
+            </a>
+            <a href="" class="navbar-item">
+              Ladrillos
+            </a>
+            <a href="" class="navbar-item">
+              Acabados
+            </a>
+            <a href="" class="navbar-item">
+              Pinturas
+            </a>
+            <a href="" class="navbar-item">
+              Barnices
+            </a>
+            <a href="" class="navbar-item">
+              Ceramicos
+            </a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a href="Equipos_seguridad" class="navbar-link"> <!--Equipos de seguridad-->
+            Equipos de seguridad
           </a>
-          <a href="" class="navbar-item">
-            Ladrillos
+          <div class="navbar-dropdown">
+            <a href="" class="navbar-item">
+              Cascos
+            </a>
+            <a href="" class="navbar-item ">
+              Guantes
+            </a>
+            <a href="" class="navbar-item">
+              Lentes de seguridad
+            </a>
+            <a href="" class="navbar-item">
+              Accesorios varios
+            </a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a href="Tornillos_anclajes" class="navbar-link"> <!--Tornillos y Anclajes-->
+            Tornillos y anclajes
           </a>
-          <a href="" class="navbar-item">
-            Acabados
+          <div class="navbar-dropdown">
+            <a href="" class="navbar-item">
+              Fijacion madera
+            </a>
+            <a href="" class="navbar-item ">
+              Fijacion Metal
+            </a>
+            <a href="" class="navbar-item">
+              Fijaciones Adhesivas
+            </a>
+            <a href="" class="navbar-item">
+              Anclajes
+            </a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a href="Fijaciones_adhesivos" class="navbar-link"> <!--Fijaciones y Adhesivos-->
+            Fijaciones y Adhesivos
           </a>
-          <a href="" class="navbar-item">
-            Pinturas
+          <div class="navbar-dropdown">
+            <a href="" class="navbar-item">
+              Cintas Adhesivas
+            </a>
+            <a href="" class="navbar-item ">
+              Selladores
+            </a>
+            <a href="" class="navbar-item">
+              Espuma expansiva
+            </a>
+            <a href="" class="navbar-item">
+              Pasta muro
+            </a>
+            <a href="" class="navbar-item">
+              Silicona
+            </a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a href="Equipos_medicion" class="navbar-link"> <!--Equipos de Medicion-->
+            Equipos de medicion
           </a>
-          <a href="" class="navbar-item">
-            Barnices
-          </a>
-          <a href="" class="navbar-item">
-            Ceramicos
-          </a>
+          <div class="navbar-dropdown">
+            <a href="" class="navbar-item">
+              Medidor laser
+            </a>
+            <a href="" class="navbar-item ">
+              Niveladores
+            </a>
+            <a href="" class="navbar-item">
+              Medidor distancia
+            </a>
+          </div>
         </div>
       </div>
-      <div class="navbar-item has-dropdown is-hoverable">
-        <a href="Equipos_seguridad" class="navbar-link"> <!--Equipos de seguridad-->
-          Equipos de seguridad
-        </a>
-        <div class="navbar-dropdown">
-          <a href="" class="navbar-item">
-            Cascos
-          </a>
-          <a href="" class="navbar-item ">
-            Guantes
-          </a>
-          <a href="" class="navbar-item">
-            Lentes de seguridad
-          </a>
-          <a href="" class="navbar-item">
-            Accesorios varios
-          </a>
-        </div>
-      </div>
-      <div class="navbar-item has-dropdown is-hoverable">
-        <a href="Tornillos_anclajes" class="navbar-link"> <!--Tornillos y Anclajes-->
-          Tornillos y anclajes
-        </a>
-        <div class="navbar-dropdown">
-          <a href="" class="navbar-item">
-            Fijacion madera
-          </a>
-          <a href="" class="navbar-item ">
-            Fijacion Metal
-          </a>
-          <a href="" class="navbar-item">
-            Fijaciones Adhesivas
-          </a>
-          <a href="" class="navbar-item">
-            Anclajes
-          </a>
-        </div>
-      </div>
-      <div class="navbar-item has-dropdown is-hoverable">
-        <a href="Fijaciones_adhesivos" class="navbar-link"> <!--Fijaciones y Adhesivos-->
-          Fijaciones y Adhesivos
-        </a>
-        <div class="navbar-dropdown">
-          <a href="" class="navbar-item">
-            Cintas Adhesivas
-          </a>
-          <a href="" class="navbar-item ">
-            Selladores
-          </a>
-          <a href="" class="navbar-item">
-            Espuma expansiva
-          </a>
-          <a href="" class="navbar-item">
-            Pasta muro
-          </a>
-          <a href="" class="navbar-item">
-            Silicona
-          </a>
-        </div>
-      </div>
-      <div class="navbar-item has-dropdown is-hoverable">
-        <a href="Equipos_medicion" class="navbar-link"> <!--Equipos de Medicion-->
-          Equipos de medicion
-        </a>
-        <div class="navbar-dropdown">
-          <a href="" class="navbar-item">
-            Medidor laser
-          </a>
-          <a href="" class="navbar-item ">
-            Niveladores
-          </a>
-          <a href="" class="navbar-item">
-            Medidor distancia
-          </a>
-        </div>
-      </div>
+
     </div>
   </nav>
 
@@ -331,7 +335,7 @@
   <div class="copyright">
     <p>Copyright &copy; 2024 Ferremas</p>
   </div>
-</footer>
+
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='JavaScript/Estado_de_pago.js') }}"></script>
