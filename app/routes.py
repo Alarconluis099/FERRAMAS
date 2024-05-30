@@ -23,10 +23,10 @@ def ver_pedidos():
     return render_template('pedidos.html', pedido=pedidos_dict)
 
 
-@app.route('/disminuir_cantidad/<int:product_id>', methods=['POST'])
-def disminuir_cantidad(product_id):
+@app.route('/disminuir_cantidad/<int:id_pedido>', methods=['POST'])
+def disminuir_cantidad(id_pedido):
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT cantidad FROM pedido WHERE id_pedido = %s", (product_id,))
+    cursor.execute("SELECT cantidad FROM pedido WHERE id_pedido = %s", (id_pedido,))
     result = cursor.fetchone()
 
     if result:
@@ -35,15 +35,16 @@ def disminuir_cantidad(product_id):
             nueva_cantidad = cantidad - 1
             cursor.execute(
                 "UPDATE pedido SET cantidad = %s WHERE id_pedido = %s",
-                (nueva_cantidad, product_id)
+                (nueva_cantidad, id_pedido)
             )
         else:
-            cursor.execute("DELETE FROM pedido WHERE id_pedido = %s", (product_id,))
+            cursor.execute("DELETE FROM pedido WHERE id_pedido = %s", (id_pedido,))
 
         mysql.connection.commit()
 
     cursor.close()
     return redirect(url_for('carrito'))
+
 
 
 @app.route('/aumentar_cantidad/<int:product_id>', methods=['POST'])
@@ -246,28 +247,48 @@ def cliente():
 
 
 from decimal import Decimal
+import pdb
+
 
 @app.route('/Carrito')
 def carrito():
     usuario = session.get('usuario')
-    pedidos = fetch_all_pedidos_ready()
-    
-    # Obtener el descuento del usuario si está logueado
+    pedidos = fetch_all_pedidos_ready() 
+
     descuento = Decimal(0)
     if usuario:
         cursor = mysql.connection.cursor()
-        cursor.execute(
-            "SELECT descuento FROM users WHERE usuario = %s",
-            (usuario,)
-        )
+        cursor.execute("SELECT descuento FROM users WHERE usuario = %s", (usuario,))
         result = cursor.fetchone()
         if result:
-            descuento = Decimal(result[0]) / 100  # Convertir el descuento a porcentaje decimal
+            descuento = Decimal(result[0]) / 100
 
-    # Calcular el monto total con descuento
-    total_con_descuento = sum(Decimal(pedido['precio_total']) * (1 - descuento) for pedido in pedidos)
+    pedidos_agrupados = {}
+    for pedido in pedidos:
+        id_pedido = pedido['id_pedido']
+        if id_pedido not in pedidos_agrupados:
+            pedidos_agrupados[id_pedido] = {
+                'precio_pedido': pedido['precio_pedido'],
+                'cantidad_total': 0,
+                'id_pedido': id_pedido,
+                'nom_pedido': pedido['nom_pedido'],
+                'desc_pedido': pedido['desc_pedido']
+            }
+        pedidos_agrupados[id_pedido]['cantidad_total'] += pedido['cantidad_total']
 
-    return render_template('carrito.html', pedidos=pedidos, usuario=usuario, descuento=descuento, total_con_descuento=total_con_descuento)
+    total_con_descuento = sum(
+        Decimal(pedido['precio_pedido']) * pedido['cantidad_total'] * (1 - descuento)
+        for pedido in pedidos_agrupados.values()
+    )
+
+    return render_template(
+        'carrito.html',
+        pedidos=list(pedidos_agrupados.values()),
+        usuario=usuario,
+        descuento=descuento,
+        total_con_descuento=total_con_descuento
+    )
+
 
 @app.route('/Inicio')
 def inicio():
@@ -283,7 +304,7 @@ def login():
 @app.route('/logout')
 def logout():
     # Eliminar la información de la sesión del usuario
-    session.pop('usuario', )
+    session.pop('usuario', None)
     # Redirigir al usuario a la página de inicio de sesión o página principal
     return redirect(url_for('inicio'))
 
@@ -369,6 +390,9 @@ from decimal import Decimal
 @bp.route("/create", methods=["POST"])
 def webpay_plus_create():
     # Obtener datos de la compra
+    if 'usuario' not in session:
+        # El usuario no ha iniciado sesión, redirigir a la página de inicio de sesión
+        return redirect(url_for('iniciar_sesion'))
     buy_order = str(random.randrange(1000000, 99999999))
     session_id = str(random.randrange(1000000, 99999999))
     amount = int(Decimal(request.form.get("amount")) )  # Convertir a entero y considerar dos decimales
