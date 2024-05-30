@@ -1,6 +1,21 @@
 from app import mysql
 from flask import current_app
 
+def fetch_all_pedido():
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("SELECT id_pedido, nom_pedido, desc_pedido, precio_pedido, cantidad, id_user FROM pedido")
+        rows = cursor.fetchall()
+        columns = [column[0] for column in cursor.description]
+        unique_ids = set()
+        data = [dict(zip(columns, row)) for row in rows]
+        return data
+    except Exception as e:
+        current_app.logger.error(f"Error fetching pedido: {e}")
+        return []
+    finally:
+        cursor.close()
+
 def fetch_all_pedidos_ready():
     cursor = mysql.connection.cursor()
     try:

@@ -1,26 +1,16 @@
 from flask import flash, Blueprint, request, jsonify, render_template, redirect, url_for, session
 from app import app
-from .models import fetch_all_tools, fetch_tools_by_code, insert_tools, delete_tools, update_tools, get_all_users, fetch_users_by_id, fetch_all_pedidos_ready, fetch_pedido_by_id, get_usuario_by_usuario
+from .models import fetch_all_tools, fetch_tools_by_code, insert_tools, delete_tools, update_tools, get_all_users, fetch_users_by_id, fetch_all_pedidos_ready, fetch_pedido_by_id, get_usuario_by_usuario, fetch_all_pedido
 from . import mysql
 import random
 
 
 
 
-@app.route('/Pedidos')
-def ver_pedidos():
-    cursor = mysql.connection.cursor()
-    cursor.execute("SELECT * FROM pedido")  # Obtener todos los pedidos
-    pedido = cursor.fetchall()
-    cursor.close()
-
-    # Convertir los resultados a una lista de diccionarios
-    pedidos_dict = []
-    for pedidos in pedido:
-        columns = [column[0] for column in cursor.description]
-        pedidos_dict.append(dict(zip(columns, pedidos)))
-
-    return render_template('pedidos.html', pedido=pedidos_dict)
+@app.route('/pedido', methods=['GET'])
+def ver_pedido():
+    pedido = fetch_all_pedido()
+    return jsonify(pedido)
 
 
 @app.route('/disminuir_cantidad/<int:id_pedido>', methods=['POST'])
