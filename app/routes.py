@@ -5,10 +5,7 @@ from . import mysql
 import random
 
 
-@app.route('/Carrito')
-def carrito():
-    pedidos = fetch_all_pedidos_ready()
-    return render_template('carrito.html', pedidos=pedidos,)
+
 
 @app.route('/Pedidos')
 def ver_pedidos():
@@ -90,15 +87,19 @@ def guardar_registro():
     else:
         # El usuario no existe, proceder con el registro
         if usuario_contraseña == usuario_vercontraseña:
-            # Corregir la sintaxis SQL
-            cursor.execute("INSERT INTO users (correo, contraseña, usuario) VALUES (%s, %s, %s)", (usuario_correo, usuario_contraseña, usuario_usuario))
+            # Insertar el nuevo usuario en la base de datos con un descuento predeterminado de 0.0
+            cursor.execute("INSERT INTO users (correo, contraseña, usuario, descuento) VALUES (%s, %s, %s, %s)", (usuario_correo, usuario_contraseña, usuario_usuario, 15))
             mysql.connection.commit()
+
             cursor.close()
             return redirect(url_for('iniciar_sesion'))
         else:
             flash('Las contraseñas no coinciden', 'error')
             return redirect(url_for('registro'))
-        
+
+
+
+
 @app.route('/iniciar_sesion', methods=['POST', 'GET'])
 def iniciar_sesion():
     if request.method == 'POST':
@@ -111,20 +112,27 @@ def iniciar_sesion():
 
         cursor = mysql.connection.cursor()
         cursor.execute(
-            "SELECT correo, contraseña, usuario FROM users WHERE correo = %s AND contraseña = %s",
+            "SELECT id_user, usuario, descuento FROM users WHERE correo = %s AND contraseña = %s",
             (usuario_correo, usuario_contraseña)
         )
         result = cursor.fetchone()
-        cursor.close()
-
+        
         if result:
-            session['usuario'] = result[2]
-            return redirect(url_for('cliente'))
+            session['usuario'] = result[1]
+            usuario_id = result[0]
+            descuento = result[2]
+
+            # Verificar si es un usuario nuevo y asignar un descuento si es necesario
+            if descuento == 0:
+                pass
+
+            return redirect(url_for('inicio'))  # Redirige a la página de inicio después de iniciar sesión
         else:
             flash('Correo y/o contraseña inválidos.', 'error')
             return redirect(url_for('iniciar_sesion'))
-    
+
     return render_template('login.html')
+
 
     
 
@@ -227,7 +235,7 @@ def update_tool_route(id):
     
 @app.route('/')
 def main():
-    return redirect('Inicio')
+    return redirect(url_for('inicio'))
 
 @app.route('/Cliente')
 def cliente():
@@ -237,17 +245,47 @@ def cliente():
     return render_template('Cliente.html', usuario=usuario)
 
 
+from decimal import Decimal
 
+@app.route('/Carrito')
+def carrito():
+    usuario = session.get('usuario')
+    pedidos = fetch_all_pedidos_ready()
+    
+    # Obtener el descuento del usuario si está logueado
+    descuento = Decimal(0)
+    if usuario:
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "SELECT descuento FROM users WHERE usuario = %s",
+            (usuario,)
+        )
+        result = cursor.fetchone()
+        if result:
+            descuento = Decimal(result[0]) / 100  # Convertir el descuento a porcentaje decimal
+
+    # Calcular el monto total con descuento
+    total_con_descuento = sum(Decimal(pedido['precio_total']) * (1 - descuento) for pedido in pedidos)
+
+    return render_template('carrito.html', pedidos=pedidos, usuario=usuario, descuento=descuento, total_con_descuento=total_con_descuento)
 
 @app.route('/Inicio')
 def inicio():
+    usuario = session.get('usuario')
     tools = fetch_all_tools()
-    return render_template('inicio.html', tools=tools)
+    return render_template('inicio.html', tools=tools, usuario=usuario)
 
 @app.route('/Login')
 def login():
     user = get_all_users()
     return render_template('login.html', user=user)
+
+@app.route('/logout')
+def logout():
+    # Eliminar la información de la sesión del usuario
+    session.pop('usuario', )
+    # Redirigir al usuario a la página de inicio de sesión o página principal
+    return redirect(url_for('inicio'))
 
 @app.route('/Registro')
 def registro():
@@ -324,25 +362,49 @@ from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
 from transbank.common.integration_api_keys import IntegrationApiKeys
 
 bp = Blueprint('routes', __name__)
+from decimal import Decimal
+
+from decimal import Decimal
+
 @bp.route("/create", methods=["POST"])
 def webpay_plus_create():
-
     # Obtener datos de la compra
     buy_order = str(random.randrange(1000000, 99999999))
     session_id = str(random.randrange(1000000, 99999999))
-    amount = request.form.get("amount")
+    amount = int(Decimal(request.form.get("amount")) )  # Convertir a entero y considerar dos decimales
     return_url = 'http://localhost:5000/commit'
 
+    # Obtener el descuento del usuario si está logueado
+    descuento = Decimal(0)
+    if 'usuario' in session:
+        usuario = session['usuario']
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "SELECT descuento FROM users WHERE usuario = %s",
+            (usuario,)
+        )
+        result = cursor.fetchone()
+        if result:
+            descuento = result[0]
 
-    # 6. Crear la transacción con Transbank
+    # Aplicar el descuento al monto total y convertir a entero
+    total_con_descuento = int(Decimal(amount))
+
+    # Crear la transacción con Transbank
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
-    response = tx.create(buy_order, session_id, amount, return_url)
+    response = tx.create(buy_order, session_id, total_con_descuento, return_url)
+
+    # Después de crear la transacción, actualiza el descuento a 0
+    if 'usuario' in session:
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "UPDATE users SET descuento = %s WHERE usuario = %s",
+            (0, usuario)
+        )
+        mysql.connection.commit()
 
     # Renderizar ruta de destino
     return redirect(response['url'] + '?token_ws=' + response['token'])
-
-
-
 
 @bp.route("/commit", methods=["GET", "POST"])
 def webpay_plus_commit():
