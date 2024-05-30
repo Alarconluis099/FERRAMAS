@@ -117,6 +117,10 @@ footer a:hover {
   padding: 20px;
 }
 
+.barra-lateral a:hover{
+  color: orange;
+}
+
 .barra-usuario{
   border-bottom: 2px solid lightgray ;
   margin: 10px;

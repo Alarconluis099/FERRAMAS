@@ -199,6 +199,7 @@
                         </div>
                       </div>
                     </div>
+<<<<<<< Updated upstream
   
   
                     <div id="navbarBasicExample" class="navbar-menu">
@@ -219,6 +220,48 @@
                               Medidor distancia 
                             </a>
                           </div>
+=======
+      
+
+      </nav>
+
+      <!-- BODY -->
+
+      <!--Carro de compras-->
+
+      
+      <div class="card"> <!--Columna productos-->
+        <div class="row">
+            <div class="col-md-8 cart">
+                <div class="title">
+                    <div class="row">
+                        <div class="col"><h4><b>Carro de compras</b></h4></div>
+                        <div class="col align-self-center text-right text-muted">{{ pedidos|length }} Producto(s)</div>
+                        <div class="info-producto">
+                            <ul>
+                                {% for pedido in pedidos %}
+                                    <li>
+                                      <div class="informacion-producto">
+                                        <p>{{ pedido['nom_pedido'] }}</p> <!-- Nombre -->
+                                        <a> {{ pedido['desc_pedido'] }}</a> <!-- Categoria -->
+                                      </div>
+
+                                      <div class="acciones-producto">
+                                        <p>${{ pedido['precio_total'] }}</p> <!-- Precio -->
+
+                                        <form method="POST" action="{{ url_for('disminuir_cantidad', product_id=pedido['id_pedido']) }}">
+                                            <button type="submit">-</button>
+                                        </form>
+                                        <p>{{ pedido['cantidad_total'] }}</p> <!-- Cantidad -->
+                                        <form method="POST" action="{{ url_for('aumentar_cantidad', product_id=pedido['id_pedido']) }}">
+                                            <button type="submit">+</button>
+                                        </form>
+                                      </div>
+
+                                    </li>
+                                {% endfor %}
+                            </ul>
+>>>>>>> Stashed changes
                         </div>
                       </div>
         
