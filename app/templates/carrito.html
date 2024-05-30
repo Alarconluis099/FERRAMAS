@@ -1,336 +1,331 @@
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <title>Ferremas - Carro de compras</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
-    <link rel="stylesheet" href="{{ url_for ('static', filename = 'css/style_carrito.css')}}">
-  </head>
-      <body >
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ferremas - Carro de compras</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+  <link rel="stylesheet" href="{{ url_for ('static', filename = 'css/style_carrito.css')}}">
+</head>
+    <body >
 
-        <!-- NAVBAR -->
+      <!-- NAVBAR -->
 
-        <nav class="navbar is-warning" role="navigation" aria-label="main navigation">
-          <div class="navbar-brand">
-            <a class="navbar-item" href="Inicio">
-              <img src="{{ url_for ('static', filename='Imagenes/Marcas/ferremas.png') }}" alt="">
-            </a>
-        
-            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
-              <span aria-hidden="true"></span>
-              <span aria-hidden="true"></span>
-              <span aria-hidden="true"></span>
-              <span aria-hidden="true"></span>
-            </a>
+      <nav class="navbar is-warning" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+          <a class="navbar-item" href="Inicio">
+            <img src="{{ url_for ('static', filename='Imagenes/Marcas/ferremas.png') }}" alt="">
+          </a>
+      
+          <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </a>
+        </div>
+      
+        <div id="navbarBasicExample" class="navbar-menu">
+          <div class="navbar-start">      
+            <form class="form-inline">
+              <input class="form-control mr-sm-2" type="search" placeholder="¡Hola! ¿Que estas buscando?" aria-label="Buscar productos">
+            </form>
           </div>
-        
-          <div id="navbarBasicExample" class="navbar-menu">
-            <div class="navbar-start">      
-              <form class="form-inline">
-                <input class="form-control mr-sm-2" type="search" placeholder="¡Hola! ¿Que estas buscando?" aria-label="Buscar productos">
-              </form>
-            </div>
-        
-            <div class="navbar-end">
-              <div class="navbar-item">
-                <div class="buttons">
-                  <a href="Login" class="button is-light is-rounded">
-                    Ingresar
-                  </a>
-                  <a href="Carrito" class="button is-light is-rounded">
-                    <i class="bi bi-cart"></i>
-                  </a>
-                </div>
+      
+          <div class="navbar-end">
+            <div class="navbar-item">
+              <div class="buttons">
+                <a href="Login" class="button is-light is-rounded">
+                  Ingresar
+                </a>
+                <a href="Carrito" class="button is-light is-rounded">
+                  <i class="bi bi-cart"></i>
+                </a>
               </div>
-  
+            </div>
+
+          </div>
+        </div>
+      </nav>
+
+      <!-- NAVBAR - CATEGORIAS y SUBCATEGORIAS-->
+      <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
+
+      
+        <div id="navbarBasicExample" class="navbar-menu">
+          <div class="navbar-start">      
+            <div class="navbar-item has-dropdown is-hoverable">
+              <a href="Herramientas_manuales" class="navbar-link"> <!--Herramientas_manuales-->
+                Herramientas manuales
+              </a>
+      
+              <div class="navbar-dropdown">
+                <a href="" class="navbar-item">
+                  Martillos 
+                </a>
+                <a href="" class="navbar-item ">
+                  Destornilladores 
+                </a>
+                <a href="" class="navbar-item">
+                  Llaves
+                </a>
+                <a href="" class="navbar-item">
+                  Herramientas electricas
+                </a>
+                <a href="" class="navbar-item"> 
+                  Taladros
+                </a>
+                <a href="" class="navbar-item">
+                  Sierras
+                </a>
+                <a href="" class="navbar-item">
+                  Lijadoras
+                </a>
+                <a href="" class="navbar-item">
+                  Materiales Construccion
+                </a>
+              </div>
             </div>
           </div>
-        </nav>
-  
-        <!-- NAVBAR - CATEGORIAS y SUBCATEGORIAS-->
-        <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
-  
-        
+
           <div id="navbarBasicExample" class="navbar-menu">
             <div class="navbar-start">      
               <div class="navbar-item has-dropdown is-hoverable">
-                <a href="Herramientas_manuales" class="navbar-link"> <!--Herramientas_manuales-->
-                  Herramientas manuales
+                <a href="Materiales_basicos" class="navbar-link"> <!--Materiales Basicos-->
+                  Materiales basicos
                 </a>
         
                 <div class="navbar-dropdown">
                   <a href="" class="navbar-item">
-                    Martillos 
+                    Cemento 
                   </a>
                   <a href="" class="navbar-item ">
-                    Destornilladores 
+                    Arena 
                   </a>
                   <a href="" class="navbar-item">
-                    Llaves
+                    Ladrillos
                   </a>
                   <a href="" class="navbar-item">
-                    Herramientas electricas
+                    Acabados 
                   </a>
                   <a href="" class="navbar-item"> 
-                    Taladros
+                    Pinturas
                   </a>
                   <a href="" class="navbar-item">
-                    Sierras
+                    Barnices
                   </a>
                   <a href="" class="navbar-item">
-                    Lijadoras
-                  </a>
-                  <a href="" class="navbar-item">
-                    Materiales Construccion
+                    Ceramicos
                   </a>
                 </div>
               </div>
             </div>
-  
+
+
             <div id="navbarBasicExample" class="navbar-menu">
               <div class="navbar-start">      
                 <div class="navbar-item has-dropdown is-hoverable">
-                  <a href="Materiales_basicos" class="navbar-link"> <!--Materiales Basicos-->
-                    Materiales basicos
+                  <a href="Equipos_seguridad" class="navbar-link"> <!--Equipos de seguridad-->
+                    Equipos de seguridad
                   </a>
           
                   <div class="navbar-dropdown">
                     <a href="" class="navbar-item">
-                      Cemento 
+                      Cascos 
                     </a>
                     <a href="" class="navbar-item ">
-                      Arena 
+                      Guantes 
                     </a>
                     <a href="" class="navbar-item">
-                      Ladrillos
+                      Lentes de seguridad
                     </a>
                     <a href="" class="navbar-item">
-                      Acabados 
-                    </a>
-                    <a href="" class="navbar-item"> 
-                      Pinturas
-                    </a>
-                    <a href="" class="navbar-item">
-                      Barnices
-                    </a>
-                    <a href="" class="navbar-item">
-                      Ceramicos
+                      Accesorios varios
                     </a>
                   </div>
                 </div>
               </div>
-  
-  
+
+
               <div id="navbarBasicExample" class="navbar-menu">
                 <div class="navbar-start">      
                   <div class="navbar-item has-dropdown is-hoverable">
-                    <a href="Equipos_seguridad" class="navbar-link"> <!--Equipos de seguridad-->
-                      Equipos de seguridad
+                    <a href="Tornillos_anclajes" class="navbar-link"> <!--Tornillos y Anclajes-->
+                      Tornillos y anclajes
                     </a>
             
                     <div class="navbar-dropdown">
                       <a href="" class="navbar-item">
-                        Cascos 
+                        Fijacion madera 
                       </a>
                       <a href="" class="navbar-item ">
-                        Guantes 
+                        Fijacion Metal 
                       </a>
                       <a href="" class="navbar-item">
-                        Lentes de seguridad
+                        Fijaciones Adhesivas
                       </a>
                       <a href="" class="navbar-item">
-                        Accesorios varios
+                        Anclajes 
                       </a>
                     </div>
                   </div>
                 </div>
-  
-  
+
+
                 <div id="navbarBasicExample" class="navbar-menu">
                   <div class="navbar-start">      
                     <div class="navbar-item has-dropdown is-hoverable">
-                      <a href="Tornillos_anclajes" class="navbar-link"> <!--Tornillos y Anclajes-->
-                        Tornillos y anclajes
+                      <a href="Fijaciones_adhesivos" class="navbar-link"> <!--Fijaciones y Adhesivos-->
+                        Fijaciones y Adhesivos
                       </a>
               
                       <div class="navbar-dropdown">
                         <a href="" class="navbar-item">
-                          Fijacion madera 
+                          Cintas Adhesivas
                         </a>
                         <a href="" class="navbar-item ">
-                          Fijacion Metal 
+                          Selladores 
                         </a>
                         <a href="" class="navbar-item">
-                          Fijaciones Adhesivas
+                          Espuma expansiva
                         </a>
                         <a href="" class="navbar-item">
-                          Anclajes 
+                          Pasta muro 
+                        </a>
+                        <a href="" class="navbar-item"> 
+                          Silicona
                         </a>
                       </div>
                     </div>
                   </div>
-  
-  
+
+
                   <div id="navbarBasicExample" class="navbar-menu">
                     <div class="navbar-start">      
                       <div class="navbar-item has-dropdown is-hoverable">
-                        <a href="Fijaciones_adhesivos" class="navbar-link"> <!--Fijaciones y Adhesivos-->
-                          Fijaciones y Adhesivos
+                        <a href="Equipos_medicion" class="navbar-link"> <!--Equipos de Medicion-->
+                          Equipos de medicion
                         </a>
                 
                         <div class="navbar-dropdown">
                           <a href="" class="navbar-item">
-                            Cintas Adhesivas
+                            Medidor laser 
                           </a>
                           <a href="" class="navbar-item ">
-                            Selladores 
+                            Niveladores 
                           </a>
                           <a href="" class="navbar-item">
-                            Espuma expansiva
-                          </a>
-                          <a href="" class="navbar-item">
-                            Pasta muro 
-                          </a>
-                          <a href="" class="navbar-item"> 
-                            Silicona
+                            Medidor distancia 
                           </a>
                         </div>
                       </div>
                     </div>
-  
-  
-                    <div id="navbarBasicExample" class="navbar-menu">
-                      <div class="navbar-start">      
-                        <div class="navbar-item has-dropdown is-hoverable">
-                          <a href="Equipos_medicion" class="navbar-link"> <!--Equipos de Medicion-->
-                            Equipos de medicion
-                          </a>
-                  
-                          <div class="navbar-dropdown">
-                            <a href="" class="navbar-item">
-                              Medidor laser 
-                            </a>
-                            <a href="" class="navbar-item ">
-                              Niveladores 
-                            </a>
-                            <a href="" class="navbar-item">
-                              Medidor distancia 
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-        
-  
-        </nav>
-
-        <!-- BODY -->
-
-        <!--Carro de compras-->
-        <div class="card"> <!--Columna productos-->
-          <div class="row">
-            <div class="col-md-8 cart">
-              <div class="title">
-                <div class="row">
-                  <div class="col"><h4><b>Carro de compras</b></h4></div>
-                  <div class="col align-self-center text-right text-muted">{{ pedidos|length }} items</div>
-                  <div>
-                      <ul>
-                          {% for pedido in pedidos %}
-                              <li>
-                                  <p>{{ pedido['nom_pedido'] }}</p>
-                                  <p> {{ pedido['desc_pedido'] }}</p>
-                                  <p> ${{ pedido['precio_total'] }}</p>
-                                  <p> {{ pedido['cantidad_total'] }}</p>
-                                  <form method="POST" action="{{ url_for('disminuir_cantidad', product_id=pedido['id_pedido']) }}">
-                                    <button type="submit">-</button>
-                                </form>
-                                <form method="POST" action="{{ url_for('aumentar_cantidad', product_id=pedido['id_pedido']) }}">
-                                  <button type="submit">+</button>
-                              </form>
-                              </li>
-                          {% endfor %}
-                      </ul>
-                  </div>
-              </div>
-              </div>
-            </div>
-            <div class="col-md-4 summary">
-              <div><h5><b>Resumen de compra</b></h5></div>
-                <hr>
-                <div class="row">
-                  {% for pedido in pedidos %}
-                    <div class="col" style="padding-left:0;">Item: {{ pedidos|length }}</div><br>
-                    <div class="col text-right"></div>
-                      
-                      Valor: ${{pedido['precio_pedido']}}
-                    
-                  
-                  <div>
-
-                  </div>
-                  Cantidad: {{pedido['cantidad_total']}}
-                </div>
-                  
-                  
-                
-                <div class="row" style="border-top: 1px solid rgba(0,0,0,.1); padding: 2vh 0;">
-                    <div class="col">TOTAL DE SU COMPRA</div>
-                    <div class="col text-right">&dollar; {{ pedidos|sum(attribute='precio_total') }}</div>
-                    
-                </div>
-                <form action="{{ url_for('routes.webpay_plus_create') }}" method="POST">
-                  <input type="hidden" name="buy_order" value="{{ buy_order }}">
-                  <input type="hidden" name="session_id" value="{{ session_id }}">
-                  <input type="hidden" name="amount" value="{{ pedidos|sum(attribute='precio_total') }}">
-                <button class="btn">IR A PAGAR</button>
-                {% endfor %}
-                </form>
-              </div>
-            </div>
-          </div>
-      </div>
       
 
-      </body>
+      </nav>
 
-      <!-- FOOTER -->
+      <!-- BODY -->
 
-      <footer class="footer">
-        <div class="container">
-          <div class="secciones-footer"> 
-  
-            <div class="seccion-contactos">
-              <strong><h2>Contactanos</h2></strong>
-              <a href="https://maps.app.goo.gl/HwFHvTRBiNXT5yFv9"> <i class="bi bi-building-fill"></i> Antonio Varas 666, Providencia. </a>
-              <p> <i class="bi bi-envelope"></i> ferremas@gmail.com </p>
-              <p> <i class="bi bi-telephone-fill"></i> +56 2 23540400</p>
+      <!--Carro de compras-->
+      <div class="card"> <!--Columna productos-->
+        <div class="row">
+            <div class="col-md-8 cart">
+                <div class="title">
+                    <div class="row">
+                        <div class="col"><h4><b>Carro de compras</b></h4></div>
+                        <div class="col align-self-center text-right text-muted">{{ pedidos|length }} items</div>
+                        <div>
+                            <ul>
+                                {% for pedido in pedidos %}
+                                    <li>
+                                        <p>{{ pedido['nom_pedido'] }}</p>
+                                        <p>{{ pedido['desc_pedido'] }}</p>
+                                        <p>${{ pedido['precio_total'] }}</p>
+                                        <p>{{ pedido['cantidad_total'] }}</p>
+                                        <form method="POST" action="{{ url_for('disminuir_cantidad', product_id=pedido['id_pedido']) }}">
+                                            <button type="submit">-</button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('aumentar_cantidad', product_id=pedido['id_pedido']) }}">
+                                            <button type="submit">+</button>
+                                        </form>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
-  
-            <div class="seccion-rrss">
-              <h2>Redes sociales</h2>
-              <a href="" > <i class="bi bi-facebook"></i> Facebook</a>
-              <a href="" > <i class="bi bi-instagram"></i> Instagram</a>
-              <a href="" > <i class="bi bi-youtube"></i> Youtube</a>
+            <div class="col-md-4 summary">
+                <div><h5><b>Resumen de compra</b></h5></div>
+                <hr>
+                <div class="row">
+                    {% for pedido in pedidos %}
+                        <div class="col" style="padding-left:0;">Item: {{ pedidos|length }}</div><br>
+                        <div class="col text-right"></div>
+                        <div>Valor: ${{ pedido['precio_pedido'] }}</div>
+                        <div>Cantidad: {{ pedido['cantidad_total'] }}</div>
+                    {% endfor %}
+                </div>
+                <div class="row" style="border-top: 1px solid rgba(0,0,0,.1); padding: 2vh 0;">
+                    <div class="col">Descuento aplicado:</div>
+                    <div class="col text-right">{{ descuento}}%</div> <!-- Mostrar el descuento en porcentaje -->
+                </div>
+                <div class="row" style="border-top: 1px solid rgba(0,0,0,.1); padding: 2vh 0;">
+                    <div class="col">TOTAL DE SU COMPRA:</div>
+                    <!-- Calcular el monto total con descuento -->
+                    <div class="col text-right">${{ pedidos|sum(attribute='precio_total') * (1 - descuento) }}</div>
+                </div>
+                <form action="{{ url_for('routes.webpay_plus_create') }}" method="POST">
+                    <input type="hidden" name="buy_order" value="{{ buy_order }}">
+                    <input type="hidden" name="session_id" value="{{ session_id }}">
+                    <!-- Pasar el monto total con descuento -->
+                    <input type="hidden" name="amount" value="{{ pedidos|sum(attribute='precio_total') * (1 - descuento) }}">
+                    <button class="btn">IR A PAGAR</button>
+                </form>
             </div>
-  
-            <div class="seccion-metodos-de-pago">
-              <h2>Métodos de pago</h2>
-              <p>Débito</p>
-              <p>Crédito</p>
-              <p>Transferencia</p>
-            </div>
-  
-            <div class="footer-webpay">
-              <figure><img src="{{ url_for ('static', filename='imagenes/marcas/webpay.png') }}" alt=""></figure>
-            </div>
+        </div>
+    </div>
+    
+
+    </body>
+
+    <!-- FOOTER -->
+
+    <footer class="footer">
+      <div class="container">
+        <div class="secciones-footer"> 
+
+          <div class="seccion-contactos">
+            <strong><h2>Contactanos</h2></strong>
+            <a href="https://maps.app.goo.gl/HwFHvTRBiNXT5yFv9"> <i class="bi bi-building-fill"></i> Antonio Varas 666, Providencia. </a>
+            <p> <i class="bi bi-envelope"></i> ferremas@gmail.com </p>
+            <p> <i class="bi bi-telephone-fill"></i> +56 2 23540400</p>
+          </div>
+
+          <div class="seccion-rrss">
+            <h2>Redes sociales</h2>
+            <a href="" > <i class="bi bi-facebook"></i> Facebook</a>
+            <a href="" > <i class="bi bi-instagram"></i> Instagram</a>
+            <a href="" > <i class="bi bi-youtube"></i> Youtube</a>
+          </div>
+
+          <div class="seccion-metodos-de-pago">
+            <h2>Métodos de pago</h2>
+            <p>Débito</p>
+            <p>Crédito</p>
+            <p>Transferencia</p>
+          </div>
+
+          <div class="footer-webpay">
+            <figure><img src="{{ url_for ('static', filename='imagenes/marcas/webpay.png') }}" alt=""></figure>
           </div>
         </div>
-  
-        </div>
-        <div class="copyright">
-          <p>Copyright &copy; 2024 Ferremas</p>
-        </div>
-      </footer>
-  </html>
+      </div>
+
+      </div>
+      <div class="copyright">
+        <p>Copyright &copy; 2024 Ferremas</p>
+      </div>
+    </footer>
+</html>
