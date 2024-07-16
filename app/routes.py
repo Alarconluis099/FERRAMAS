@@ -1,19 +1,19 @@
-from flask import flash, Blueprint, request, jsonify, render_template, redirect, url_for, session
+from flask import flash, request, Blueprint, jsonify, render_template, redirect, url_for, session
 from app import app
 from .models import fetch_all_tools, fetch_tools_by_code, insert_tools, delete_tools, update_tools, get_all_users, fetch_users_by_id, fetch_all_pedidos_ready, fetch_pedido_by_id, get_usuario_by_usuario, fetch_all_pedido
 from . import mysql
 import random
 
 
+bp = Blueprint('bp', __name__)
 
-
-@app.route('/pedido', methods=['GET'])
+@bp.route('/pedido', methods=['GET'])
 def ver_pedido():
     pedido = fetch_all_pedido()
     return jsonify(pedido)
 
 
-@app.route('/disminuir_cantidad/<int:id_pedido>', methods=['POST'])
+@bp.route('/disminuir_cantidad/<int:id_pedido>', methods=['POST'])
 def disminuir_cantidad(id_pedido):
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT cantidad FROM pedido WHERE id_pedido = %s", (id_pedido,))
@@ -37,7 +37,7 @@ def disminuir_cantidad(id_pedido):
 
 
 
-@app.route('/aumentar_cantidad/<int:product_id>', methods=['POST'])
+@bp.route('/aumentar_cantidad/<int:product_id>', methods=['POST'])
 def aumentar_cantidad(product_id):
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT cantidad FROM pedido WHERE id_pedido = %s", (product_id,))
@@ -60,7 +60,7 @@ def aumentar_cantidad(product_id):
     return redirect(url_for('carrito'))
 
 
-@app.route('/guardar_registro', methods=['POST'])
+@bp.route('/guardar_registro', methods=['POST'])
 def guardar_registro():
     usuario_usuario = request.form['usuario_usuario']
     usuario_correo = request.form['usuario_correo']
@@ -91,7 +91,7 @@ def guardar_registro():
 
 
 
-@app.route('/iniciar_sesion', methods=['POST', 'GET'])
+@bp.route('/iniciar_sesion', methods=['POST', 'GET'])
 def iniciar_sesion():
     if request.method == 'POST':
         usuario_correo = request.form.get('usuario_correo')
@@ -117,7 +117,7 @@ def iniciar_sesion():
             if descuento == 0:
                 pass
 
-            return redirect(url_for('inicio'))  # Redirige a la página de inicio después de iniciar sesión
+            return render_template('inicio')  # Redirige a la página de inicio después de iniciar sesión
         else:
             flash('Correo y/o contraseña inválidos.', 'error')
             return redirect(url_for('iniciar_sesion'))
@@ -127,7 +127,7 @@ def iniciar_sesion():
 
     
 
-@app.route('/guardar_pedido', methods=['POST'])
+@bp.route('/guardar_pedido', methods=['POST'])
 def guardar_pedido():
     product_id = request.form['product_id']
     product_name = request.form['product_name']
@@ -154,21 +154,21 @@ def guardar_pedido():
         )
     mysql.connection.commit()
     cursor.close()
-    return redirect(url_for('inicio'))
+    return render_template('inicio')
 
 
 
-@app.route('/Pedido', methods=['GET'])
+@bp.route('/Pedido', methods=['GET'])
 def pedido():
     pedido = fetch_all_pedidos_ready()
     return jsonify(pedido)
 
-@app.route('/users', methods=['GET'])
+@bp.route('/users', methods=['GET'])
 def get_users():
     users = get_all_users()
     return jsonify(users)
 
-@app.route('/users', methods=['GET'])
+@bp.route('/users', methods=['GET'])
 def get_users_by_id():
     users = fetch_users_by_id()
     return jsonify(users)
@@ -179,26 +179,26 @@ def get_tools():
     return jsonify(tools)
 
 
-@app.route('/tools/<code>', methods=['GET'])
+@bp.route('/tools/<code>', methods=['GET'])
 def get_tool(code):
     tool = fetch_tools_by_code(code)
     return jsonify(tool)
 
 
-@app.route('/tool', methods=['POST'])
+@bp.route('/tool', methods=['POST'])
 def create_tools():
     tools_data = request.get_json()
     insert_tools(tools_data)
     return jsonify({'message': 'Herramienta creada exitosamente'}), 200
 
 
-@app.route('/pedido/<id_pedido>', methods=['GET'])
+@bp.route('/pedido/<id_pedido>', methods=['GET'])
 def get_pedido(id_pedido):
     pedido = fetch_pedido_by_id(id_pedido)
     return jsonify(pedido)
 
 
-@app.route('/tools/<id>', methods=['DELETE'])
+@bp.route('/tools/<id>', methods=['DELETE'])
 def delete_tool_route(id):
     try:
         eliminada = delete_tools(id)
@@ -211,7 +211,7 @@ def delete_tool_route(id):
         return jsonify({'Error': 'Error del servidor'}), 500
     
 
-@app.route('/tools/<id>', methods=['PUT'])
+@bp.route('/tools/<id>', methods=['PUT'])
 def update_tool_route(id):
     try:
         tools_data = request.json
@@ -224,11 +224,11 @@ def update_tool_route(id):
     except Exception:
         return jsonify({'Error': 'Error del servidor'}), 500
     
-@app.route('/')
+@bp.route('/')
 def main():
     return redirect(url_for('inicio'))
 
-@app.route('/Cliente')
+@bp.route('/Cliente')
 def cliente():
     usuario = session.get('usuario')
     if not usuario:
@@ -240,7 +240,7 @@ from decimal import Decimal
 import pdb
 
 
-@app.route('/Carrito')
+@bp.route('/Carrito')
 def carrito():
     usuario = session.get('usuario')
     pedidos = fetch_all_pedidos_ready() 
@@ -280,223 +280,93 @@ def carrito():
     )
 
 
-@app.route('/Inicio')
+@bp.route('/inicio')
 def inicio():
     usuario = session.get('usuario')
     tools = fetch_all_tools()
     return render_template('inicio.html', tools=tools, usuario=usuario)
 
-@app.route('/Login')
+@bp.route('/Login') 
 def login():
     user = get_all_users()
     return render_template('login.html', user=user)
 
-@app.route('/logout')
+@bp.route('/logout')
 def logout():
     # Eliminar la información de la sesión del usuario
     session.pop('usuario', None)
     # Redirigir al usuario a la página de inicio de sesión o página principal
-    return redirect(url_for('inicio'))
+    return render_template('inicio')
 
-@app.route('/Registro')
+@bp.route('/Registro')
 def registro():
     user = get_all_users()
     return render_template('registro.html', user=user)
 
-@app.route('/Equipos_medicion')
+@bp.route('/Equipos_medicion')
 def equipos_medicion():
     usuario=session.get('usuarios') 
     return render_template('equipos-medicion.html',usuario=usuario)  
     
 
-@app.route('/Equipos_seguridad')
+@bp.route('/Equipos_seguridad')
 def equipos_seguridad():
     usuario=session.get('usuarios')
     return render_template('equipos-seguridad.html',usuario=usuario)
 
-@app.route('/Fijaciones_adhesivos')
+@bp.route('/Fijaciones_adhesivos')
 def fijaciones_adhesivos():
     usuario=session.get('usuarios')
     return render_template('fijaciones-adhesivos.html',usuario=usuario)
 
-@app.route('/Herramientas_manuales')
+@bp.route('/Herramientas_manuales')
 def herramientas_manuales():
     usuario=session.get('usuarios')
     return render_template('herramientas-manuales.html',usuario=usuario)
 
-@app.route('/Materiales_basicos')
+@bp.route('/Materiales_basicos')
 def materiales_basicos():
     usuario=session.get('usuarios')
     return render_template('materiales-basicos.html',usuario=usuario)
 
-@app.route('/Tornillos_anclajes')
+@bp.route('/Tornillos_anclajes')
 def tornillos_anclajes():
     usuario=session.get('usuarios')
     return render_template('tornillos-anclajes.html',usuario=usuario)
 
 # Herramientas manuales - Subcategorias
 
-@app.route('/martillos')
+@bp.route('/martillos')
 def martillos():
     return render_template('HM-martillos.html')
 
-@app.route('/destornillador')
+@bp.route('/destornillador')
 def destornillador():
     return render_template('HM-destornillador.html')
 
-@app.route('/llaves')
+@bp.route('/llaves')
 def llaves():
     return render_template('HM-llaves.html')
 
-@app.route('/electricas')
+@bp.route('/electricas')
 def electricas():
     return render_template('HM-electricas.html')
 
-app.route('/taladros')
+bp.route('/taladros')
 def taladros():
     return render_template('HM-taladros.html')
 
-app.route('/sierras')
+bp.route('/sierras')
 def sierras():
     return render_template('HM-sierras.html')
 
-app.route('/lijadoras')
+bp.route('/lijadoras')
 def lijadoras():
     return render_template('HM-lijadoras.html')
 
-app.route('/materiales')
+bp.route('/materiales')
 def materiales():
     return render_template('HM-materiales.html')
-
-    
-# Rutas Transbank
-
-from transbank.webpay.webpay_plus.transaction import Transaction
-from transbank.error.transbank_error import TransbankError
-from transbank.webpay.webpay_plus.transaction import Transaction
-from transbank.webpay.webpay_plus.transaction import WebpayOptions
-from transbank.common.integration_type import IntegrationType
-from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
-from transbank.common.integration_api_keys import IntegrationApiKeys
-
-bp = Blueprint('routes', __name__)
-from decimal import Decimal
-
-from decimal import Decimal
-
-@bp.route("/create", methods=["POST"])
-def webpay_plus_create():
-    # Obtener datos de la compra
-    if 'usuario' not in session:
-        # El usuario no ha iniciado sesión, redirigir a la página de inicio de sesión
-        return redirect(url_for('iniciar_sesion'))
-    buy_order = str(random.randrange(1000000, 99999999))
-    session_id = str(random.randrange(1000000, 99999999))
-    amount = int(Decimal(request.form.get("amount")) )  # Convertir a entero y considerar dos decimales
-    return_url = 'http://localhost:5000/commit'
-
-    # Obtener el descuento del usuario si está logueado
-    descuento = Decimal(0)
-    if 'usuario' in session:
-        usuario = session['usuario']
-        cursor = mysql.connection.cursor()
-        cursor.execute(
-            "SELECT descuento FROM users WHERE usuario = %s",
-            (usuario,)
-        )
-        result = cursor.fetchone()
-        if result:
-            descuento = result[0]
-
-    # Aplicar el descuento al monto total y convertir a entero
-    total_con_descuento = int(Decimal(amount))
-
-    # Crear la transacción con Transbank
-    tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
-    response = tx.create(buy_order, session_id, total_con_descuento, return_url)
-
-    # Después de crear la transacción, actualiza el descuento a 0
-    if 'usuario' in session:
-        cursor = mysql.connection.cursor()
-        cursor.execute(
-            "UPDATE users SET descuento = %s WHERE usuario = %s",
-            (0, usuario)
-        )
-        mysql.connection.commit()
-
-    # Renderizar ruta de destino
-    return redirect(response['url'] + '?token_ws=' + response['token'])
-
-@bp.route("/commit", methods=["GET", "POST"])
-def webpay_plus_commit():
-    token = request.args.get("token_ws")
-    tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
-    response = tx.commit(token)
-
-    print("commit for token_ws: {}".format(token))
-    print("response: {}".format(response))
-
-    # return render_template('tbk_commit.html', token=token, response=response)
-
-    if response['status'] == 'AUTHORIZED':
-        flash('PAGO EXITOSO', 'success')
-        return redirect(url_for('inicio'))
-    else:
-        flash('PAGO FALLIDO', 'error')
-        return redirect(url_for('inicio'))
-    
-
-@bp.route('/callback', methods=['POST'])
-def callback():
-    token_ws = request.form.get('token_ws')
-    response = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST)).commit(token_ws)
-
-    
-    if response['status'] == 'AUTHORIZED':
-        flash('PAGO EXITOSO')
-        return redirect(url_for('Inicio'))
-    else:
-        flash('PAGO FALLIDO')
-        return redirect(url_for('Inicio'))
-
-
-
-
-
-@bp.route("/refund", methods=["POST"])
-def webpay_plus_refund():
-    token = request.form.get("token_ws")
-    amount = request.form.get("amount")
-    tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
-    response = tx.refund(token, amount)
-    print("refund for token_ws: {} by amount: {}".format(token, amount))
-
-    try:
-        response = Transaction.refund(token, amount)
-        print("response: {}".format(response))
-
-        return render_template("tbk_refund.html", token=token, amount=amount, response=response)
-    except TransbankError as e:
-        print(e.message)
-        return jsonify({"error": e.message}), 400
-    
-
-    
-
-@bp.route("/refund-form", methods=["GET"])
-def webpay_plus_refund_form():
-    return render_template("tbk_refund-form.html")
-
-@bp.route('/status-form', methods=['GET'])
-def show_create():
-    return render_template('tbk_status-form.html')
-
-@bp.route('/status', methods=['POST'])
-def status():
-    token_ws = request.form.get('token_ws')
-    tx = Transaction()
-    resp = tx.status(token_ws)
-    return render_template('tbk_status.html', response=resp, token=token_ws, req=request.form)
 
 
 def error_page(error):
