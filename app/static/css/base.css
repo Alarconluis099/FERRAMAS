@@ -249,3 +249,15 @@ main.main-content {
 .footer-list {
     padding: 0;
 }
+
+/* --- Top search pill --- */
+.top-search { position:relative; display:flex; align-items:center; width:100%; background:#ffffff; border-radius:40px; padding:4px 14px 4px 18px; box-shadow:0 2px 6px rgba(0,0,0,.12); border:1px solid rgba(255,255,255,.4); transition:box-shadow .25s, transform .15s; }
+.top-search:focus-within { box-shadow:0 4px 14px rgba(0,0,0,.18); }
+.top-search input { flex:1; border:none; background:transparent; outline:none; font-size:.9rem; padding:6px 8px; color:#111; }
+.top-search input::placeholder { color:#888; letter-spacing:.3px; }
+.top-search button { background:transparent; border:none; color:#0d48a1; font-size:1.05rem; display:flex; align-items:center; justify-content:center; padding:4px 6px; cursor:pointer; border-left:1px solid #e3e3e3; margin-left:6px; }
+.top-search button:hover { color:#083779; }
+.dark-theme .top-search { background:#1c1f26; border-color:#2c313a; }
+.dark-theme .top-search input { color:#f2f2f2; }
+.dark-theme .top-search input::placeholder { color:#aaa; }
+.dark-theme .top-search button { border-left:1px solid #333; color:#5da0ff; }

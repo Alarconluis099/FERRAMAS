@@ -6,6 +6,7 @@ from .models import (
     fetch_all_tools,
     fetch_tools_by_code,
     fetch_tools_filtered,
+    fetch_tool_suggestions,
     insert_tools,
     delete_tools,
     update_tools,
@@ -189,87 +190,83 @@ def guardar_registro():
 
 @bp.route('/iniciar_sesion', methods=['POST', 'GET'])
 def iniciar_sesion():
+    """Permite iniciar sesión usando correo (@gmail.com) o nombre de usuario.
+    Mantiene compatibilidad con contraseñas legacy en texto plano (se migran a hash al primer login)."""
     if request.method == 'POST':
-        usuario_correo = request.form.get('usuario_correo')
-        usuario_contraseña = request.form.get('usuario_contraseña')
+        user_input = (request.form.get('usuario_correo') or '').strip()  # campo compartido (correo o usuario)
+        password = request.form.get('usuario_contraseña') or ''
 
-        if not usuario_correo or not usuario_contraseña:
-            flash('Por favor, ingrese tanto el correo como la contraseña.', 'error')
+        if not user_input or not password:
+            flash('Ingresa tu correo/usuario y la contraseña.', 'error')
             return redirect(url_for('bp.iniciar_sesion'))
 
-        # Validación formato gmail
-        correo_normalizado = usuario_correo.strip().lower()
         import re
-        if not re.match(r'^[A-Za-z0-9._%+-]+@gmail\.com$', correo_normalizado):
-            flash('El correo debe ser un correo @gmail.com válido.', 'error')
-            return redirect(url_for('bp.iniciar_sesion'))
+        es_correo = re.match(r'^[A-Za-z0-9._%+-]+@gmail\.com$', user_input.lower()) is not None
 
         cursor = mysql.connection.cursor()
         try:
-            cursor.execute(
-                "SELECT id_user, usuario, contraseña, COALESCE(descuento_porcentaje,0), COALESCE(role,'') FROM users WHERE correo = %s",
-                (correo_normalizado,)
-            )
-            result = cursor.fetchone()
-            role_indexed = True
-        except Exception as e:
-            # Fallback si aún no existe la columna 'role'
-            if 'Unknown column' in str(e) and "'role'" in str(e):
-                cursor.execute(
-                    "SELECT id_user, usuario, contraseña, COALESCE(descuento_porcentaje,0) FROM users WHERE correo = %s",
-                    (correo_normalizado,)
-                )
-                row = cursor.fetchone()
-                if row:
-                    # Simular tupla con role vacío
-                    result = (*row, '')
+            if es_correo:
+                # Buscar por correo
+                try:
+                    cursor.execute("SELECT id_user, usuario, contraseña, COALESCE(descuento_porcentaje,0), COALESCE(role,'') FROM users WHERE correo=%s", (user_input.lower(),))
+                    result = cursor.fetchone()
+                except Exception as e:
+                    if 'Unknown column' in str(e) and "'role'" in str(e):
+                        cursor.execute("SELECT id_user, usuario, contraseña, COALESCE(descuento_porcentaje,0) FROM users WHERE correo=%s", (user_input.lower(),))
+                        row = cursor.fetchone()
+                        result = (*row, '') if row else None
+                    else:
+                        cursor.close(); flash('Error en autenticación.', 'error'); return redirect(url_for('bp.iniciar_sesion'))
+            else:
+                # Buscar por nombre de usuario
+                try:
+                    cursor.execute("SELECT id_user, usuario, contraseña, COALESCE(descuento_porcentaje,0), COALESCE(role,'') FROM users WHERE usuario=%s", (user_input,))
+                    result = cursor.fetchone()
+                except Exception as e:
+                    if 'Unknown column' in str(e) and "'role'" in str(e):
+                        cursor.execute("SELECT id_user, usuario, contraseña, COALESCE(descuento_porcentaje,0) FROM users WHERE usuario=%s", (user_input,))
+                        row = cursor.fetchone()
+                        result = (*row, '') if row else None
+                    else:
+                        cursor.close(); flash('Error en autenticación.', 'error'); return redirect(url_for('bp.iniciar_sesion'))
+
+            if not result:
+                cursor.close(); flash('Credenciales inválidas.', 'error'); return redirect(url_for('bp.iniciar_sesion'))
+
+            usuario_id, usuario_nombre, stored_pass, descuento_pct, role = result
+            is_hashed = stored_pass.startswith('pbkdf2:') or stored_pass.startswith('scrypt:')
+            try:
+                if is_hashed:
+                    valid = check_password_hash(stored_pass, password)
                 else:
-                    result = None
-                role_indexed = False
-            else:
-                cursor.close()
-                flash('Error en autenticación.', 'error')
-                return redirect(url_for('bp.iniciar_sesion'))
-        if not result:
+                    valid = (stored_pass == password)
+                    if valid:
+                        try:
+                            new_hash = generate_password_hash(password)
+                            up = mysql.connection.cursor(); up.execute("UPDATE users SET contraseña=%s WHERE id_user=%s", (new_hash, usuario_id)); mysql.connection.commit(); up.close()
+                        except Exception:
+                            mysql.connection.rollback()
+            except Exception:
+                valid = False
             cursor.close()
-            flash('Correo y/o contraseña inválidos.', 'error')
-            return redirect(url_for('bp.iniciar_sesion'))
-
-        usuario_id, usuario_nombre, stored_pass, descuento_pct, role = result
-
-        # Detección de hash (formatos Werkzeug comienzan con 'pbkdf2:' o similares)
-        is_hashed = stored_pass.startswith('pbkdf2:') or stored_pass.startswith('scrypt:')
-        valid = False
-        try:
-            if is_hashed:
-                valid = check_password_hash(stored_pass, usuario_contraseña)
+            if not valid:
+                flash('Credenciales inválidas.', 'error')
+                return redirect(url_for('bp.iniciar_sesion'))
+            from datetime import timedelta
+            session['usuario'] = usuario_nombre
+            remember = request.form.get('remember_me') == '1'
+            if remember:
+                session.permanent = True
+                # Extiende a 30 días sólo para esta sesión; mantiene config global para otras.
+                app.permanent_session_lifetime = timedelta(days=30)
             else:
-                # Legacy plaintext: comparar directo y luego migrar a hash
-                valid = (stored_pass == usuario_contraseña)
-                if valid:
-                    try:
-                        new_hash = generate_password_hash(usuario_contraseña)
-                        up = mysql.connection.cursor()
-                        up.execute("UPDATE users SET contraseña=%s WHERE id_user=%s", (new_hash, usuario_id))
-                        mysql.connection.commit()
-                        up.close()
-                    except Exception:
-                        mysql.connection.rollback()
+                session.permanent = False
+            return redirect(url_for('bp.inicio'))
         except Exception:
-            valid = False
-
-        cursor.close()
-        if not valid:
-            flash('Correo y/o contraseña inválidos.', 'error')
+            try: cursor.close()
+            except Exception: pass
+            flash('Error en autenticación.', 'error')
             return redirect(url_for('bp.iniciar_sesion'))
-
-    # Auto-promoción desactivada para evitar logins inesperados como admin tras flujos externos.
-    # if usuario_nombre == 'admin' and role != 'admin': ...
-        session['usuario'] = usuario_nombre
-        session.permanent = True
-        # descuento_pct se mantiene para lógica futura; ya disponible en variable
-        return redirect(url_for('bp.inicio'))
-
     return render_template('login.html')
 
 
@@ -441,8 +438,13 @@ def carrito():
 @bp.route('/inicio')
 def inicio():
     usuario = session.get('usuario')
-    # Paginación tradicional con control de "items por página".
+    # Paginación + búsqueda inicial (solo para primer render; navegación usa API)
     all_tools = fetch_all_tools()
+    query = (request.args.get('q') or '').strip()
+    if query:
+        q_lower = query.lower()
+        # Filtrado simple en memoria para SSR inicial
+        all_tools = [t for t in all_tools if q_lower in (t.get('name','').lower()) or q_lower in (t.get('description','') or '').lower()]
     total = len(all_tools)
     # Leer per_page desde query (fallback 12) y sanitizar
     try:
@@ -465,6 +467,7 @@ def inicio():
         allowed_per_page=allowed_opts,
         has_more=has_more,
         usuario=usuario,
+        search_query=query,
         cart_count=_get_cart_count()
     )
 
@@ -491,6 +494,14 @@ def api_tools_paginated():
     items, total = fetch_tools_filtered(page=page, per_page=per_page, q=q, precio_min=precio_min, precio_max=precio_max, order=order)
     has_more = page * per_page < total
     return jsonify({'ok':True,'page':page,'per_page':per_page,'total':total,'has_more':has_more,'items':items})
+
+@bp.route('/api/tool_suggestions')
+def api_tool_suggestions():
+    q = (request.args.get('q') or '').strip()
+    if not q:
+        return jsonify({'ok':True,'items':[]})
+    suggestions = fetch_tool_suggestions(q)
+    return jsonify({'ok':True,'items':suggestions})
 
 @bp.route('/admin')
 @admin_required

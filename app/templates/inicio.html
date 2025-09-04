@@ -9,17 +9,23 @@
   <!--Productos en promocion--> <!--Slide de imagenes-->
   <section class="seccion-promociones">
     <div id="carouselE" class="carousel slide" data-bs-ride="carousel">
+      {% set banners = [
+        ('Imagenes/Marcas/banner-herramientas-manuales.png','Herramientas manuales'),
+        ('Imagenes/Marcas/banner-equipos-seguridad.png','Equipos de seguridad'),
+        ('Imagenes/Marcas/banner-equipos-medicion.png','Equipos de medición'),
+        ('Imagenes/Marcas/banner-fijaciones-adhesivos.png','Fijaciones y adhesivos')
+      ] %}
       <div class="carousel-indicators">
-        <button type="button" data-bs-target="#carouselE" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-        <button type="button" data-bs-target="#carouselE" data-bs-slide-to="1" aria-current="active" aria-label="Slide 2"></button>
+        {% for b in banners %}
+          <button type="button" data-bs-target="#carouselE" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" {% if loop.first %}aria-current="true"{% endif %} aria-label="Slide {{ loop.index }}"></button>
+        {% endfor %}
       </div>
       <div class="carousel-inner">
-        <div class="carousel-item active">
-          <img src="{{ url_for('static', filename='imagenes/marcas/FERREMAS - BANNER INICIO.png') }}" class="d-block w-100" alt="">
-        </div>
-        <div class="carousel-item">
-          <img src="{{ url_for('static', filename='imagenes/marcas/banner-seguridad.png') }}" class="d-block w-100" alt="">
-        </div>
+        {% for path, alt in banners %}
+          <div class="carousel-item {% if loop.first %}active{% endif %}">
+            <img src="{{ url_for('static', filename=path) }}" class="banner-img" alt="Banner {{ alt }}" loading="lazy">
+          </div>
+        {% endfor %}
       </div>
       <button class="carousel-control-prev" type="button" data-bs-target="#carouselE" data-bs-slide="prev">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -41,7 +47,7 @@
       <form id="filter-form" onsubmit="return false;" style="display:flex;flex-direction:column;gap:.75rem;">
         <div>
           <label style="font-weight:600;font-size:.7rem;letter-spacing:.5px;">Palabras clave</label>
-          <input type="text" id="f-q" class="form-control form-control-sm" placeholder="Buscar..." style="font-size:.75rem;">
+          <input type="text" id="f-q" class="form-control form-control-sm" placeholder="Buscar..." style="font-size:.75rem;" value="{{ search_query|default('') }}">
         </div>
         <div>
           <label style="font-weight:600;font-size:.7rem;">Precio mínimo</label>
@@ -95,11 +101,19 @@
           <div class="producto" data-tool-id="{{ tool.id_tool }}">
             {# Selección de imagen básica por id; ajustar según tus assets #}
             {% set img_map = {
-              100: 'imagenes/marcas/martillo.jpg',
-              110: 'imagenes/Herramientas manuales/destornillador.png'
+              100: 'Imagenes/Herramientas manuales/martillo.png',
+              110: 'Imagenes/Herramientas manuales/destornillador.png',
+              120: 'Imagenes/Herramientas manuales/llave.png',
+              130: 'Imagenes/Herramientas manuales/taladro.png',
+              140: 'Imagenes/Herramientas manuales/sierra.png',
+              200: 'Imagenes/Equipos de medicion/laser.png',
+              210: 'Imagenes/Equipos de medicion/distancia.png',
+              300: 'Imagenes/Equipos de seguridad/casco.png',
+              310: 'Imagenes/Equipos de seguridad/guantes.png',
+              320: 'Imagenes/Equipos de seguridad/lentes.png'
             } %}
-            {% set img_src = img_map.get(tool.id_tool, 'Imagenes/Marcas/ferremas.png') %}
-            <img src="{{ url_for('static', filename=img_src) }}" alt="{{ tool.name }}">
+            {% set img_src = img_map.get(tool.id_tool, 'Imagenes/Marcas/220px-Stanley_Hand_Tools_logo.png') %}
+            <img src="{{ url_for('static', filename=img_src) }}" alt="{{ tool.name }}" class="tool-img" data-fallback="{{ url_for('static', filename='Imagenes/Marcas/220px-Stanley_Hand_Tools_logo.png') }}">
             <h3 title="{{ tool.name }}">{{ tool.name }}</h3>
             <p>{{ tool.description or 'Sin descripción' }}</p>
             <div class="precio">$ {{ tool.precio }}</div>
@@ -132,10 +146,10 @@
   <section class="seccion-marcas">
     <h2>Marcas asociadas</h2>
     <div class="contenedor-marcas">
-      <img src="{{ url_for('static', filename='Imagenes/Marcas/Bosch-logo.png') }}" alt="Bosch">
-      <img src="{{ url_for('static', filename='Imagenes/Marcas/250px-Makita_Logo.png') }}" alt="Makita">
-      <img src="{{ url_for('static', filename='Imagenes/Marcas/220px-Stanley_Hand_Tools_logo.png') }}" alt="Stanley">
-      <img src="{{ url_for('static', filename='Imagenes/Marcas/Logo_Sika_AG.png') }}" alt="Sika">
+  <img src="{{ url_for('static', filename='Imagenes/Marcas/Bosch-logo.png') }}" alt="Bosch" onerror="this.style.display='none'">
+  <img src="{{ url_for('static', filename='Imagenes/Marcas/250px-Makita_Logo.png') }}" alt="Makita" onerror="this.style.display='none'">
+  <img src="{{ url_for('static', filename='Imagenes/Marcas/220px-Stanley_Hand_Tools_logo.png') }}" alt="Stanley" onerror="this.style.display='none'">
+  <img src="{{ url_for('static', filename='Imagenes/Marcas/Logo_Sika_AG.png') }}" alt="Sika" onerror="this.style.display='none'">
     </div>
   </section>
 
@@ -175,7 +189,17 @@ function bindAddToCart(root=document){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
+  // Asignar fallback a imágenes renderizadas inicialmente
+  document.querySelectorAll('img.tool-img').forEach(img=>{
+    img.addEventListener('error',()=>{
+      if(!img.dataset._fallbackApplied){
+        img.dataset._fallbackApplied='1';
+        img.src = img.getAttribute('data-fallback');
+      }
+    });
+  });
   bindAddToCart();
+  const STATIC_BASE = "{{ url_for('static', filename='') }}"; // ends with '/static/'
   const grid=document.getElementById('productos-grid');
   const total=parseInt(grid.dataset.total,10)||0;
   let perPage=parseInt(grid.dataset.perPage,10)||12;
@@ -219,8 +243,19 @@ document.addEventListener('DOMContentLoaded',()=>{
       const div=document.createElement('div');
       div.className='producto';
       div.setAttribute('data-tool-id', tool.id_tool);
-      const imgSrc='Imagenes/Marcas/ferremas.png';
-      div.innerHTML=`<img src='${imgSrc}' alt='${tool.name}'>
+  const fallback='Imagenes/Marcas/220px-Stanley_Hand_Tools_logo.png';
+  // Intento de inferir categoría simple según nombre
+  const lower=(tool.name||'').toLowerCase();
+  let inferred=fallback;
+  if(/martillo/.test(lower)) inferred='Imagenes/Herramientas manuales/martillo.png';
+  else if(/destorn/.test(lower)) inferred='Imagenes/Herramientas manuales/destornillador.png';
+  else if(/taladro/.test(lower)) inferred='Imagenes/Herramientas manuales/taladro.png';
+  else if(/sierra/.test(lower)) inferred='Imagenes/Herramientas manuales/sierra.png';
+  else if(/nivel|laser/.test(lower)) inferred='Imagenes/Equipos de medicion/laser.png';
+  else if(/casco/.test(lower)) inferred='Imagenes/Equipos de seguridad/casco.png';
+  else if(/guante/.test(lower)) inferred='Imagenes/Equipos de seguridad/guantes.png';
+  else if(/lente/.test(lower)) inferred='Imagenes/Equipos de seguridad/lentes.png';
+  div.innerHTML=`<img src='${STATIC_BASE + inferred}' alt='${tool.name}' onerror="this.onerror=null;this.src='${STATIC_BASE + fallback}'">
         <h3 title='${tool.name}'>${tool.name}</h3>
         <p>${tool.description || 'Sin descripción'}</p>
         <div class='precio'>$ ${tool.precio}</div>

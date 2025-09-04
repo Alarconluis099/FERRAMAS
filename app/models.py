@@ -103,6 +103,23 @@ def fetch_tools_filtered(page=1, per_page=12, q=None, precio_min=None, precio_ma
     finally:
         cursor.close()
 
+def fetch_tool_suggestions(q, limit=8):
+    """Return lightweight suggestions (id_tool, name, precio) for autocomplete."""
+    if not q:
+        return []
+    like = f"%{q}%"
+    cursor = mysql.connection.cursor(DictCursor)
+    try:
+        cursor.execute(
+            "SELECT id_tool, name, precio FROM tools WHERE name LIKE %s OR description LIKE %s ORDER BY name ASC LIMIT %s",
+            (like, like, limit)
+        )
+        return cursor.fetchall()
+    except Exception:
+        return []
+    finally:
+        cursor.close()
+
 def fetch_pedido_by_id(code):  # legacy placeholder
     return None
 

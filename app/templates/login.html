@@ -16,14 +16,18 @@
     {% endwith %}
     <form method="POST" action="{{ url_for('bp.iniciar_sesion') }}" data-validate novalidate>
       <div class="form-group">
-        <label for="login-correo">Correo electrónico</label>
-        <input id="login-correo" class="auth-input" type="email" name="usuario_correo" autocomplete="email" placeholder="tuusuario@gmail.com" required>
+        <label for="login-correo">Correo o Usuario</label>
+        <input id="login-correo" class="auth-input" type="text" name="usuario_correo" autocomplete="username" placeholder="usuario o correo@gmail.com" required>
         <div class="error-text" data-error-for="usuario_correo" aria-live="polite"></div>
       </div>
       <div class="form-group">
         <label for="login-pass">Contraseña</label>
         <input id="login-pass" class="auth-input" type="password" name="usuario_contraseña" autocomplete="current-password" placeholder="••••••••" required>
         <div class="error-text" data-error-for="usuario_contraseña" aria-live="polite"></div>
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+        <input type="checkbox" id="remember-me" name="remember_me" value="1" style="width:16px;height:16px;cursor:pointer;">
+        <label for="remember-me" style="margin:0;font-weight:500;font-size:.75rem;letter-spacing:.5px;cursor:pointer;">Recuérdame</label>
       </div>
       <button type="submit" class="btn-auth w-100">Ingresar</button>
     </form>
@@ -38,7 +42,7 @@
   const form = document.querySelector('form[data-validate]');
   if(!form) return;
   const rules = {
-    usuario_correo: v => { if(!v) return 'El correo es obligatorio'; const r=/^[A-Za-z0-9._%+-]+@gmail\.com$/; if(!r.test(v)) return 'Debe ser un correo @gmail.com';},
+    usuario_correo: v => { if(!v) return 'Campo obligatorio'; const email=/^[A-Za-z0-9._%+-]+@gmail\.com$/; const user=/^[A-Za-z0-9._-]{3,}$/; if(!(email.test(v)||user.test(v))) return 'Ingresa correo @gmail.com o usuario válido (>=3)';},
     usuario_contraseña: v => { if(!v) return 'La contraseña es obligatoria'; if(v.length < 8) return 'Mínimo 8 caracteres'; }
   };
   function setError(input,msg){ const box=form.querySelector('.error-text[data-error-for="'+input.name+'"]'); if(!box) return; if(msg){ input.classList.add('error'); box.textContent=msg; box.classList.add('active'); } else { input.classList.remove('error'); box.textContent=''; box.classList.remove('active'); } }
