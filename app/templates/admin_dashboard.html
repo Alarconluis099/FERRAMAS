@@ -335,7 +335,7 @@
                 <input class="form-control form-control-sm" name="stock" type="number" min="0" value="0" required>
             </div>
             <div class="field field-submit">
-                <label class="form-label d-none d-md-block" style="visibility:hidden">Enviar</label>
+                <label class="form-label d-none d-md-block label-hidden">Enviar</label>
                 <button class="btn-create w-100" type="submit">Crear</button>
             </div>
         </form>
@@ -363,7 +363,7 @@
                                 class="badge badge-ok">OK</span>{% endif %}</td>
                     <td class="text-end">
                         <details>
-                            <summary class="action-btn secondary" style="display:inline-block">Editar</summary>
+                            <summary class="action-btn secondary inline">Editar</summary>
                             <form class="mt-2 text-start" method="POST"
                                 action="{{ url_for('bp.admin_update_product', tool_id=t.id_tool) }}">
                                 <input type="hidden" name="_action" value="update">

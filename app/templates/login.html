@@ -25,9 +25,9 @@
         <input id="login-pass" class="auth-input" type="password" name="usuario_contraseña" autocomplete="current-password" placeholder="••••••••" required>
         <div class="error-text" data-error-for="usuario_contraseña" aria-live="polite"></div>
       </div>
-      <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-        <input type="checkbox" id="remember-me" name="remember_me" value="1" style="width:16px;height:16px;cursor:pointer;">
-        <label for="remember-me" style="margin:0;font-weight:500;font-size:.75rem;letter-spacing:.5px;cursor:pointer;">Recuérdame</label>
+        <div class="form-group remember-group">
+          <input type="checkbox" id="remember-me" name="remember_me" value="1" class="remember-checkbox">
+          <label for="remember-me" class="remember-label">Recuérdame por 30 días</label>
       </div>
       <button type="submit" class="btn-auth w-100">Ingresar</button>
     </form>
