@@ -1,5 +1,7 @@
 from app import mysql
 from flask import current_app
+import MySQLdb
+from MySQLdb.cursors import DictCursor
 
 def fetch_all_pedido():
     cursor = mysql.connection.cursor()
@@ -7,7 +9,6 @@ def fetch_all_pedido():
         cursor.execute("SELECT id_pedido, nom_pedido, desc_pedido, precio_pedido, cantidad, id_user FROM pedido")
         rows = cursor.fetchall()
         columns = [column[0] for column in cursor.description]
-        unique_ids = set()
         data = [dict(zip(columns, row)) for row in rows]
         return data
     except Exception as e:
@@ -19,12 +20,17 @@ def fetch_all_pedido():
 def fetch_all_pedidos_ready():
     cursor = mysql.connection.cursor()
     try:
+        # Use aggregate functions on non-grouped columns for compatibility with ONLY_FULL_GROUP_BY
         cursor.execute("""
-            SELECT id_pedido, nom_pedido, desc_pedido, precio_pedido,
-                   SUM(precio_pedido * cantidad) AS precio_total, 
-                   SUM(cantidad) AS cantidad_total
+            SELECT 
+                id_pedido,
+                MIN(nom_pedido)       AS nom_pedido,
+                MIN(desc_pedido)      AS desc_pedido,
+                MIN(precio_pedido)    AS precio_pedido,
+                SUM(precio_pedido * cantidad) AS precio_total,
+                SUM(cantidad)         AS cantidad_total
             FROM pedido
-            GROUP BY id_pedido 
+            GROUP BY id_pedido
         """)
         rows = cursor.fetchall()
         columns = [column[0] for column in cursor.description]
@@ -38,22 +44,13 @@ def fetch_all_pedidos_ready():
         cursor.close()
 
 def fetch_all_tools():
+    """Return all tools (schema sin id_tools_type)."""
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("SELECT DISTINCT id_tool, id_tools_type, name, description, stock, precio FROM tools")
+        cursor.execute("SELECT id_tool, name, description, stock, precio FROM tools")
         rows = cursor.fetchall()
         columns = [column[0] for column in cursor.description]
-
-        # Crear un conjunto para almacenar IDs únicos
-        unique_ids = set()
-        data = []
-        for row in rows:
-            tool_id = row[0]  # Obtener el ID de la herramienta
-            if tool_id not in unique_ids:  # Verificar si el ID ya está en el conjunto
-                unique_ids.add(tool_id)
-                data.append(dict(zip(columns, row)))  # Agregar solo si es único
-
-        return data
+        return [dict(zip(columns, row)) for row in rows]
     except Exception as e:
         current_app.logger.error(f"Error fetching tools: {e}")
         return []
@@ -63,7 +60,7 @@ def fetch_all_tools():
 def fetch_pedido_by_id(code):
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute(f"SELECT SUM(precio_pedido * cantidad) FROM pedido WHERE id_pedido = {code}")
+        cursor.execute("SELECT SUM(precio_pedido * cantidad) AS total FROM pedido WHERE id_pedido = %s", (code,))
         data = cursor.fetchone()
         return data
     except Exception as e:
@@ -75,11 +72,11 @@ def fetch_pedido_by_id(code):
 def fetch_tools_by_code(code):
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("SELECT * FROM tools WHERE code=%s", (code,))
+        cursor.execute("SELECT * FROM tools WHERE id_tool=%s", (code,))
         data = cursor.fetchone()
         return data
     except Exception as e:
-        current_app.logger.error(f"Error fetching tool by code {code}: {e}")
+        current_app.logger.error(f"Error fetching tool by id_tool {code}: {e}")
         return None
     finally:
         cursor.close()
@@ -87,8 +84,16 @@ def fetch_tools_by_code(code):
 def insert_tools(tools_data):
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("INSERT INTO tools (id, id_tools_type, name, description, stock) VALUES (%s, %s, %s, %s, %s)",
-                       (tools_data['id'], tools_data['id_tools_type'], tools_data['name'], tools_data['description'], tools_data['stock']))
+        cursor.execute("""
+            INSERT INTO tools (id_tool, name, description, stock, precio)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (
+            tools_data['id_tool'],
+            tools_data['name'],
+            tools_data.get('description'),
+            tools_data.get('stock', 0),
+            tools_data.get('precio', 0)
+        ))
         mysql.connection.commit()
         return True
     except Exception as e:
@@ -99,35 +104,38 @@ def insert_tools(tools_data):
         cursor.close()
 
 
-def delete_tools(id):
+def delete_tools(id_tool):
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("DELETE FROM tools WHERE id=%s", (id,))
+        cursor.execute("DELETE FROM tools WHERE id_tool=%s", (id_tool,))
         mysql.connection.commit()
-        if cursor.rowcount > 0:
-            return True
-        else:
-            return False
+        return cursor.rowcount > 0
     except Exception as e:
         mysql.connection.rollback()
-        current_app.logger.error(f"Error deleting tool by code {id}: {e}")
+        current_app.logger.error(f"Error deleting tool by id_tool {id_tool}: {e}")
         return False
     finally:
         cursor.close()
 
 
-def update_tools(id, tools_data):
+def update_tools(id_tool, tools_data):
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute(""" UPDATE tools SET id_tools_type=%s, name=%s, description=%s, stock=%s WHERE id=%s
-                       """, (tools_data['id_tools_type'], tools_data['name'], tools_data['description'], tools_data['stock'], id))
+        cursor.execute("""
+            UPDATE tools
+            SET name=%s, description=%s, stock=%s, precio=%s
+            WHERE id_tool=%s
+        """, (
+            tools_data['name'],
+            tools_data.get('description'),
+            tools_data.get('stock', 0),
+            tools_data.get('precio', 0),
+            id_tool
+        ))
         mysql.connection.commit()
-        if cursor.rowcount > 0:
-            return True
-        else:
-            return False
+        return cursor.rowcount > 0
     except Exception as e:
-        current_app.logger.error(f"Error updating tool by id {id}: {e}")
+        current_app.logger.error(f"Error updating tool by id_tool {id_tool}: {e}")
         return False
     finally:
         cursor.close()
@@ -151,37 +159,32 @@ def get_all_users():
         cursor.close()
 
 
-def fetch_users_by_id(id_users):
+def fetch_users_by_id(id_user):
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("SELECT id_users, correo,  FROM users WHERE id_users = %s", (id_users,))  
+        cursor.execute("SELECT id_user, correo, usuario, descuento FROM users WHERE id_user = %s", (id_user,))  
         user_data = cursor.fetchone()
-
         if user_data:
             columns = [desc[0] for desc in cursor.description]
             return dict(zip(columns, user_data))
-        else:
-            return {} 
-    except mysql.connector.OperationalError as e:
-        current_app.logger.error(f"Error de base de datos al obtener usuario por ID {id_users}: {e}")
+        return {}
+    except Exception as e:
+        current_app.logger.error(f"Error de base de datos al obtener usuario por ID {id_user}: {e}")
         return {}
     finally:
         cursor.close()
 
 def get_usuario_by_usuario(usuario):
-    cursor = mysql.connection.cursor(dictionary=True)  # Para obtener resultados como diccionarios
+    """Return basic public info for a user (no password)."""
     try:
-        cursor.execute("SELECT correo, usuario FROM users WHERE usuario = %s", (usuario,))
-        usuario_data = cursor.fetchone()
-
-        # No incluimos la contraseña ni el hash de verificación en la respuesta
-        if usuario_data:
-            del usuario_data['contraseña'] 
-            del usuario_data['verificar_contraseña']
-
-        return usuario_data  
+        cursor = mysql.connection.cursor(DictCursor)
+        cursor.execute("SELECT correo, usuario, descuento FROM users WHERE usuario = %s", (usuario,))
+        return cursor.fetchone()
     except Exception as e:
         current_app.logger.error(f"Error de base de datos al obtener usuario: {e}")
-        return None  
+        return None
     finally:
-        cursor.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass

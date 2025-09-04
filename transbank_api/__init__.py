@@ -1,4 +1,3 @@
-from app import app
+"""Namespace package for Transbank related blueprints."""
 
-if __name__ == "__main__":
-    app.run(debug=True)
+from .transbank_services import bp_tbk  # re-export for convenience

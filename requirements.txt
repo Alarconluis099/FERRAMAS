@@ -1,0 +1,5 @@
+flask
+flask-mysqldb
+transbank-sdk
+flask-testing
+pytest

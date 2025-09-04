@@ -14,9 +14,7 @@
 
       <nav class="navbar is-warning" role="navigation" aria-label="main navigation">
         <div class="navbar-brand">
-          <a class="navbar-item" href="Inicio">
-            <img src="{{ url_for ('static', filename='Imagenes/Marcas/ferremas.png') }}" alt="">
-          </a>
+          <a class="navbar-item" href="{{ url_for('bp.inicio') }}"><img src="{{ url_for ('static', filename='Imagenes/Marcas/ferremas.png') }}" alt=""></a>
       
           <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
             <span aria-hidden="true"></span>
@@ -39,12 +37,8 @@
             </div>
             <div class="navbar-item">
               <div class="buttons">
-                <a href="Login" class="button is-light is-rounded">
-                  Ingresar
-                </a>
-                <a href="Carrito" class="button is-light is-rounded">
-                  <i class="bi bi-cart"></i>
-                </a>
+                <a href="{{ url_for('bp.login') }}" class="button is-light is-rounded">Ingresar</a>
+                <a href="{{ url_for('bp.carrito') }}" class="button is-light is-rounded"><i class="bi bi-cart"></i></a>
               </div>
             </div>
 
@@ -234,7 +228,7 @@
       <div class="login">
         <div class="form-background">
             <h1>Registrar</h1>
-            <form method="POST" action="{{ url_for('guardar_registro') }}">
+            <form method="POST" action="{{ url_for('bp.guardar_registro') }}">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
@@ -257,7 +251,7 @@
                 <input type="submit" value="Registrar" style="color: white;">
             </form>
             <p class="separador"></p>
-            <p class="text-center"> ¿Ya tienes cuenta? <a href="{{ url_for('iniciar_sesion') }}">PINCHA AQUI</a></p> 
+            <p class="text-center"> ¿Ya tienes cuenta? <a href="{{ url_for('bp.iniciar_sesion') }}">PINCHA AQUI</a></p> 
         </div>
     </div>
         
@@ -297,6 +291,12 @@
         </div>
       </div>
 
+      </div>
+      <div class="copyright">
+        <p>Copyright &copy; 2024 Ferremas</p>
+      </div>
+    </footer>
+</html>
       </div>
       <div class="copyright">
         <p>Copyright &copy; 2024 Ferremas</p>
