@@ -2,6 +2,7 @@ from app import mysql
 from flask import current_app
 import MySQLdb
 from MySQLdb.cursors import DictCursor
+from datetime import datetime, timedelta
 
 """Compatibilidad: funciones antiguas asociadas a la tabla 'pedido' (eliminada).
 Se mantienen como no-op / retornos vacíos para no romper imports existentes.
@@ -328,6 +329,111 @@ def insert_transaction(order_id, amount, metodo='Webpay Plus'):
     except Exception as e:
         mysql.connection.rollback()
         current_app.logger.error(f"Error registrando transaccion pedido {order_id}: {e}")
+        return False
+    finally:
+        cursor.close()
+
+# --- Admin / reporting helpers ---
+def fetch_all_orders():
+    """Return list of pedidos with computed totals and item counts."""
+    cursor = mysql.connection.cursor(DictCursor)
+    try:
+        cursor.execute("""
+            SELECT p.id_pedido, p.id_user, p.monto_total, p.estado_pedido, p.created_at,
+                   COALESCE(SUM(d.cantidad),0) AS total_items,
+                   COALESCE(SUM(d.cantidad*d.precio_unitario),0) AS subtotal_calc
+            FROM pedidos p
+            LEFT JOIN pedido_detalle d ON d.id_pedido = p.id_pedido
+            GROUP BY p.id_pedido
+            ORDER BY p.id_pedido DESC
+        """)
+        rows = cursor.fetchall()
+        # If monto_total is NULL or 0 but estado finalized, use subtotal_calc
+        for r in rows:
+            if (r.get('monto_total') is None or r.get('monto_total') == 0) and r.get('subtotal_calc'):
+                r['monto_total'] = r['subtotal_calc']
+        return rows
+    except Exception as e:
+        current_app.logger.error(f"Error fetching orders: {e}")
+        return []
+    finally:
+        cursor.close()
+
+def fetch_order_detail(order_id):
+    """Return header + items for one pedido."""
+    cur = mysql.connection.cursor(DictCursor)
+    try:
+        cur.execute("SELECT * FROM pedidos WHERE id_pedido=%s", (order_id,))
+        header = cur.fetchone()
+        cur.execute("""
+            SELECT d.id_detalle, d.id_tool, t.name, t.description, d.cantidad, d.precio_unitario,
+                   (d.cantidad*d.precio_unitario) AS subtotal_linea
+            FROM pedido_detalle d
+            JOIN tools t ON t.id_tool=d.id_tool
+            WHERE d.id_pedido=%s
+            ORDER BY d.id_detalle ASC
+        """, (order_id,))
+        items = cur.fetchall()
+        return header, items
+    except Exception as e:
+        current_app.logger.error(f"Error fetching order detail {order_id}: {e}")
+        return None, []
+    finally:
+        cur.close()
+
+def fetch_sales_metrics(days=7):
+    """Return aggregate sales metrics for the last N days (estado_pedido='enviado')."""
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("""
+            SELECT COALESCE(SUM(monto_total),0) AS total_monto,
+                   COUNT(*) AS total_orders
+            FROM pedidos
+            WHERE estado_pedido='enviado' AND created_at >= (NOW() - INTERVAL %s DAY)
+        """, (days,))
+        row = cursor.fetchone()
+        total_monto = row[0] if row else 0
+        total_orders = row[1] if row else 0
+        return {
+            'days': days,
+            'total_monto': total_monto,
+            'total_orders': total_orders
+        }
+    except Exception as e:
+        current_app.logger.error(f"Error metrics: {e}")
+        return {'days':days,'total_monto':0,'total_orders':0}
+    finally:
+        cursor.close()
+
+def fetch_top_products(limit=5, days=30):
+    cursor = mysql.connection.cursor(DictCursor)
+    try:
+        cursor.execute("""
+            SELECT d.id_tool, t.name, SUM(d.cantidad) AS unidades
+            FROM pedido_detalle d
+            JOIN pedidos p ON p.id_pedido=d.id_pedido
+            JOIN tools t ON t.id_tool=d.id_tool
+            WHERE p.estado_pedido='enviado' AND p.created_at >= (NOW() - INTERVAL %s DAY)
+            GROUP BY d.id_tool, t.name
+            ORDER BY unidades DESC
+            LIMIT %s
+        """, (days, limit))
+        return cursor.fetchall()
+    except Exception as e:
+        current_app.logger.error(f"Error top products: {e}")
+        return []
+    finally:
+        cursor.close()
+
+def update_order_status(order_id, new_status):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("UPDATE pedidos SET estado_pedido=%s WHERE id_pedido=%s", (new_status, order_id))
+        mysql.connection.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        mysql.connection.rollback()
+        current_app.logger.error(f"Error updating status pedido {order_id}: {e}")
         return False
     finally:
         cursor.close()

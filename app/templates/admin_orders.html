@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Admin - Pedidos{% endblock %}
+{% block extra_css %}<style>
+:root{--admin-accent:#f59f0b;--admin-accent-rgb:245,159,11;--admin-border:#e2e8f0;--admin-muted:#6b7280;}
+.orders-wrapper h1{background:linear-gradient(90deg,var(--admin-accent),#ffcc55);background-clip:text;-webkit-background-clip:text;color:transparent;font-weight:600;letter-spacing:.5px;}
+.orders-table-box{background:#fff;border:1px solid var(--admin-border);border-radius:1rem;padding:1rem 1.1rem;box-shadow:0 3px 10px -2px rgba(0,0,0,.08);} 
+table.table-sm thead{background:linear-gradient(90deg,#f1f5f9,#e2e8f0);} 
+table.table-sm thead th{border:0;color:#475569;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
+table.table-sm tbody tr{transition:.25s;}
+table.table-sm tbody tr:hover{background:#fff7eb;}
+.estado-pill{padding:.3em .6em;font-size:.6rem;border-radius:.65rem;font-weight:600;letter-spacing:.5px;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;display:inline-block;}
+.estado-enviado{background:#dcfce7;color:#166534;border-color:#bbf7d0;}
+.estado-cancelado{background:#fee2e2;color:#b91c1c;border-color:#fecaca;}
+.btn-detalle{background:var(--admin-accent);color:#1f2937;border:none;padding:.4rem .75rem;font-size:.65rem;font-weight:600;border-radius:.55rem;box-shadow:0 3px 8px -2px rgba(var(--admin-accent-rgb),.35);text-decoration:none;}
+.btn-detalle:hover{filter:brightness(1.06);} 
+</style>{% endblock %}
+{% block content %}
+<section class="container py-4 orders-wrapper">
+  <h1 class="h4 mb-4">Pedidos</h1>
+  <div class="orders-table-box">
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead><tr><th>ID</th><th>Usuario</th><th>Estado</th><th>Monto</th><th>Items</th><th>Creado</th><th></th></tr></thead>
+        <tbody>
+        {% for o in orders %}
+          <tr>
+            <td>{{ o.id_pedido }}</td>
+            <td>{{ o.id_user }}</td>
+            <td>
+              <span class="estado-pill estado-{{ o.estado_pedido }}">{{ o.estado_pedido|capitalize }}</span>
+            </td>
+            <td>${{ o.monto_total or o.subtotal_calc }}</td>
+            <td>{{ o.total_items }}</td>
+            <td>{{ o.created_at }}</td>
+            <td class="text-end"><a href="{{ url_for('bp.admin_order_detail', order_id=o.id_pedido) }}" class="btn-detalle">Detalle</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

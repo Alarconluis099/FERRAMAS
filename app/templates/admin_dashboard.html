@@ -1,0 +1,496 @@
+{% block extra_css %}<style>
+:root{
+    --admin-accent:#f59f0b; --admin-accent-rgb:245,159,11; --admin-danger:#dc3545; --admin-ok:#198754;
+    --admin-surface:#ffffff; --admin-surface-alt:#fafafa; --admin-border:#e2e8f0; --admin-text:#1f2937; --admin-muted:#6b7280;
+    --admin-gradient:linear-gradient(135deg,#fff 0%,#f8fafc 60%,#ffffff 100%);
+}
+.admin-wrapper{color:var(--admin-text);}
+.admin-header h1{background:linear-gradient(90deg,var(--admin-accent),#ffcc55);background-clip:text;-webkit-background-clip:text;color:transparent;font-weight:600;letter-spacing:.5px;}
+.admin-cards{display:grid;gap:1.1rem;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-bottom:1.25rem;}
+.admin-card{position:relative;overflow:hidden;border-radius:1rem;padding:1rem 1.1rem;background:var(--admin-gradient);border:1px solid var(--admin-border);box-shadow:0 4px 10px -2px rgba(0,0,0,.08);transition:.3s;}
+.admin-card:before{content:"";position:absolute;inset:0;opacity:.08;background:radial-gradient(circle at 20% 25%,rgba(var(--admin-accent-rgb),.9),transparent 60%);} 
+.admin-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px -4px rgba(0,0,0,.12);} 
+.admin-card .label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--admin-muted);}
+.admin-card .value{font-size:1.9rem;font-weight:600;line-height:1.1;margin-top:.2rem;color:#111827;}
+.admin-card .sub{font-size:.6rem;color:var(--admin-muted);}
+
+/* Tables */
+.admin-table-wrapper{background:var(--admin-surface);border:1px solid var(--admin-border);border-radius:1rem;padding:1rem 1.1rem;margin-bottom:2rem;box-shadow:0 3px 10px -2px rgba(0,0,0,.08);} 
+table.table-sm thead{background:linear-gradient(90deg,#f1f5f9,#e2e8f0);} 
+table.table-sm thead th{border:0;color:#475569;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
+table.table-sm tbody tr{transition:.25s;background:transparent;}
+table.table-sm tbody tr:hover{background:#fff7eb;} 
+table.table-sm td,table.table-sm th{padding:.55rem .7rem;vertical-align:middle;}
+table.table-sm td:last-child{white-space:nowrap;}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:.3ch;padding:.4em .65em;font-size:.6rem;border-radius:.75rem;font-weight:600;line-height:1;letter-spacing:.5px;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;}
+.badge-danger{background:#fee2e2;color:#b91c1c;border-color:#fecaca;}
+.badge-ok{background:#dcfce7;color:#166534;border-color:#bbf7d0;}
+
+/* Buttons / actions */
+.action-btn{border:none;background:var(--admin-accent);color:#1f2937;padding:.45rem .75rem;border-radius:.55rem;font-size:.68rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.4ch;box-shadow:0 3px 10px -2px rgba(var(--admin-accent-rgb),.35);transition:.25s;}
+.action-btn.secondary{background:#e2e8f0;color:#374151;box-shadow:none;}
+.action-btn.danger{background:var(--admin-danger);color:#fff;box-shadow:0 3px 10px -2px rgba(220,53,69,.35);} 
+.action-btn.success{background:var(--admin-ok);color:#fff;}
+.action-btn:hover{filter:brightness(1.05);} 
+.action-btn:active{transform:translateY(1px);} 
+
+details summary.action-btn{list-style:none;} details summary.action-btn::-webkit-details-marker{display:none;}
+details{display:inline-block;}
+details[open] summary.action-btn{border-bottom-left-radius:.25rem;border-bottom-right-radius:.25rem;}
+details form{background:var(--admin-surface-alt);border:1px solid var(--admin-border);padding:.65rem .75rem;border-radius:.6rem;margin-top:.6rem;}
+
+/* Create form */
+.create-form{background:var(--admin-surface);border:1px solid var(--admin-border);border-radius:1rem;padding:1rem 1.1rem;margin-bottom:1.75rem;box-shadow:0 3px 10px -2px rgba(0,0,0,.08);} 
+.create-form label{font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;font-weight:600;color:var(--admin-muted);}
+.create-form input{background:#fff;border:1px solid #d1d5db;color:#1f2937;font-size:.78rem;}
+.create-form input:focus{border-color:var(--admin-accent);box-shadow:0 0 0 .15rem rgba(var(--admin-accent-rgb),.25);}
+
+/* Section headings */
+.admin-section-title{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;color:#475569;display:flex;align-items:center;gap:.5ch;margin:0 0 .9rem;}
+.admin-section-title:before{content:"";width:.65rem;height:.65rem;border-radius:50%;background:linear-gradient(135deg,var(--admin-accent),#ffcf66);} 
+
+td[data-neg]{color:#b91c1c;} td[data-pos]{color:#166534;}
+.top-products-table td{padding:.45rem .6rem;}
+
+@media (max-width: 992px){
+    .admin-cards{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}
+    .admin-card .value{font-size:1.55rem;}
+}
+</style>{% endblock %}
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-weight: 600;
+        color: var(--admin-muted);
+    }
+
+    .admin-card .value {
+        font-size: 2rem;
+        font-weight: 600;
+        line-height: 1.1;
+        margin-top: .15rem;
+        color: #fff;
+    }
+
+    .admin-card .sub {
+        font-size: .65rem;
+        color: var(--admin-muted);
+    }
+
+    /* Tables */
+    .admin-table-wrapper {
+        background: var(--admin-surface);
+        border: 1px solid var(--admin-border);
+        border-radius: 1rem;
+        padding: 1rem 1.1rem;
+        margin-bottom: 2.2rem;
+        box-shadow: 0 6px 18px -6px rgba(0, 0, 0, .55);
+    }
+
+    table.table-sm {
+        color: var(--admin-text);
+    }
+
+    table.table-sm thead {
+        background: linear-gradient(90deg, #242a32, #1a1f25);
+    }
+
+    table.table-sm thead th {
+        border: 0;
+        color: var(--admin-muted);
+        font-size: .7rem;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        font-weight: 600;
+    }
+
+    table.table-sm tbody tr {
+        transition: .25s;
+        background: transparent;
+    }
+
+    table.table-sm tbody tr:hover {
+        background: rgba(255, 255, 255, .04);
+    }
+
+    table.table-sm td,
+    table.table-sm th {
+        padding: .55rem .7rem;
+        vertical-align: middle;
+    }
+
+    table.table-sm td:last-child {
+        white-space: nowrap;
+    }
+
+    /* Badges */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .3ch;
+        padding: .35em .6em;
+        font-size: .65rem;
+        border-radius: .75rem;
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: .5px;
+        background: #333;
+        color: #eee;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, .05);
+    }
+
+    .badge-danger {
+        background: linear-gradient(135deg, #ef4444, #b91c1c);
+        color: #fff;
+    }
+
+    .badge-ok {
+        background: linear-gradient(135deg, #16a34a, #065f46);
+        color: #fff;
+    }
+
+    /* Buttons / actions */
+    .action-btn {
+        border: none;
+        background: var(--admin-accent);
+        color: #1b1f24;
+        padding: .45rem .75rem;
+        border-radius: .55rem;
+        font-size: .7rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: .4ch;
+        box-shadow: 0 4px 10px -2px rgba(var(--admin-accent-rgb), .45);
+        transition: .25s;
+    }
+
+    .action-btn.secondary {
+        background: #374151;
+        color: #e5e7eb;
+        box-shadow: none;
+    }
+
+    .action-btn.danger {
+        background: var(--admin-danger);
+        color: #fff;
+        box-shadow: 0 4px 12px -2px rgba(220, 53, 69, .45);
+    }
+
+    .action-btn.success {
+        background: var(--admin-ok);
+        color: #fff;
+    }
+
+    .action-btn:hover {
+        filter: brightness(1.08);
+    }
+
+    .action-btn:active {
+        transform: translateY(1px);
+    }
+
+    details summary.action-btn {
+        list-style: none;
+    }
+
+    details summary.action-btn::-webkit-details-marker {
+        display: none;
+    }
+
+    details {
+        display: inline-block;
+    }
+
+    details[open] summary.action-btn {
+        border-bottom-left-radius: .25rem;
+        border-bottom-right-radius: .25rem;
+    }
+
+    details form {
+        background: var(--admin-surface-alt);
+        border: 1px solid var(--admin-border);
+        padding: .6rem .7rem;
+        border-radius: .6rem;
+        margin-top: .6rem;
+    }
+
+    /* Create form */
+    .create-form {
+        background: var(--admin-surface);
+        border: 1px solid var(--admin-border);
+        border-radius: 1rem;
+        padding: 1rem 1.1rem;
+        margin-bottom: 1.75rem;
+        box-shadow: 0 4px 14px -4px rgba(0, 0, 0, .55);
+    }
+
+    .create-form label {
+        font-size: .65rem;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        font-weight: 600;
+        color: var(--admin-muted);
+    }
+
+    .create-form input {
+        background: #11161c;
+        border: 1px solid #252d37;
+        color: #e5e7eb;
+        font-size: .8rem;
+    }
+
+    .create-form input:focus {
+        border-color: var(--admin-accent);
+        box-shadow: 0 0 0 .15rem rgba(var(--admin-accent-rgb), .25);
+    }
+
+    /* Section headings */
+    .admin-section-title {
+        font-size: .85rem;
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        font-weight: 700;
+        color: var(--admin-muted);
+        display: flex;
+        align-items: center;
+        gap: .5ch;
+        margin: 0 0 .9rem;
+    }
+
+    .admin-section-title:before {
+        content: "";
+        width: .75rem;
+        height: .75rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--admin-accent), #ffcf66);
+    }
+
+    /* Gradients for numeric cells */
+    td[data-neg] {
+        color: #ef4444;
+    }
+
+    td[data-pos] {
+        color: #10b981;
+    }
+
+    .top-products-table td {
+        padding: .45rem .6rem;
+    }
+
+    /* Scrollbar tweak (webkit) */
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #101418;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #2a313a;
+        border-radius: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #353d47;
+    }
+
+    @media (max-width: 992px) {
+        .admin-cards {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+
+        .admin-card .value {
+            font-size: 1.55rem;
+        }
+    }
+</style>{% endblock %}
+{% block content %}
+<section class="container py-4 admin-wrapper">
+    <div class="admin-header mb-4">
+        <h1 class="mb-0">Panel administrador</h1>
+    </div>
+    <div class="admin-cards">
+        <div class="admin-card">
+            <div class="label">Productos</div>
+            <div class="value">{{ tools|length }}</div>
+        </div>
+        <div class="admin-card">
+            <div class="label">Usuarios</div>
+            <div class="value">{{ users|length }}</div>
+        </div>
+        <div class="admin-card">
+            <div class="label">Stock bajo</div>
+            <div class="value">{{ low_stock|length }}</div>
+            <div class="sub">&le; 5 uds</div>
+        </div>
+        <div class="admin-card">
+            <div class="label">Ventas {{ metrics7.days }}d</div>
+            <div class="value">${{ metrics7.total_monto }}</div>
+            <div class="sub">{{ metrics7.total_orders }} pedidos</div>
+        </div>
+    </div>
+
+    <h2 class="admin-section-title mt-4">Productos</h2>
+    <div class="create-form">
+        <form class="row g-2 align-items-end" method="POST" action="{{ url_for('bp.admin_create_product') }}">
+            <div class="col-sm-3">
+                <label class="form-label">Nombre</label>
+                <input class="form-control form-control-sm" name="name" required>
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label">Descripción</label>
+                <input class="form-control form-control-sm" name="description">
+            </div>
+            <div class="col-sm-2">
+                <label class="form-label">Precio</label>
+                <input class="form-control form-control-sm" name="precio" type="number" min="0" value="0" required>
+            </div>
+            <div class="col-sm-2">
+                <label class="form-label">Stock</label>
+                <input class="form-control form-control-sm" name="stock" type="number" min="0" value="0" required>
+            </div>
+            <div class="col-sm-2">
+                <button class="btn btn-sm btn-dark w-100" type="submit">Crear</button>
+            </div>
+        </form>
+    </div>
+    <div class="admin-table-wrapper">
+        <table class="table table-sm align-middle">
+            <thead class="table-secondary">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Stock</th>
+                    <th>Precio</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tools %}
+                <tr>
+                    <td>{{ t.id_tool }}</td>
+                    <td>{{ t.name }}</td>
+                    <td>{{ t.stock }}</td>
+                    <td>${{ t.precio }}</td>
+                    <td>{% if (t.stock or 0) <= 5 %}<span class="badge badge-danger">Bajo</span>{% else %}<span
+                                class="badge badge-ok">OK</span>{% endif %}</td>
+                    <td class="text-end">
+                        <details>
+                            <summary class="action-btn secondary" style="display:inline-block">Editar</summary>
+                            <form class="mt-2 text-start" method="POST"
+                                action="{{ url_for('bp.admin_update_product', tool_id=t.id_tool) }}">
+                                <input type="hidden" name="_action" value="update">
+                                <div class="row g-1 mb-1">
+                                    <div class="col-6"><input name="name" class="form-control form-control-sm"
+                                            value="{{ t.name }}" required></div>
+                                    <div class="col-6"><input name="description" class="form-control form-control-sm"
+                                            value="{{ t.description }}"></div>
+                                    <div class="col-4"><input name="precio" type="number"
+                                            class="form-control form-control-sm" value="{{ t.precio }}" min="0"
+                                            required></div>
+                                    <div class="col-4"><input name="stock" type="number"
+                                            class="form-control form-control-sm" value="{{ t.stock }}" min="0" required>
+                                    </div>
+                                    <div class="col-4 d-flex gap-1">
+                                        <button class="btn btn-sm btn-success w-100" type="submit">Guardar</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <form method="POST" action="{{ url_for('bp.admin_update_product', tool_id=t.id_tool) }}"
+                                onsubmit="return confirm('¿Eliminar producto?');">
+                                <input type="hidden" name="_action" value="delete">
+                                <button class="action-btn danger mt-1" type="submit">Eliminar</button>
+                            </form>
+                        </details>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="admin-section-title">Usuarios</h2>
+    <div class="admin-table-wrapper">
+        <table class="table table-sm align-middle">
+            <thead class="table-secondary">
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Correo</th>
+                    <th>Desc.%</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ u.id_user }}</td>
+                    <td>{{ u.usuario }}</td>
+                    <td>{{ u.correo }}</td>
+                    <td>{{ u.descuento_porcentaje }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <h2 class="admin-section-title">Pedidos recientes</h2>
+    <div class="admin-table-wrapper">
+        <table class="table table-sm align-middle">
+            <thead class="table-secondary">
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Estado</th>
+                    <th>Monto</th>
+                    <th>Items</th>
+                    <th>Creado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in recent_orders %}
+                <tr>
+                    <td>{{ o.id_pedido }}</td>
+                    <td>{{ o.id_user }}</td>
+                    <td>{{ o.estado_pedido }}</td>
+                    <td>${{ o.monto_total or o.subtotal_calc }}</td>
+                    <td>{{ o.total_items }}</td>
+                    <td>{{ o.created_at }}</td>
+                    <td class="text-end"><a class="action-btn secondary"
+                            href="{{ url_for('bp.admin_order_detail', order_id=o.id_pedido) }}">Ver</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div><a href="{{ url_for('bp.admin_orders') }}" class="btn btn-sm btn-outline-secondary">Ver todos</a></div>
+    </div>
+
+    <h2 class="admin-section-title">Top productos (30 días)</h2>
+    <div class="admin-table-wrapper">
+        <table class="table table-sm top-products-table">
+            <thead class="table-secondary">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Unidades</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tp in top_products %}
+                <tr>
+                    <td>{{ tp.id_tool }}</td>
+                    <td>{{ tp.name }}</td>
+                    <td>{{ tp.unidades }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

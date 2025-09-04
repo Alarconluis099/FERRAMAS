@@ -38,6 +38,22 @@ def enforce_session_boot_id():
 
 mysql = MySQL(app)
 
+# --- Simple one-time migration: add 'role' column to users if absent ---
+def _ensure_role_column():
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("SHOW COLUMNS FROM users LIKE 'role'")
+        exists = cur.fetchone()
+        if not exists:
+            cur.execute("ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'user'")
+            mysql.connection.commit()
+        cur.close()
+    except Exception as e:
+        # Non-fatal; just print warning
+        print(f"[MIGRATION] Could not ensure role column: {e}")
+
+_ensure_role_column()
+
 from .routes import bp
 app.register_blueprint(bp)
 

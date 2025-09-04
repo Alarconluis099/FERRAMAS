@@ -1,5 +1,6 @@
 from flask import flash, request, Blueprint, jsonify, render_template, redirect, url_for, session, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 from app import app
 from .models import (
     fetch_all_tools,
@@ -19,12 +20,41 @@ from .models import (
     set_item_quantity,
     get_user_open_order,
     clear_order_items,
+    fetch_all_orders,
+    fetch_order_detail,
+    fetch_sales_metrics,
+    fetch_top_products,
+    update_order_status,
 )
 from . import mysql
 import random
 
 
 bp = Blueprint('bp', __name__)
+
+# --- Admin utilities ---
+def admin_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        user = session.get('usuario')
+        if not user:
+            flash('Acceso restringido.', 'error')
+            return redirect(url_for('bp.inicio'))
+        # Revisa role si existe
+        try:
+            cur = mysql.connection.cursor()
+            cur.execute("SELECT role FROM users WHERE usuario=%s", (user,))
+            row = cur.fetchone()
+            cur.close()
+            role = row[0] if row else None
+        except Exception:
+            role = None
+        # Compatibilidad: si el username es literalmente 'admin', concédelo aunque rol aún no migrado
+        if role != 'admin' and user != 'admin':
+            flash('Acceso restringido.', 'error')
+            return redirect(url_for('bp.inicio'))
+        return f(*args, **kwargs)
+    return wrapper
 
 def _current_user_id():
     if 'usuario' not in session:
@@ -120,9 +150,20 @@ def guardar_registro():
         return redirect(url_for('bp.registro'))
 
     hashed = generate_password_hash(pass1)
+    # Si no hay ningún admin aún, el primer usuario con nombre 'admin' será admin
+    role = 'user'
+    if username.lower() == 'admin':
+        try:
+            cur2 = mysql.connection.cursor()
+            cur2.execute("SELECT COUNT(*) FROM users WHERE role='admin'")
+            if (cur2.fetchone() or [0])[0] == 0:
+                role = 'admin'
+            cur2.close()
+        except Exception:
+            pass
     cursor.execute(
-        "INSERT INTO users (correo, contraseña, usuario, descuento_porcentaje) VALUES (%s,%s,%s,%s)",
-        (correo, hashed, username, 15)
+        "INSERT INTO users (correo, contraseña, usuario, descuento_porcentaje, role) VALUES (%s,%s,%s,%s,%s)",
+        (correo, hashed, username, 15, role)
     )
     mysql.connection.commit()
     cursor.close()
@@ -151,7 +192,7 @@ def iniciar_sesion():
 
         cursor = mysql.connection.cursor()
         cursor.execute(
-            "SELECT id_user, usuario, contraseña, COALESCE(descuento_porcentaje,0) FROM users WHERE correo = %s",
+            "SELECT id_user, usuario, contraseña, COALESCE(descuento_porcentaje,0), COALESCE(role,'') FROM users WHERE correo = %s",
             (correo_normalizado,)
         )
         result = cursor.fetchone()
@@ -160,7 +201,7 @@ def iniciar_sesion():
             flash('Correo y/o contraseña inválidos.', 'error')
             return redirect(url_for('bp.iniciar_sesion'))
 
-        usuario_id, usuario_nombre, stored_pass, descuento_pct = result
+        usuario_id, usuario_nombre, stored_pass, descuento_pct, role = result
 
         # Detección de hash (formatos Werkzeug comienzan con 'pbkdf2:' o similares)
         is_hashed = stored_pass.startswith('pbkdf2:') or stored_pass.startswith('scrypt:')
@@ -188,6 +229,15 @@ def iniciar_sesion():
             flash('Correo y/o contraseña inválidos.', 'error')
             return redirect(url_for('bp.iniciar_sesion'))
 
+        # Promoción automática: si el username es 'admin' y aún no tiene role admin
+        if usuario_nombre == 'admin' and role != 'admin':
+            try:
+                up2 = mysql.connection.cursor()
+                up2.execute("UPDATE users SET role='admin' WHERE id_user=%s", (usuario_id,))
+                mysql.connection.commit()
+                up2.close()
+            except Exception:
+                mysql.connection.rollback()
         session['usuario'] = usuario_nombre
         session.permanent = True
         # descuento_pct se mantiene para lógica futura; ya disponible en variable
@@ -365,6 +415,108 @@ def carrito():
 def inicio():
     usuario = session.get('usuario')
     return render_template('inicio.html', tools=fetch_all_tools(), usuario=usuario, cart_count=_get_cart_count())
+
+@bp.route('/admin')
+@admin_required
+def admin_dashboard():
+    """Panel sencillo: listado de productos y usuarios, con acciones básicas."""
+    tools = fetch_all_tools()
+    users = get_all_users()
+    # Detectar stock bajo
+    low_stock = [t for t in tools if (t.get('stock') or 0) <= 5]
+    recent_orders = fetch_all_orders()[:10]
+    metrics7 = fetch_sales_metrics(7)
+    top_products = fetch_top_products()
+    return render_template('admin_dashboard.html', tools=tools, users=users, low_stock=low_stock, recent_orders=recent_orders, metrics7=metrics7, top_products=top_products, usuario=session.get('usuario'), cart_count=_get_cart_count())
+
+@bp.route('/admin/pedidos')
+@admin_required
+def admin_orders():
+    orders = fetch_all_orders()
+    return render_template('admin_orders.html', orders=orders, usuario=session.get('usuario'), cart_count=_get_cart_count())
+
+@bp.route('/admin/pedidos/<int:order_id>')
+@admin_required
+def admin_order_detail(order_id):
+    header, items = fetch_order_detail(order_id)
+    if not header:
+        flash('Pedido no encontrado', 'error')
+        return redirect(url_for('bp.admin_orders'))
+    total_calc = sum([(it.get('cantidad') or 0) * (it.get('precio_unitario') or 0) for it in items])
+    return render_template('admin_order_detail.html', pedido=header, items=items, total_calc=total_calc, usuario=session.get('usuario'), cart_count=_get_cart_count())
+
+@bp.route('/admin/pedidos/<int:order_id>/estado', methods=['POST'])
+@admin_required
+def admin_update_order_status(order_id):
+    new_status = request.form.get('estado')
+    valid = {'pendiente','enviado','cancelado'}
+    if new_status not in valid:
+        flash('Estado inválido', 'error')
+        return redirect(url_for('bp.admin_order_detail', order_id=order_id))
+    if update_order_status(order_id, new_status):
+        flash('Estado actualizado', 'success')
+    else:
+        flash('No se pudo actualizar', 'error')
+    return redirect(url_for('bp.admin_order_detail', order_id=order_id))
+
+@bp.route('/admin/producto', methods=['POST'])
+@admin_required
+def admin_create_product():
+    form = request.form
+    try:
+        name = form.get('name','').strip()
+        precio = int(form.get('precio','0') or 0)
+        stock = int(form.get('stock','0') or 0)
+        desc = form.get('description')
+        if not name:
+            flash('Nombre requerido', 'error')
+            return redirect(url_for('bp.admin_dashboard'))
+        # Generar id_tool random que no choque
+        cur = mysql.connection.cursor()
+        import random
+        for _ in range(5):
+            candidate = random.randint(1000,999999)
+            cur.execute("SELECT 1 FROM tools WHERE id_tool=%s", (candidate,))
+            if not cur.fetchone():
+                id_tool = candidate
+                break
+        else:
+            cur.close()
+            flash('No se pudo generar ID producto', 'error')
+            return redirect(url_for('bp.admin_dashboard'))
+        cur.execute("INSERT INTO tools (id_tool,name,description,stock,precio) VALUES (%s,%s,%s,%s,%s)", (id_tool,name,desc,stock,precio))
+        mysql.connection.commit()
+        cur.close()
+        flash('Producto creado', 'success')
+    except Exception:
+        mysql.connection.rollback()
+        flash('Error creando producto', 'error')
+    return redirect(url_for('bp.admin_dashboard'))
+
+@bp.route('/admin/producto/<int:tool_id>', methods=['POST'])
+@admin_required
+def admin_update_product(tool_id):
+    form = request.form
+    action = form.get('_action')
+    if action == 'delete':
+        if delete_tools(tool_id):
+            flash('Producto eliminado', 'info')
+        else:
+            flash('No se pudo eliminar', 'error')
+        return redirect(url_for('bp.admin_dashboard'))
+    try:
+        name = form.get('name','').strip()
+        desc = form.get('description')
+        stock = int(form.get('stock','0') or 0)
+        precio = int(form.get('precio','0') or 0)
+        if not name:
+            flash('Nombre requerido', 'error')
+            return redirect(url_for('bp.admin_dashboard'))
+        update_tools(tool_id, {'name':name,'description':desc,'stock':stock,'precio':precio})
+        flash('Producto actualizado', 'success')
+    except Exception:
+        flash('Error actualizando producto', 'error')
+    return redirect(url_for('bp.admin_dashboard'))
 
 @bp.route('/Login') 
 def login():

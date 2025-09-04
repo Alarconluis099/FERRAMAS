@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Pedido #{{ order.id_pedido }}{% endblock %}
+{% block extra_css %}<style>
+:root{--admin-accent:#f59f0b;--admin-accent-rgb:245,159,11;--admin-border:#e2e8f0;--admin-muted:#6b7280;}
+.order-detail-wrapper h1{background:linear-gradient(90deg,var(--admin-accent),#ffcc55);background-clip:text;-webkit-background-clip:text;color:transparent;font-weight:600;letter-spacing:.5px;}
+.order-box{background:#fff;border:1px solid var(--admin-border);border-radius:1rem;padding:1rem 1.2rem;box-shadow:0 3px 10px -2px rgba(0,0,0,.08);} 
+table.table-sm thead{background:linear-gradient(90deg,#f1f5f9,#e2e8f0);} 
+table.table-sm thead th{border:0;color:#475569;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
+table.table-sm tbody tr{transition:.25s;}
+table.table-sm tbody tr:hover{background:#fff7eb;}
+.estado-pill{padding:.35em .7em;font-size:.6rem;border-radius:.7rem;font-weight:600;letter-spacing:.5px;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;display:inline-block;}
+.estado-pendiente{background:#fef9c3;color:#92400e;border-color:#fde68a;}
+.estado-procesando{background:#e0f2fe;color:#075985;border-color:#bae6fd;}
+.estado-enviado{background:#dcfce7;color:#166534;border-color:#bbf7d0;}
+.estado-completado{background:#ecfdf5;color:#065f46;border-color:#d1fae5;}
+.estado-cancelado{background:#fee2e2;color:#b91c1c;border-color:#fecaca;}
+.summary-list li{margin-bottom:.35rem;}
+.badge-total{background:var(--admin-accent);color:#1f2937;font-size:.65rem;font-weight:600;padding:.35em .65em;border-radius:.6rem;box-shadow:0 3px 8px -2px rgba(var(--admin-accent-rgb),.35);} 
+.btn-guardar{background:var(--admin-accent);color:#1f2937;border:none;font-weight:600;font-size:.65rem;padding:.45rem .9rem;border-radius:.55rem;box-shadow:0 3px 8px -2px rgba(var(--admin-accent-rgb),.35);} 
+.btn-guardar:hover{filter:brightness(1.05);} 
+.select-estado{font-size:.75rem;padding:.4rem .55rem;border-radius:.55rem;border:1px solid var(--admin-border);} 
+.volver-link{font-size:.65rem;text-decoration:none;font-weight:600;color:#475569;display:inline-block;margin-top:.75rem;} 
+.volver-link:hover{color:#111827;} 
+</style>{% endblock %}
+{% block content %}
+<section class="container py-4 order-detail-wrapper">
+  <a href="{{ url_for('bp.admin_orders') }}" class="btn btn-sm btn-outline-secondary mb-3">← Volver</a>
+  <h1 class="h4 mb-4">Pedido #{{ order.id_pedido }}</h1>
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="order-box mb-0">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Producto</th><th>Cant</th><th>Precio</th><th>Subtotal</th></tr></thead>
+            <tbody>
+              {% for item in items %}
+                <tr>
+                  <td>{{ item.name }}</td>
+                  <td>{{ item.cantidad }}</td>
+                  <td>${{ item.precio_unitario }}</td>
+                  <td>${{ item.subtotal }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="order-box h-100 d-flex flex-column">
+        <h2 class="h6 mb-3" style="font-weight:600;color:#334155;">Resumen</h2>
+        <ul class="list-unstyled small summary-list mb-2">
+          <li><strong>ID Usuario:</strong> {{ order.id_user }}</li>
+          <li><strong>Estado:</strong> <span class="estado-pill estado-{{ order.estado_pedido }}">{{ order.estado_pedido|capitalize }}</span></li>
+          <li><strong>Monto Total:</strong> <span class="badge-total">${{ order.monto_total }}</span></li>
+          <li><strong>Creado:</strong> {{ order.created_at }}</li>
+          <li><strong>Actualizado:</strong> {{ order.updated_at }}</li>
+        </ul>
+        <form method="post" class="d-flex flex-wrap gap-2 align-items-end mt-2">
+          <div>
+            <label class="small text-muted d-block mb-1">Actualizar estado</label>
+            <select name="estado" class="select-estado">
+              <option value="pendiente" {% if order.estado_pedido=='pendiente' %}selected{% endif %}>Pendiente</option>
+              <option value="procesando" {% if order.estado_pedido=='procesando' %}selected{% endif %}>Procesando</option>
+              <option value="enviado" {% if order.estado_pedido=='enviado' %}selected{% endif %}>Enviado</option>
+              <option value="completado" {% if order.estado_pedido=='completado' %}selected{% endif %}>Completado</option>
+              <option value="cancelado" {% if order.estado_pedido=='cancelado' %}selected{% endif %}>Cancelado</option>
+            </select>
+          </div>
+          <button class="btn-guardar" type="submit">Guardar</button>
+        </form>
+        <a href="{{ url_for('bp.admin_orders') }}" class="volver-link mt-auto">← Volver a pedidos</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
