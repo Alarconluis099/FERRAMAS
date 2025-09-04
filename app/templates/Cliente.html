@@ -2,100 +2,94 @@
 {% block title %}Ferremas - Perfil{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename = 'css/style_cliente.css') }}">{% endblock %}
 {% block content %}
-
-  <div class="contenedor-perfil">
-
-        <!-- Barra lateral -->
-        <div class="barra-lateral"> 
-          <div class="barra-usuario">
-            <h1>Bienvenido, {{ usuario }}</h1>
+<div class="profile-wrapper container py-4">
+  <div class="row g-4">
+    <aside class="col-12 col-md-4 col-lg-3">
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body text-center">
+          <div class="profile-avatar mb-3">
+            <i class="bi bi-person-circle display-4 text-secondary"></i>
           </div>
-
-          <div class="card"> <!--Datos personales-->
-            <div class="card-content">
-              <div class="media">
-                <div class="media-left">
-                  <i class="bi bi-person-circle"></i>
-                </div>
-                <div class="media-content">
-                  <a class="title is-5" href="{{ url_for('bp.cliente') }}">Mi perfil</a>
-                </div>
+          <h5 class="mb-1 fw-semibold">{{ usuario }}</h5>
+          <p class="text-muted small mb-3">Usuario registrado</p>
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('bp.carrito') }}" class="btn btn-outline-warning btn-sm"><i class="bi bi-cart me-1"></i> Ver carrito</a>
+            <a href="{{ url_for('bp.logout') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+          </div>
+        </div>
+      </div>
+      <div class="list-group shadow-sm small">
+        <a class="list-group-item list-group-item-action active fw-semibold" aria-current="true">
+          <i class="bi bi-person me-2"></i>Mi perfil
+        </a>
+        <span class="list-group-item list-group-item-action disabled opacity-75">
+          <i class="bi bi-gear me-2"></i>Preferencias (próximamente)
+        </span>
+        <span class="list-group-item list-group-item-action disabled opacity-75">
+          <i class="bi bi-shield-lock me-2"></i>Seguridad (próximamente)
+        </span>
+      </div>
+    </aside>
+    <section class="col-12 col-md-8 col-lg-9">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+          <h5 class="m-0 fw-semibold"><i class="bi bi-person-lines-fill me-2 text-warning"></i>Información personal</h5>
+        </div>
+        <div class="card-body">
+          <form class="row g-3" aria-describedby="profileHelp" autocomplete="off">
+            <div class="col-md-6">
+              <label class="form-label small text-uppercase text-muted">Nombre</label>
+              <input type="text" class="form-control" placeholder="Nombre" disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small text-uppercase text-muted">Apellido</label>
+              <input type="text" class="form-control" placeholder="Apellido" disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small text-uppercase text-muted">Correo</label>
+              <input type="email" class="form-control" placeholder="correo@ferremas.com" disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small text-uppercase text-muted">Teléfono</label>
+              <input type="text" class="form-control" placeholder="+56 9 1234 5678" disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small text-uppercase text-muted">RUT</label>
+              <input type="text" class="form-control" placeholder="12.345.678-9" disabled>
+            </div>
+            <div class="col-12">
+              <div class="alert alert-info small mb-0" role="alert" id="profileHelp">
+                Esta sección será editable en una próxima versión. Tus datos están protegidos.
               </div>
             </div>
-          </div>
-
-          <div class="card"> <!--Cerrar sesión-->
-            <div class="card-content">
-              <div class="media">
-                <div class="media-left">
-                  <i class="bi bi-power"></i>
-                </div>
-                <div class="media-content">
-                  <a class="title is-5" href="{{ url_for('bp.logout') }}">Cerrar sesión</a>
-                </div>
-              </div>
+          </form>
+        </div>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <h6 class="fw-semibold mb-3 text-muted text-uppercase small">Actividad</h6>
+              <p class="small text-muted mb-2"><i class="bi bi-clock-history me-2"></i>Último acceso: ahora</p>
+              <p class="small text-muted mb-0"><i class="bi bi-shield-check me-2"></i>Sesión activa y protegida</p>
             </div>
           </div>
         </div>
-
-        <!--Mi perfil - datos personales-->
-
-        <fieldset disabled>
-
-          <div class="seccion-perfil">
-            <h2>Mi perfil</h2>
-            
-            <div class="datos-perfil">
-  
-            <div class="nombre-apellido">
-  
-              <div class="field">
-                <label class="label">Nombre</label>
-                <div class="control">
-                  <input class="input" type="text" placeholder="Juan">
-                </div>
-              </div>
-  
-              <div class="field">
-                <label class="label">Apellido</label>
-                <div class="control">
-                  <input class="input" type="text" placeholder="Perez">
-                </div>
-              </div>
-  
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <h6 class="fw-semibold mb-3 text-muted text-uppercase small">Próximamente</h6>
+              <ul class="small text-muted mb-0 ps-3">
+                <li>Edición de datos personales</li>
+                <li>Historial de compras</li>
+                <li>Preferencias y notificaciones</li>
+              </ul>
             </div>
-              
-              <div class="field">
-                <label class="label">Email</label>
-                <div class="control">
-                  <input class="input" type="email" placeholder="ej. JuanPerez@ferremas.com">
-                </div>
-              </div>
-    
-              <div class="field">
-                <label class="label">
-                  Telefono
-                </label>
-                <div class="control">
-                  <input class="input" type="email" placeholder="+56 9 1234 5678">
-                </div>
-              </div>
-    
-              <div class="field">
-                <label class="label">RUT</label>
-                <div class="control">
-                  <input class="input" type="email" placeholder="12.345.678-2">
-                </div>
-              </div>
-            </div>
-            
           </div>
-
-        </fieldset>
-        
+        </div>
       </div>
-
-
-
+    </section>
+  </div>
+</div>
 {% endblock %}
 

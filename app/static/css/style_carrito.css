@@ -1,319 +1,172 @@
+/* Nuevo diseño carrito */
 
-/* Carrito - Footer */
-
-.footer{
-  background-color: hsl;/* rgb(248, 240, 226); */
-  padding: 20px;
-  text-align: center;
+.carrito-wrapper h2 {
+  font-size: 1.6rem;
 }
 
-footer .copyright {
-  background-color: sk;
-  padding: 10px 0;
-  text-align: center;
-  border-top: 1px solid #ddd;
+.carrito-vacio .btn {
+  margin-top: .5rem;
 }
 
-footer .secciones-footer{
+.carrito-tabla tbody tr {
+  transition: background-color .15s ease;
+}
+
+.carrito-tabla tbody tr:hover {
+  background: #ffffff;
+}
+
+.cantidad-control button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.resumen {
+  font-size: .9rem;
+}
+
+.resumen h5 {
+  font-size: 1.1rem;
+}
+
+/* Thumbnails */
+.thumb-wrapper {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+}
+
+.thumb-fallback {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: #ffffff;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  text-align: left;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #444;
+  border: 1px solid #e2e2e2;
 }
 
-footer .section-contactos,
-footer .section-redes-sociales,
-footer .section-metodos-pago {
-  flex: 1; 
-  padding: 10px;
-  text-align: left; 
-  ;
+.nombre-item {
+  font-size: .95rem;
+  color: #222 !important;
 }
 
-.footer-webpay {
-  text-align: left;
-  width: 150px;
-  height: 150px;
+.categoria-item {
+  font-size: .75rem;
+  letter-spacing: .3px;
+  color: #333 !important;
 }
 
-
-
-footer h2 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-weight: bold;
-  color: whitesmoke;
+/* Mejora de contraste general */
+.carrito-tabla th {
+  color: #202020 !important;
+  font-weight: 600;
+  letter-spacing: .4px;
+  background: #f5f5f5;
 }
 
-footer p {
-  margin: 0;
-  color: #b6a9a9;
+.carrito-tabla td {
+  color: #222;
 }
 
-footer a {
-  color: #b6a9a9;
-  text-decoration: none;
-  display: block; 
-  margin-bottom: 5px;
+/* Asegurar que los labels en móvil también tengan contraste */
+@media (max-width: 768px) {
+  .carrito-tabla tbody td[data-label]::before {
+    color: #222;
+  }
 }
 
-footer a:hover {
-  color: orange;
-} 
+/* Remove any unintended transparency */
+.carrito-wrapper,
+.carrito-tabla,
+.carrito-tabla tbody tr,
+.resumen {
+  background: #fff !important;
+}
 
-
-
-/* Body - fuentes
-------------------------------------------*/
-
-body{
-  min-height: 100vh;
+/* Table adjustments */
+.carrito-tabla td,
+.carrito-tabla th {
   vertical-align: middle;
-  display: flexbox;
-  font-family: sans-serif;
-  font-size: 0.8rem;
-  font-weight: bold;
 }
 
-/* Carro de compras - Columna Productos
-------------------------------------------*/
-
-.title{
-  margin-bottom: 5vh;
-  color: black;
+/* Button styles refine */
+.cantidad-control button {
+  line-height: 1;
 }
 
-.card{
-  margin: auto;
-  margin-top: 20px;
-  max-width: 1250px;
-  width: 90%;
-  box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  border-radius: 1rem;
-  border: transparent;
-}
-
-.info-producto{
-
-  border-top: 2px solid lightgray;
-}
-
-.info-producto li {
-  display: flex; /* Activar flexbox para el elemento li */
-  align-items: center; /* Alinear verticalmente el contenido */
-  border-bottom: 1px solid #ccc; /* Agregar una línea divisoria entre elementos */
-  padding: 10px; /* Agregar espacio alrededor del contenido */
-}
-
-.informacion-producto{
-  flex: 1;
-}
-
-.informacion-producto p{
-  color: black;
-  font-weight: 100;
-}
-
-.informacion-producto a{
-  color: red;
-  font-weight: lighter;
-  margin: 0;
-}
-
-
-.acciones-producto{
-  display: flex;
-  justify-content: flex-end;
-  margin: 0 auto;
-}
-
-.acciones-producto p{
-  color: #333;
-  padding: 2vh 0;
-  margin-left: 5px;
-}
-
-.acciones-producto button{
-  margin-left: 10px;
-  margin-right: 10px;
-  
-  width: 30px;
-  height: 30px;
-}
-
-.informacion-importante{
-  color: red;
-  text-align:  center;
-}
-
-
-/* Carro de compras - Productos
-------------------------------------------*/
-
-.cart{
-  background-color: #fff;
-  padding: 4vh 5vh;
-  border-bottom-left-radius: 1rem;
-  border-top-left-radius: 1rem;
-}
-
-/* Carro de compras - Resumen de compra
-------------------------------------------*/
-
-
-
-
-.summary{
-  background-color: #ddd;
-  border-top-right-radius: 1rem;
-  border-bottom-right-radius: 1rem;
-  padding: 4vh;
-  color: rgb(65, 65, 65);
-}
-
-.summary b {
-  font-weight: bold;
-  font-size: large;
-}
-
-.summary .col-2{
-  padding: 0;
-}
-.summary .col-10
-{
-  padding: 0;
-}.row{
-  margin: 0;
-}
-.title b{
-  font-size: 1.5rem;
-}
-.main{
-  margin: 0;
-  padding: 2vh 0;
-  width: 100%;
-}
-.col-2, .col{
-  padding: 0 1vh;
-}
-a{
-  padding: 0 1vh;
-}
-.close{
-  margin-left: auto;
-  font-size: 0.7rem;
-}
-img{
-  width: 3.5rem;
-}
-.back-to-shop{
-  margin-top: 4.5rem;
-}
-h5{
-  margin-top: 4vh;
-}
-hr{
-  margin-top: 1.25rem;
-}
-form{
-  padding: 2vh 0;
-}
-select{
-  border: 1px solid rgba(0, 0, 0, 0.137);
-  padding: 1.5vh 1vh;
-  margin-bottom: 4vh;
-  outline: none;
-  width: 100%;
-  background-color: rgb(247, 247, 247);
-}
-input{
-  border: 1px solid rgba(0, 0, 0, 0.137);
-  padding: 1vh;
-  margin-bottom: 4vh;
-  outline: none;
-  width: 100%;
-  background-color: rgb(247, 247, 247);
-}
-input:focus::-webkit-input-placeholder
-{
-    color:transparent;
-}
-.btn{
-  background-color: #000;
-  border-color: #000;
-  color: white;
-  width: 100%;
-  font-size: 0.7rem;
-  margin-top: 4vh;
-  padding: 1vh;
-  border-radius: 0;
-}
-.btn:focus{
-  box-shadow: none;
-  outline: none;
-  box-shadow: none;
-  color: white;
-  -webkit-box-shadow: none;
-  -webkit-user-select: none;
-  transition: none; 
-}
-.btn:hover{
-  color: white;
-}
-a{
-  color: black; 
-}
-a:hover{
-  color: black;
-  text-decoration: none;
-}
-
-/* carrito de compras  */
-
-
-/* Carrito - Navbar principal  */
-
-/* Buscador de productos */
-.form-inline input{
-  background-color: white;
-  margin-top: 20px;
-  width: 450px;
-  box-shadow: 5px 10px 5px rgba(0, 0, 0, 0.5);
-}
-
-/* navbar - logo ferremas */
-.navbar-item img{
-  max-height: 50px;
-}
-
-/* Botones - Ingresar y Carrito */
-.navbar-item .buttons a:hover{
-  box-shadow: 5px 10px 5px rgba(0, 0, 0, 0.5);
-}
-
-
-/* SUB-Navbar - categorias */
-.navbar-menu{
-  font-size: small;
-  font-weight: bold;
-}
-
-.navbar-menu .navbar-item{
-  font-size: small;
-  font-weight: lighter;
-}
-
-/* Usuario logeado */
-.usuario-navbar{
-  margin: 10px;
-  margin-top: 20px;
-  padding: 10px;
+.cantidad-control span {
+  min-width: 24px;
   text-align: center;
-  font-size: medium;
 }
 
-.usuario-navbar h1{
-  color: black;
-  font-weight: bold;
+.carrito-vacio {
+  background: #fff !important;
+}
 
+@media (max-width: 768px) {
+  .carrito-tabla thead {
+    display: none;
+  }
+
+  .carrito-tabla tbody tr {
+    display: block;
+    margin-bottom: 1rem;
+    padding: .75rem .5rem;
+    border: 1px solid #e4e4e4;
+    border-radius: .5rem;
+  }
+
+  .carrito-tabla tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none !important;
+    padding: .4rem .35rem;
+    font-size: .85rem;
+  }
+
+  .carrito-tabla tbody td:first-child {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .carrito-tabla tbody td[data-label="Producto"] {
+    padding-top: .25rem;
+  }
+
+  .carrito-tabla tbody td:last-child {
+    justify-content: center;
+  }
+
+  .carrito-tabla tbody td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #555;
+    margin-right: .5rem;
+    display: inline-block;
+  }
+
+  .cantidad-control span {
+    min-width: 28px;
+  }
+}
+
+/* Botón pagar y enlaces */
+.resumen form button[disabled] {
+  opacity: .7;
+  cursor: not-allowed;
+}
+
+/* Accesibilidad focus */
+.cantidad-control button:focus,
+.resumen form button:focus,
+form button.btn-outline-danger:focus {
+  outline: 2px solid #222;
+  outline-offset: 2px;
 }

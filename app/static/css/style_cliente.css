@@ -96,91 +96,21 @@ footer a:hover {
 }
 
 
-/* Mi Perfil - container principal */
-
-.contenedor-perfil{
-  background-color: lightgray;
-  border-radius: 15px;
-  height: 700px;
-  width: 1600px;
-  margin: 50px auto;
-  padding: 50px;
-  box-shadow: 5px 10px 5px rgba(0, 0, 0, 0.5);
-  display: flex;
-}
-
-/* Cliente - Barra lateral */
-
-.barra-lateral{
-  border-radius: 15px;
-  background-color: white;
-  padding: 20px;
-}
-
-.barra-lateral a:hover{
-  color: orange;
-}
-
-.barra-usuario{
-  border-bottom: 2px solid lightgray ;
-  margin: 10px;
-  margin-bottom: 20px;
-  padding: 5px;
-}
-
-.barra-usuario h1{
-  font-weight: bold;
-  color: black;
-}
-
-.media-content p{
-  margin: 2 auto;
-}
-
-
-/* Cliente - datos cliente */
-
-.seccion-perfil{
-  border-radius: 15px;
-  background-color: white;
-  text-align: left;
-  width: x; /* Ajustar el ancho deseado (en píxeles) */
-  margin-top: 0 auto; 
-  margin-bottom: 0 auto; 
-  margin-left: 50px;
-  padding: 30px;
-}
-
-.seccion-perfil h2{
-  font-weight: bold;
-  color: black; 
-  border-bottom: 2px solid lightgray ;
-  padding-bottom: 5px;
-}
-
-.datos-perfil p{
-  font-weight: 400;
-  color: black;
-}
-
-
-.field{
-  margin: 10px;
-  padding: 10px;
-
-}
-
-.field label{
-  color: black;
-}
-
-.nombre-apellido {
-  display: flex; /* Activar flexbox para el contenedor de nombre y apellido */
-  justify-content: space-between; /* Distribuir espacio entre nombre y apellido */
-}
-
-.nombre-apellido p {
-  margin-right: 20px; /* Agregar espacio a la derecha del apellido */
+/* Perfil - mejoras visuales */
+.profile-wrapper { max-width: 1400px; }
+.profile-wrapper .card { background:#ffffff; border:1px solid #ece7df; border-radius:16px; }
+.profile-wrapper .card-header { border-bottom:1px solid #f1ece5; border-top-left-radius:16px; border-top-right-radius:16px; }
+.profile-avatar i { color:#ffb347; }
+.profile-avatar { width:86px; height:86px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto; background:linear-gradient(135deg,#ffe3c4,#ffd08f); box-shadow:0 4px 10px rgba(0,0,0,.08); }
+.list-group-item.active { background:#ffb347; border-color:#ffb347; color:#1d1d1d; }
+.list-group-item { border-color:#efebe5; }
+.list-group-item.disabled { background:#faf9f7; }
+.list-group-item.disabled.opacity-75 { opacity:.55 !important; }
+.profile-wrapper input.form-control[disabled] { background:#f7f7f7; border-color:#e5ded4; color:#444; }
+.profile-wrapper .alert-info { background:#e9f8ff; color:#234b5d; border:none; }
+@media (max-width: 768px){
+  .profile-wrapper .card-header h5 { font-size:1rem; }
+  .profile-wrapper .profile-avatar { width:70px; height:70px; }
 }
 
 

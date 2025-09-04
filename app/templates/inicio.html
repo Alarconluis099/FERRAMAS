@@ -34,47 +34,43 @@
 
   <!-- Categorias - distribuir en fila con texto + logo arriba -->
 
-  <!--Lanzamientos recientes--> <!-- 8 productos -->
-  <section class="seccion-lanzamientos">
-    <h2>Lanzamientos recientes</h2>
-    <div class="contenedor-productos-lanz">
-      <div class="producto">
-        <img src="{{ url_for('static', filename='imagenes/marcas/martillo.jpg') }}" alt="">
+  <!--Listado dinámico de productos (todos los de la base) -->
+  <section class="seccion-productos" id="productos">
+    <h2>Productos disponibles</h2>
+    <div class="contenedor-productos">
+      {% if tools %}
         {% for tool in tools %}
-        {% if tool.id_tool == 100 %}
-        <h3>{{ tool["name"] }}</h3>
-        <a>{{ tool["description"] }}</a>
-        <p>$ {{ tool["precio"] }}</p>
-  <form method="POST" action="{{ url_for('bp.guardar_pedido') }}">
-          <input type="hidden" name="product_id" value="{{ tool['id_tool'] }}">
-          <input type="hidden" name="product_name" value="{{ tool['name'] }}">
-          <input type="hidden" name="product_description" value="{{ tool['description'] }}">
-          <input type="hidden" name="product_price" value="{{ tool['precio'] }}">
-          <input type="number" name="cantidad" value="1" min="1" placeholder="Ingrese cantidad">
-          <button type="submit">añadir al carro</button>
-        </form>
-        {% endif %}
+          <div class="producto">
+            {# Selección de imagen básica por id; ajustar según tus assets #}
+            {% set img_map = {
+              100: 'imagenes/marcas/martillo.jpg',
+              110: 'imagenes/Herramientas manuales/destornillador.png'
+            } %}
+            {% set img_src = img_map.get(tool.id_tool, 'Imagenes/Marcas/ferremas.png') %}
+            <img src="{{ url_for('static', filename=img_src) }}" alt="{{ tool.name }}">
+            <h3 title="{{ tool.name }}">{{ tool.name }}</h3>
+            <p>{{ tool.description or 'Sin descripción' }}</p>
+            <div class="precio">$ {{ tool.precio }}</div>
+            {% if tool.stock is not none %}
+              <small class="text-muted" style="font-size:.65rem;">Stock: {{ tool.stock }}</small>
+            {% endif %}
+            {% if tool.stock is not defined or tool.stock > 0 %}
+              <form method="POST" action="{{ url_for('bp.guardar_pedido') }}">
+                <input type="hidden" name="product_id" value="{{ tool.id_tool }}">
+                <input type="hidden" name="product_name" value="{{ tool.name }}">
+                <input type="hidden" name="product_description" value="{{ tool.description }}">
+                <input type="hidden" name="product_price" value="{{ tool.precio }}">
+                <input type="number" name="cantidad" value="1" min="1" class="form-control form-control-sm mb-1" style="font-size:.65rem;">
+                <button type="submit" class="btn-add">Añadir al carrito</button>
+              </form>
+            {% else %}
+              <div class="agotado">Agotado</div>
+            {% endif %}
+          </div>
         {% endfor %}
-      </div>
-
-      <div class="producto">
-        <img src="{{ url_for('static', filename='imagenes/Herramientas manuales/destornillador.png') }}" alt="">
-        {% for tool in tools %}
-        {% if tool.id_tool == 110 %}
-        <h3>{{ tool["name"] }}</h3>
-        <a>{{ tool["description"] }}</a>
-        <p>${{ tool["precio"] }}</p>
-  <form method="POST" action="{{ url_for('bp.guardar_pedido') }}">
-          <input type="hidden" name="product_id" value="{{ tool['id'] }}">
-          <input type="hidden" name="product_name" value="{{ tool['name'] }}">
-          <input type="hidden" name="product_description" value="{{ tool['description'] }}">
-          <input type="hidden" name="product_price" value="{{ tool['precio'] }}">
-          <input type="number" name="cantidad" value="1" min="1" placeholder="Ingrese cantidad">
-          <button type="submit">añadir al carro</button>
-        </form>
-        {% endif %}
-        {% endfor %}
-      </div>
+      {% else %}
+        <p>No hay productos registrados.</p>
+      {% endif %}
     </div>
   </section>
 
@@ -89,78 +85,39 @@
     </div>
   </section>
 
-  <!-- INVENTARIO COMPLETO POR CATEGORÍAS -->
-  <!-- Herramientas Manuales -->
-  <section class="seccion-categorias" id="herramientas-manuales">
-    <h2>Herramientas manuales</h2>
-    <div class="categoria">
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Herramientas manuales/martillo.png') }}" alt="Martillos"><span>Martillos</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Herramientas manuales/destornillador.png') }}" alt="Destornilladores"><span>Destornilladores</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Herramientas manuales/llave.png') }}" alt="Llaves"><span>Llaves</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Herramientas manuales/electrica.png') }}" alt="Herramientas eléctricas"><span>Herramientas eléctricas</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Herramientas manuales/taladro.png') }}" alt="Taladros"><span>Taladros</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Herramientas manuales/sierra.png') }}" alt="Sierras"><span>Sierras</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Herramientas manuales/lijadora.png') }}" alt="Lijadoras"><span>Lijadoras</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Herramientas manuales/material.png') }}" alt="Materiales construcción"><span>Materiales construcción</span></div>
-    </div>
-  </section>
-
-  <!-- Materiales Básicos -->
-  <section class="seccion-categorias" id="materiales-basicos">
-    <h2>Materiales básicos</h2>
-    <div class="categoria">
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Materiales Basicos/cemento.png') }}" alt="Cemento"><span>Cemento</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Materiales Basicos/arena.png') }}" alt="Arena"><span>Arena</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Materiales Basicos/ladrillo.png') }}" alt="Ladrillos"><span>Ladrillos</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Materiales Basicos/acabados.png') }}" alt="Acabados"><span>Acabados</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Materiales Basicos/pinturas.png') }}" alt="Pinturas"><span>Pinturas</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Materiales Basicos/barnices.png') }}" alt="Barnices"><span>Barnices</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Materiales Basicos/ceramicas.png') }}" alt="Cerámicos"><span>Cerámicos</span></div>
-    </div>
-  </section>
-
-  <!-- Equipos de Seguridad -->
-  <section class="seccion-categorias" id="equipos-seguridad">
-    <h2>Equipos de seguridad</h2>
-    <div class="categoria">
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Equipos de seguridad/casco.png') }}" alt="Cascos"><span>Cascos</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Equipos de seguridad/guantes.png') }}" alt="Guantes"><span>Guantes</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Equipos de seguridad/lentes.png') }}" alt="Lentes"><span>Lentes</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Equipos de seguridad/accesorios.png') }}" alt="Accesorios"><span>Accesorios</span></div>
-    </div>
-  </section>
-
-  <!-- Tornillos y Anclajes -->
-  <section class="seccion-categorias" id="tornillos-anclajes">
-    <h2>Tornillos y anclajes</h2>
-    <div class="categoria">
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Tornillos y anclajes/madera.png') }}" alt="Fijación madera"><span>Fijación madera</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Tornillos y anclajes/metal.png') }}" alt="Fijación metal"><span>Fijación metal</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Tornillos y anclajes/adhesivas.png') }}" alt="Fijaciones adhesivas"><span>Fijaciones adhesivas</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Tornillos y anclajes/anclajes.png') }}" alt="Anclajes"><span>Anclajes</span></div>
-    </div>
-  </section>
-
-  <!-- Fijaciones y Adhesivos -->
-  <section class="seccion-categorias" id="fijaciones-adhesivos">
-    <h2>Fijaciones y Adhesivos</h2>
-    <div class="categoria">
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Fijaciones y Adhesivos/cinta.png') }}" alt="Cintas"><span>Cintas adhesivas</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Fijaciones y Adhesivos/sellador.png') }}" alt="Selladores"><span>Selladores</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Fijaciones y Adhesivos/espuma.png') }}" alt="Espuma expansiva"><span>Espuma expansiva</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Fijaciones y Adhesivos/pasta.png') }}" alt="Pasta muro"><span>Pasta muro</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Fijaciones y Adhesivos/silicona.png') }}" alt="Silicona"><span>Silicona</span></div>
-    </div>
-  </section>
-
-  <!-- Equipos de medición -->
-  <section class="seccion-categorias" id="equipos-medicion">
-    <h2>Equipos de medición</h2>
-    <div class="categoria">
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Equipos de medicion/laser.png') }}" alt="Medidor láser"><span>Medidor láser</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Equipos de medicion/nivelador.png') }}" alt="Niveladores"><span>Niveladores</span></div>
-      <div class="sub-producto"><img src="{{ url_for('static', filename='Imagenes/Equipos de medicion/distancia.png') }}" alt="Medidor distancia"><span>Medidor distancia</span></div>
-    </div>
-  </section>
-
+{% endblock %}
+{% block extra_js %}{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const cartCountEl=document.getElementById('cart-count');
+  document.querySelectorAll('.producto form').forEach(form=>{
+    form.addEventListener('submit',e=>{
+      e.preventDefault();
+      const fd=new FormData(form);
+      const payload={
+        product_id: fd.get('product_id'),
+        product_name: fd.get('product_name'),
+        product_description: fd.get('product_description'),
+        product_price: fd.get('product_price'),
+        cantidad: fd.get('cantidad')
+      };
+  fetch("{{ url_for('bp.api_guardar_pedido') }}",{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      }).then(r=>r.json()).then(data=>{
+        if(data.ok){
+          if(cartCountEl){ cartCountEl.textContent=data.cart_count; }
+          form.querySelector('[name="cantidad"]').value=1;
+          const btn=form.querySelector('button[type="submit"]');
+          const old=btn.textContent; btn.textContent='Añadido'; btn.disabled=true;
+          setTimeout(()=>{btn.textContent=old; btn.disabled=false;},1200);
+        } else {
+          alert(data.error||'Error al agregar');
+        }
+      }).catch(()=>alert('Error de red'));
+    });
+  });
+});
+</script>
 {% endblock %}

@@ -1,5 +1,6 @@
 from flask import flash, Blueprint, request, jsonify, render_template, redirect, url_for, session, current_app
 from app import mysql
+from app.models import get_user_open_order, get_cart_items, get_cart_totals, clear_order_items, finalize_order, insert_transaction
 import random
 from transbank.webpay.webpay_plus.transaction import Transaction
 from transbank.error.transbank_error import TransbankError
@@ -15,87 +16,84 @@ bp_tbk = Blueprint('tbk', __name__)
 
 @bp_tbk.route("/create", methods=["POST"])
 def webpay_plus_create():
-    # Obtener datos de la compra
+    """Crea la transacción Webpay validando el carrito según el esquema normalizado.
+    Recalcula el monto (ignora el hidden enviado) y revalida stock antes de llamar a Transbank."""
     if 'usuario' not in session:
-        # El usuario no ha iniciado sesión, redirigir a la página de inicio de sesión
         return redirect(url_for('bp.iniciar_sesion'))
 
-    # Validar amount y que el carrito no esté vacío
-    raw_amount = request.form.get("amount")
-    if raw_amount is None:
-        flash('Monto no proporcionado', 'error')
-        return redirect(url_for('bp.carrito'))
+    usuario = session['usuario']
+    # Obtener id usuario y descuento_porcentaje
     try:
-        amount_decimal = Decimal(raw_amount)
+        cur_user = mysql.connection.cursor()
+        cur_user.execute("SELECT id_user, COALESCE(descuento_porcentaje,0) FROM users WHERE usuario=%s", (usuario,))
+        row_user = cur_user.fetchone()
+        cur_user.close()
+        if not row_user:
+            flash('Usuario no encontrado.', 'error')
+            return redirect(url_for('bp.carrito'))
+        user_id, descuento_pct = row_user[0], int(row_user[1] or 0)
     except Exception:
-        flash('Monto inválido', 'error')
+        flash('No se pudo validar el usuario.', 'error')
         return redirect(url_for('bp.carrito'))
-    if amount_decimal <= 0:
-        flash('El carrito está vacío o el monto es 0. Agrega productos antes de pagar.', 'error')
+
+    # Pedido abierto
+    order_id = get_user_open_order(user_id)
+    if not order_id:
+        flash('No hay productos en el carrito.', 'error')
         return redirect(url_for('bp.carrito'))
-    # Verificar que existan filas en pedido
+    items = get_cart_items(order_id)
+    if not items:
+        flash('No hay productos en el carrito.', 'error')
+        return redirect(url_for('bp.carrito'))
+
+    # Revalidar stock actual
     try:
-        cursor_chk = mysql.connection.cursor()
-        cursor_chk.execute('SELECT COUNT(*) FROM pedido')
-        count = cursor_chk.fetchone()[0]
-        cursor_chk.close()
-        if count == 0:
-            flash('No hay productos en el carrito.', 'error')
+        ids = [it['id_tool'] for it in items]
+        placeholders = ','.join(['%s'] * len(ids))
+        cur_stock = mysql.connection.cursor()
+        cur_stock.execute(f"SELECT id_tool, stock FROM tools WHERE id_tool IN ({placeholders})", tuple(ids))
+        stock_rows = cur_stock.fetchall()
+        cur_stock.close()
+        stock_map = {r[0]: r[1] for r in stock_rows}
+        insuficiente = [it for it in items if it['id_tool'] not in stock_map or it['cantidad'] > stock_map[it['id_tool']]]
+        if insuficiente:
+            nombres = ', '.join([it['name'] for it in insuficiente])
+            flash(f'Stock insuficiente para: {nombres}. Actualiza tu carrito.', 'error')
             return redirect(url_for('bp.carrito'))
     except Exception:
-        flash('No se pudo validar el carrito.', 'error')
+        flash('No se pudo validar el stock.', 'error')
+        return redirect(url_for('bp.carrito'))
+
+    # Recalcular subtotal desde la BD
+    subtotal = 0
+    for it in items:
+        try:
+            subtotal += int(it['cantidad']) * int(it['precio_unitario'])
+        except Exception:
+            pass
+    if subtotal <= 0:
+        flash('El carrito está vacío.', 'error')
+        return redirect(url_for('bp.carrito'))
+
+    # Aplicar descuento porcentaje
+    factor = (Decimal(100) - Decimal(descuento_pct)) / Decimal(100)
+    total_con_descuento = int((Decimal(subtotal) * factor).quantize(Decimal('1')))
+    if total_con_descuento <= 0:
+        flash('Monto inválido para la transacción.', 'error')
         return redirect(url_for('bp.carrito'))
 
     buy_order = str(random.randrange(1000000, 99999999))
     session_id = str(random.randrange(1000000, 99999999))
     return_url = 'http://localhost:5000/tbk/commit'
 
-    # Obtener el descuento del usuario si está logueado
-    descuento = Decimal(0)
-    if 'usuario' in session:
-        usuario = session['usuario']
-        cursor = mysql.connection.cursor()
-        cursor.execute(
-            "SELECT descuento FROM users WHERE usuario = %s",
-            (usuario,)
-        )
-        result = cursor.fetchone()
-        if result:
-            descuento = result[0]
-
-    # Aplicar el descuento al monto total y convertir a entero
-    # Aplicar descuento (descuento almacenado como porcentaje entero)
-    try:
-        descuento_pct = Decimal(descuento)
-    except Exception:
-        descuento_pct = Decimal(0)
-    factor = (Decimal(100) - descuento_pct) / Decimal(100)
-    total_con_descuento = int((amount_decimal * factor).quantize(Decimal('1')))  # entero
-    if total_con_descuento < 0:
-        total_con_descuento = 0
-
-    # Crear la transacción con Transbank (evitar llamar si total es 0)
-    if total_con_descuento <= 0:
-        flash('No se puede crear transacción con monto 0.', 'error')
-        return redirect(url_for('bp.carrito'))
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
     try:
         response = tx.create(buy_order, session_id, total_con_descuento, return_url)
-    except Exception as e:
+    except Exception:
         current_app.logger.exception('Error creando transacción Webpay')
         flash('Error iniciando pago. Intenta nuevamente.', 'error')
         return redirect(url_for('bp.carrito'))
 
-    # Después de crear la transacción, actualiza el descuento a 0
-    if 'usuario' in session:
-        cursor = mysql.connection.cursor()
-        cursor.execute(
-            "UPDATE users SET descuento = %s WHERE usuario = %s",
-            (0, usuario)
-        )
-        mysql.connection.commit()
-
-    # Renderizar ruta de destino
     return redirect(response['url'] + '?token_ws=' + response['token'])
 
 @bp_tbk.route("/commit", methods=["GET", "POST"])
@@ -110,14 +108,40 @@ def webpay_plus_commit():
     # return render_template('tbk_commit.html', token=token, response=response)
 
     if response.get('status') == 'AUTHORIZED':
-        # Vaciar carrito (tabla pedido) tras compra exitosa
+        # Identificar pedido abierto del usuario y procesar
         try:
-            cursor = mysql.connection.cursor()
-            cursor.execute("DELETE FROM pedido")
-            mysql.connection.commit()
-            cursor.close()
-        except Exception as e:
-            current_app.logger.exception('No se pudo limpiar el carrito tras el pago')
+            user = session.get('usuario')
+            order_id = None
+            if user:
+                cur = mysql.connection.cursor()
+                cur.execute("SELECT id_user, COALESCE(descuento_porcentaje,0) FROM users WHERE usuario=%s", (user,))
+                row = cur.fetchone()
+                descuento_pct = 0
+                if row:
+                    from app.models import get_user_open_order
+                    order_id = get_user_open_order(row[0])
+                    descuento_pct = int(row[1] or 0)
+                cur.close()
+            if order_id:
+                items = get_cart_items(order_id)
+                total, _ = get_cart_totals(order_id)
+                # Descontar stock por item
+                cur2 = mysql.connection.cursor()
+                for it in items:
+                    cur2.execute("UPDATE tools SET stock = GREATEST(stock - %s,0) WHERE id_tool=%s", (it['cantidad'], it['id_tool']))
+                mysql.connection.commit()
+                cur2.close()
+                finalize_order(order_id, total)
+                insert_transaction(order_id, total)
+                clear_order_items(order_id)
+                # Consumir descuento solo tras compra exitosa
+                if descuento_pct > 0:
+                    cur3 = mysql.connection.cursor()
+                    cur3.execute("UPDATE users SET descuento_porcentaje=0 WHERE usuario=%s", (user,))
+                    mysql.connection.commit()
+                    cur3.close()
+        except Exception:
+            current_app.logger.exception('Fallo procesando pedido tras pago')
         flash('Gracias por su compra', 'success')
     else:
         flash('PAGO FALLIDO', 'error')
@@ -132,12 +156,35 @@ def callback():
     
     if response.get('status') == 'AUTHORIZED':
         try:
-            cursor = mysql.connection.cursor()
-            cursor.execute("DELETE FROM pedido")
-            mysql.connection.commit()
-            cursor.close()
+            user = session.get('usuario')
+            order_id = None
+            if user:
+                cur = mysql.connection.cursor()
+                cur.execute("SELECT id_user, COALESCE(descuento_porcentaje,0) FROM users WHERE usuario=%s", (user,))
+                row = cur.fetchone()
+                descuento_pct = 0
+                if row:
+                    order_id = get_user_open_order(row[0])
+                    descuento_pct = int(row[1] or 0)
+                cur.close()
+            if order_id:
+                items = get_cart_items(order_id)
+                total, _ = get_cart_totals(order_id)
+                cur2 = mysql.connection.cursor()
+                for it in items:
+                    cur2.execute("UPDATE tools SET stock = GREATEST(stock - %s,0) WHERE id_tool=%s", (it['cantidad'], it['id_tool']))
+                mysql.connection.commit()
+                cur2.close()
+                finalize_order(order_id, total)
+                insert_transaction(order_id, total)
+                clear_order_items(order_id)
+                if descuento_pct > 0:
+                    cur3 = mysql.connection.cursor()
+                    cur3.execute("UPDATE users SET descuento_porcentaje=0 WHERE usuario=%s", (user,))
+                    mysql.connection.commit()
+                    cur3.close()
         except Exception:
-            current_app.logger.exception('No se pudo limpiar el carrito tras el pago (callback)')
+            current_app.logger.exception('Fallo procesando pedido tras pago (callback)')
         flash('Gracias por su compra', 'success')
     else:
         flash('PAGO FALLIDO', 'error')

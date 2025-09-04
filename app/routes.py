@@ -1,4 +1,5 @@
 from flask import flash, request, Blueprint, jsonify, render_template, redirect, url_for, session, current_app
+from werkzeug.security import generate_password_hash, check_password_hash
 from app import app
 from .models import (
     fetch_all_tools,
@@ -8,10 +9,16 @@ from .models import (
     update_tools,
     get_all_users,
     fetch_users_by_id,
-    fetch_all_pedidos_ready,
-    fetch_pedido_by_id,
     get_usuario_by_usuario,
-    fetch_all_pedido,
+    # nuevo esquema
+    get_or_create_order,
+    add_or_update_item,
+    remove_item,
+    get_cart_items,
+    get_cart_totals,
+    set_item_quantity,
+    get_user_open_order,
+    clear_order_items,
 )
 from . import mysql
 import random
@@ -19,91 +26,108 @@ import random
 
 bp = Blueprint('bp', __name__)
 
-@bp.route('/pedido', methods=['GET'])
-def ver_pedido():
-    return jsonify(fetch_all_pedido())
+def _current_user_id():
+    if 'usuario' not in session:
+        return None
+    # look up id_user by username
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT id_user FROM users WHERE usuario=%s", (session['usuario'],))
+        row = cursor.fetchone()
+        cursor.close()
+        return row[0] if row else None
+    except Exception:
+        return None
+
+def _get_cart_count():
+    user_id = _current_user_id()
+    if not user_id:
+        return 0
+    order_id = get_user_open_order(user_id)
+    if not order_id:
+        return 0
+    _, count = get_cart_totals(order_id)
+    return count
+
+# Ruta legacy /pedido eliminada (normalización de esquema). Si se requiere, implementar listado de pedido actual.
 
 
-@bp.route('/disminuir_cantidad/<int:id_pedido>', methods=['POST'])
-def disminuir_cantidad(id_pedido):
-    cursor = mysql.connection.cursor()
-    cursor.execute("SELECT cantidad FROM pedido WHERE id_pedido = %s", (id_pedido,))
-    result = cursor.fetchone()
-
-    if result:
-        cantidad = result[0]
-        if cantidad > 1:
-            nueva_cantidad = cantidad - 1
-            cursor.execute(
-                "UPDATE pedido SET cantidad = %s WHERE id_pedido = %s",
-                (nueva_cantidad, id_pedido)
-            )
-        else:
-            cursor.execute("DELETE FROM pedido WHERE id_pedido = %s", (id_pedido,))
-
-        mysql.connection.commit()
-
-    cursor.close()
+@bp.route('/disminuir_cantidad/<int:id_tool>', methods=['POST'])
+def disminuir_cantidad(id_tool):
+    user_id = _current_user_id()
+    if not user_id:
+        return redirect(url_for('bp.inicio'))
+    order_id = get_user_open_order(user_id)
+    if not order_id:
+        return redirect(url_for('bp.inicio'))
+    # obtener cantidad actual
+    items = get_cart_items(order_id)
+    for it in items:
+        if it['id_tool'] == id_tool:
+            new_q = it['cantidad'] - 1
+            set_item_quantity(order_id, id_tool, new_q)
+            break
     return redirect(url_for('bp.carrito'))
 
 
 
-@bp.route('/aumentar_cantidad/<int:product_id>', methods=['POST'])
-def aumentar_cantidad(product_id):
-    cursor = mysql.connection.cursor()
-    cursor.execute("SELECT cantidad FROM pedido WHERE id_pedido = %s", (product_id,))
-    result = cursor.fetchone()
+@bp.route('/aumentar_cantidad/<int:id_tool>', methods=['POST'])
+def aumentar_cantidad(id_tool):
+    user_id = _current_user_id()
+    if not user_id:
+        return redirect(url_for('bp.inicio'))
+    order_id = get_or_create_order(user_id)
+    add_or_update_item(order_id, id_tool, 1)
+    return redirect(url_for('bp.carrito'))
 
-    if result:
-        cantidad = result[0]
-        if cantidad >= 1:
-            nueva_cantidad = cantidad + 1
-            cursor.execute(
-                "UPDATE pedido SET cantidad = %s WHERE id_pedido = %s",
-                (nueva_cantidad, product_id)
-            )
-        else:
-            cursor.execute("DELETE FROM pedido WHERE id_pedido = %s", (product_id,))
-
-        mysql.connection.commit()
-
-    cursor.close()
+@bp.route('/eliminar_item/<int:id_tool>', methods=['POST'])
+def eliminar_item(id_tool):
+    user_id = _current_user_id()
+    if user_id:
+        order_id = get_user_open_order(user_id)
+        if order_id:
+            remove_item(order_id, id_tool)
+    flash('Producto eliminado del carrito', 'info')
     return redirect(url_for('bp.carrito'))
 
 
 @bp.route('/guardar_registro', methods=['POST'])
 def guardar_registro():
-    usuario_usuario = request.form['usuario_usuario']
-    usuario_correo = request.form['usuario_correo'].strip().lower()
-    usuario_contraseña = request.form['usuario_contraseña']
-    usuario_vercontraseña = request.form['usuario_vercontraseña']
+    """Registro simplificado: usuario_nombre (username), usuario_correo (gmail), usuario_contraseña (sin repetición)."""
+    form = request.form
+    username = (form.get('usuario_nombre') or '').strip()
+    correo = (form.get('usuario_correo') or '').strip().lower()
+    pass1 = form.get('usuario_contraseña','')
 
-    # Validación formato gmail
+    if not all([username, correo, pass1]):
+        flash('Completa todos los campos.', 'error')
+        return redirect(url_for('bp.registro'))
+
     import re
-    if not re.match(r'^[A-Za-z0-9._%+-]+@gmail\.com$', usuario_correo):
-        flash('El correo debe ser un correo @gmail.com válido.', 'error')
+    if not re.match(r'^[A-Za-z0-9._%+-]+@gmail\.com$', correo):
+        flash('Debe ser un correo @gmail.com válido.', 'error')
+        return redirect(url_for('bp.registro'))
+    if len(pass1) < 8:
+        flash('La contraseña debe tener al menos 8 caracteres.', 'error')
         return redirect(url_for('bp.registro'))
 
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT correo FROM users WHERE correo = %s", (usuario_correo,))
-    result = cursor.fetchone()
-    if result:
-        flash('El correo electrónico ya está registrado', 'error')
+    # Unicidad de correo y usuario
+    cursor.execute("SELECT 1 FROM users WHERE correo=%s OR usuario=%s", (correo, username))
+    if cursor.fetchone():
+        flash('Correo o usuario ya registrados.', 'error')
         cursor.close()
         return redirect(url_for('bp.registro'))
-    # Usuario no existe
-    if usuario_contraseña == usuario_vercontraseña:
-        cursor.execute(
-            "INSERT INTO users (correo, contraseña, usuario, descuento) VALUES (%s, %s, %s, %s)",
-            (usuario_correo, usuario_contraseña, usuario_usuario, 15)
-        )
-        mysql.connection.commit()
-        cursor.close()
-        return redirect(url_for('bp.iniciar_sesion'))
-    else:
-        flash('Las contraseñas no coinciden', 'error')
-        cursor.close()
-        return redirect(url_for('bp.registro'))
+
+    hashed = generate_password_hash(pass1)
+    cursor.execute(
+        "INSERT INTO users (correo, contraseña, usuario, descuento_porcentaje) VALUES (%s,%s,%s,%s)",
+        (correo, hashed, username, 15)
+    )
+    mysql.connection.commit()
+    cursor.close()
+    flash('Cuenta creada. Ahora puedes iniciar sesión.', 'success')
+    return redirect(url_for('bp.iniciar_sesion'))
 
 
 
@@ -127,24 +151,47 @@ def iniciar_sesion():
 
         cursor = mysql.connection.cursor()
         cursor.execute(
-            "SELECT id_user, usuario, descuento FROM users WHERE correo = %s AND contraseña = %s",
-            (correo_normalizado, usuario_contraseña)
+            "SELECT id_user, usuario, contraseña, COALESCE(descuento_porcentaje,0) FROM users WHERE correo = %s",
+            (correo_normalizado,)
         )
         result = cursor.fetchone()
-        
-        if result:
-            session['usuario'] = result[1]
-            usuario_id = result[0]
-            descuento = result[2]
-
-            # Verificar si es un usuario nuevo y asignar un descuento si es necesario
-            if descuento == 0:
-                pass
-
-            return redirect(url_for('bp.inicio'))
-        else:
+        if not result:
+            cursor.close()
             flash('Correo y/o contraseña inválidos.', 'error')
             return redirect(url_for('bp.iniciar_sesion'))
+
+        usuario_id, usuario_nombre, stored_pass, descuento_pct = result
+
+        # Detección de hash (formatos Werkzeug comienzan con 'pbkdf2:' o similares)
+        is_hashed = stored_pass.startswith('pbkdf2:') or stored_pass.startswith('scrypt:')
+        valid = False
+        try:
+            if is_hashed:
+                valid = check_password_hash(stored_pass, usuario_contraseña)
+            else:
+                # Legacy plaintext: comparar directo y luego migrar a hash
+                valid = (stored_pass == usuario_contraseña)
+                if valid:
+                    try:
+                        new_hash = generate_password_hash(usuario_contraseña)
+                        up = mysql.connection.cursor()
+                        up.execute("UPDATE users SET contraseña=%s WHERE id_user=%s", (new_hash, usuario_id))
+                        mysql.connection.commit()
+                        up.close()
+                    except Exception:
+                        mysql.connection.rollback()
+        except Exception:
+            valid = False
+
+        cursor.close()
+        if not valid:
+            flash('Correo y/o contraseña inválidos.', 'error')
+            return redirect(url_for('bp.iniciar_sesion'))
+
+        session['usuario'] = usuario_nombre
+        session.permanent = True
+        # descuento_pct se mantiene para lógica futura; ya disponible en variable
+        return redirect(url_for('bp.inicio'))
 
     return render_template('login.html')
 
@@ -153,38 +200,50 @@ def iniciar_sesion():
 
 @bp.route('/guardar_pedido', methods=['POST'])
 def guardar_pedido():
-    product_id = request.form['product_id']
-    product_name = request.form['product_name']
-    product_description = request.form['product_description']
-    product_price = request.form['product_price']
-    product_quantity = int(request.form['cantidad'])
-
-    cursor = mysql.connection.cursor()
-    cursor.execute(
-        "SELECT * FROM pedido WHERE id_pedido = %s", (product_id,)
-    )
-    existing_order = cursor.fetchone()
-
-    if existing_order:
-        new_quantity = existing_order[4] + product_quantity
-        cursor.execute(
-            "UPDATE pedido SET cantidad = %s WHERE id_pedido = %s",
-            (new_quantity, product_id)
-        )
-    else:
-        cursor.execute(
-            "INSERT INTO pedido (id_pedido, nom_pedido, desc_pedido, precio_pedido, cantidad) VALUES (%s, %s, %s, %s, %s)",
-            (product_id, product_name, product_description, product_price, product_quantity)
-        )
-    mysql.connection.commit()
-    cursor.close()
+    user_id = _current_user_id()
+    if not user_id:
+        flash('Inicia sesión para agregar productos.', 'error')
+        return redirect(url_for('bp.login'))
+    try:
+        product_id = int(request.form['product_id'])
+        cantidad = int(request.form.get('cantidad', 1))
+    except Exception:
+        flash('Datos de producto inválidos', 'error')
+        return redirect(url_for('bp.inicio'))
+    order_id = get_or_create_order(user_id)
+    add_or_update_item(order_id, product_id, cantidad)
     return redirect(url_for('bp.inicio'))
+
+@bp.route('/api/guardar_pedido', methods=['POST'])
+def api_guardar_pedido():
+    user_id = _current_user_id()
+    if not user_id:
+        return jsonify({'ok':False,'error':'Debes iniciar sesión'}), 401
+    data = request.get_json(silent=True) or {}
+    try:
+        product_id = int(data.get('product_id'))
+        cantidad = int(data.get('cantidad', 1))
+    except Exception:
+        return jsonify({'ok':False,'error':'Datos inválidos'}), 400
+    order_id = get_or_create_order(user_id)
+    if not add_or_update_item(order_id, product_id, cantidad):
+        return jsonify({'ok':False,'error':'No se pudo agregar'}), 500
+    # Recalcular total items
+    _, count = get_cart_totals(order_id)
+    return jsonify({'ok':True,'cart_count': count})
 
 
 
 @bp.route('/Pedido', methods=['GET'])
 def pedido():
-    return jsonify(fetch_all_pedidos_ready())
+    # Retorna items de la orden abierta del usuario
+    user_id = _current_user_id()
+    if not user_id:
+        return jsonify([])
+    order_id = get_user_open_order(user_id)
+    if not order_id:
+        return jsonify([])
+    return jsonify(get_cart_items(order_id))
 
 @bp.route('/users', methods=['GET'])
 def get_users():
@@ -219,7 +278,16 @@ def create_tools():
 
 @bp.route('/pedido/<id_pedido>', methods=['GET'])
 def get_pedido(id_pedido):
-    return jsonify(fetch_pedido_by_id(id_pedido))
+    # Totales de un pedido específico (si existiera) - simplificado
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("SELECT monto_total, estado_pedido FROM pedidos WHERE id_pedido=%s", (id_pedido,))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({}), 404
+        return jsonify({'monto_total': row[0], 'estado_pedido': row[1]})
+    finally:
+        cursor.close()
 
 
 @bp.route('/tools/<id>', methods=['DELETE'])
@@ -253,7 +321,7 @@ def cliente():
     usuario = session.get('usuario')
     if not usuario:
         return redirect(url_for('bp.iniciar_sesion'))
-    return render_template('Cliente.html', usuario=usuario)
+    return render_template('Cliente.html', usuario=usuario, cart_count=_get_cart_count())
 
 
 from decimal import Decimal
@@ -264,64 +332,43 @@ import pdb
 @bp.route('/carrito')  # alias en minúsculas
 def carrito():
     usuario = session.get('usuario')
-    try:
-        pedidos = fetch_all_pedidos_ready() or []
-    except Exception as e:
-        current_app.logger.exception('Error obteniendo pedidos')
-        pedidos = []
-
+    user_id = _current_user_id()
+    if not user_id:
+        return redirect(url_for('bp.inicio'))
+    order_id = get_user_open_order(user_id)
+    pedidos = get_cart_items(order_id) if order_id else []
     from decimal import Decimal
+    subtotal = Decimal(0)
+    for p in pedidos:
+        subtotal += Decimal(p.get('subtotal_linea') or 0)
+    # descuento
     descuento_porcentaje = 0
-    descuento_factor = Decimal(0)
-
     if usuario:
         try:
             cursor = mysql.connection.cursor()
-            cursor.execute("SELECT descuento FROM users WHERE usuario = %s", (usuario,))
-            result = cursor.fetchone()
-            if result:
-                try:
-                    descuento_porcentaje = int(result[0])
-                except (ValueError, TypeError):
-                    descuento_porcentaje = 0
-                descuento_factor = Decimal(descuento_porcentaje) / 100
+            cursor.execute("SELECT descuento_porcentaje FROM users WHERE usuario=%s", (usuario,))
+            r = cursor.fetchone()
+            if r:
+                descuento_porcentaje = int(r[0] or 0)
         finally:
-            try:
-                cursor.close()
-            except Exception:
-                pass
-
-    # Calcular subtotal sin descuento y total con descuento de manera segura
-    subtotal = Decimal(0)
-    for p in pedidos:
-        try:
-            precio_linea = Decimal(p.get('precio_total') or 0)
-        except Exception:
-            precio_linea = Decimal(0)
-        subtotal += precio_linea
-
-    total_con_descuento = (subtotal * (Decimal(1) - descuento_factor)).quantize(Decimal('1')) if subtotal else Decimal(0)
+            try: cursor.close()
+            except Exception: pass
+    factor = Decimal(1) - (Decimal(descuento_porcentaje)/Decimal(100))
+    total_con_descuento = (subtotal * factor).quantize(Decimal('1')) if subtotal else Decimal(0)
     payment_available = 'tbk.webpay_plus_create' in app.view_functions
-
-    return render_template(
-        'carrito.html',
-        pedidos=pedidos,
-        usuario=usuario,
-        descuento=descuento_porcentaje,
-        total_con_descuento=total_con_descuento,
-        subtotal=subtotal,
-        payment_available=payment_available
-    )
+    if not pedidos:
+        return redirect(url_for('bp.inicio'))
+    return render_template('carrito.html', pedidos=pedidos, usuario=usuario, descuento=descuento_porcentaje, total_con_descuento=total_con_descuento, subtotal=subtotal, payment_available=payment_available, cart_count=_get_cart_count())
 
 
 @bp.route('/inicio')
 def inicio():
     usuario = session.get('usuario')
-    return render_template('inicio.html', tools=fetch_all_tools(), usuario=usuario)
+    return render_template('inicio.html', tools=fetch_all_tools(), usuario=usuario, cart_count=_get_cart_count())
 
 @bp.route('/Login') 
 def login():
-    return render_template('login.html', user=get_all_users())
+    return render_template('login.html', user=get_all_users(), cart_count=_get_cart_count())
 
 @bp.route('/logout')
 def logout():
@@ -330,45 +377,10 @@ def logout():
 
 @bp.route('/Registro')
 def registro():
-    return render_template('registro.html', user=get_all_users())
+    return render_template('registro.html', user=get_all_users(), cart_count=_get_cart_count())
 
 # Rutas de categorías eliminadas: navegación ahora mediante anclas en /inicio
 
-# Subcategorías ahora redirigen al ancla dentro de /inicio
-def _redir(anchor):
-    return redirect(url_for('bp.inicio') + anchor)
-
-@bp.route('/martillos')
-def martillos():
-    return _redir('#herramientas-manuales')
-
-@bp.route('/destornillador')
-def destornillador():
-    return _redir('#herramientas-manuales')
-
-@bp.route('/llaves')
-def llaves():
-    return _redir('#herramientas-manuales')
-
-@bp.route('/electricas')
-def electricas():
-    return _redir('#herramientas-manuales')
-
-@bp.route('/taladros')
-def taladros():
-    return _redir('#herramientas-manuales')
-
-@bp.route('/sierras')
-def sierras():
-    return _redir('#herramientas-manuales')
-
-@bp.route('/lijadoras')
-def lijadoras():
-    return _redir('#herramientas-manuales')
-
-@bp.route('/materiales')
-def materiales():
-    return _redir('#materiales-basicos')
 
 
 def error_page(error):

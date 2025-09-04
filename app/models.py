@@ -3,45 +3,15 @@ from flask import current_app
 import MySQLdb
 from MySQLdb.cursors import DictCursor
 
-def fetch_all_pedido():
-    cursor = mysql.connection.cursor()
-    try:
-        cursor.execute("SELECT id_pedido, nom_pedido, desc_pedido, precio_pedido, cantidad, id_user FROM pedido")
-        rows = cursor.fetchall()
-        columns = [column[0] for column in cursor.description]
-        data = [dict(zip(columns, row)) for row in rows]
-        return data
-    except Exception as e:
-        current_app.logger.error(f"Error fetching pedido: {e}")
-        return []
-    finally:
-        cursor.close()
+"""Compatibilidad: funciones antiguas asociadas a la tabla 'pedido' (eliminada).
+Se mantienen como no-op / retornos vacíos para no romper imports existentes.
+"""
 
-def fetch_all_pedidos_ready():
-    cursor = mysql.connection.cursor()
-    try:
-        # Use aggregate functions on non-grouped columns for compatibility with ONLY_FULL_GROUP_BY
-        cursor.execute("""
-            SELECT 
-                id_pedido,
-                MIN(nom_pedido)       AS nom_pedido,
-                MIN(desc_pedido)      AS desc_pedido,
-                MIN(precio_pedido)    AS precio_pedido,
-                SUM(precio_pedido * cantidad) AS precio_total,
-                SUM(cantidad)         AS cantidad_total
-            FROM pedido
-            GROUP BY id_pedido
-        """)
-        rows = cursor.fetchall()
-        columns = [column[0] for column in cursor.description]
+def fetch_all_pedido():  # legacy placeholder
+    return []
 
-        data = [dict(zip(columns, row)) for row in rows]
-        return data
-    except Exception as e:
-        current_app.logger.error(f"Error fetching pedidos: {e}")
-        return []
-    finally:
-        cursor.close()
+def fetch_all_pedidos_ready():  # legacy placeholder
+    return []
 
 def fetch_all_tools():
     """Return all tools (schema sin id_tools_type)."""
@@ -57,24 +27,14 @@ def fetch_all_tools():
     finally:
         cursor.close()
 
-def fetch_pedido_by_id(code):
-    cursor = mysql.connection.cursor()
-    try:
-        cursor.execute("SELECT SUM(precio_pedido * cantidad) AS total FROM pedido WHERE id_pedido = %s", (code,))
-        data = cursor.fetchone()
-        return data
-    except Exception as e:
-        current_app.logger.error(f"Error fetching pedido by id: {e}")
-        return None
-    finally:
-        cursor.close()
+def fetch_pedido_by_id(code):  # legacy placeholder
+    return None
 
 def fetch_tools_by_code(code):
-    cursor = mysql.connection.cursor()
+    cursor = mysql.connection.cursor(DictCursor)
     try:
         cursor.execute("SELECT * FROM tools WHERE id_tool=%s", (code,))
-        data = cursor.fetchone()
-        return data
+        return cursor.fetchone()
     except Exception as e:
         current_app.logger.error(f"Error fetching tool by id_tool {code}: {e}")
         return None
@@ -178,7 +138,7 @@ def get_usuario_by_usuario(usuario):
     """Return basic public info for a user (no password)."""
     try:
         cursor = mysql.connection.cursor(DictCursor)
-        cursor.execute("SELECT correo, usuario, descuento FROM users WHERE usuario = %s", (usuario,))
+        cursor.execute("SELECT correo, usuario, descuento_porcentaje FROM users WHERE usuario = %s", (usuario,))
         return cursor.fetchone()
     except Exception as e:
         current_app.logger.error(f"Error de base de datos al obtener usuario: {e}")
@@ -188,3 +148,186 @@ def get_usuario_by_usuario(usuario):
             cursor.close()
         except Exception:
             pass
+
+# ==================== NUEVO ESQUEMA NORMALIZADO ====================
+
+def get_user_open_order(user_id):
+    """Return id_pedido for user open (estado_pedido='pendiente' and no pago registrado)."""
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("SELECT id_pedido FROM pedidos WHERE id_user=%s AND estado_pedido='pendiente' ORDER BY id_pedido DESC LIMIT 1", (user_id,))
+        row = cursor.fetchone()
+        return row[0] if row else None
+    finally:
+        cursor.close()
+
+def create_order(user_id):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("INSERT INTO pedidos (id_user, estado_pedido, monto_total) VALUES (%s,'pendiente',0)", (user_id,))
+        mysql.connection.commit()
+        return cursor.lastrowid
+    except Exception as e:
+        mysql.connection.rollback()
+        current_app.logger.error(f"Error creando pedido: {e}")
+        return None
+    finally:
+        cursor.close()
+
+def get_or_create_order(user_id):
+    order_id = get_user_open_order(user_id)
+    if order_id:
+        return order_id
+    return create_order(user_id)
+
+def add_or_update_item(order_id, tool_id, quantity):
+    """Add item or increase quantity. quantity is int to add."""
+    cursor = mysql.connection.cursor()
+    try:
+        # Precio actual de la herramienta
+        cursor.execute("SELECT precio, stock FROM tools WHERE id_tool=%s", (tool_id,))
+        row = cursor.fetchone()
+        if not row:
+            return False
+        precio, stock = row[0], row[1]
+        if stock is not None and stock <= 0:
+            return False  # sin stock
+        cursor.execute("SELECT id_detalle, cantidad FROM pedido_detalle WHERE id_pedido=%s AND id_tool=%s", (order_id, tool_id))
+        existing = cursor.fetchone()
+        if existing:
+            nueva = existing[1] + quantity
+            # Validar stock
+            if stock is not None and nueva > stock:
+                return False
+            if nueva <= 0:
+                cursor.execute("DELETE FROM pedido_detalle WHERE id_detalle=%s", (existing[0],))
+            else:
+                cursor.execute("UPDATE pedido_detalle SET cantidad=%s WHERE id_detalle=%s", (nueva, existing[0]))
+        else:
+            if quantity > 0:
+                if stock is not None and quantity > stock:
+                    return False
+                cursor.execute("INSERT INTO pedido_detalle (id_pedido, id_tool, cantidad, precio_unitario) VALUES (%s,%s,%s,%s)", (order_id, tool_id, quantity, precio))
+        mysql.connection.commit()
+        return True
+    except Exception as e:
+        mysql.connection.rollback()
+        current_app.logger.error(f"Error agregando/actualizando item: {e}")
+        return False
+    finally:
+        cursor.close()
+
+def set_item_quantity(order_id, tool_id, new_qty):
+    cursor = mysql.connection.cursor()
+    try:
+        if new_qty <= 0:
+            cursor.execute("DELETE FROM pedido_detalle WHERE id_pedido=%s AND id_tool=%s", (order_id, tool_id))
+        else:
+            cursor.execute("SELECT id_detalle, cantidad FROM pedido_detalle WHERE id_pedido=%s AND id_tool=%s", (order_id, tool_id))
+            row = cursor.fetchone()
+            if row:
+                # Validar stock
+                cursor.execute("SELECT stock FROM tools WHERE id_tool=%s", (tool_id,))
+                stock_row = cursor.fetchone()
+                if stock_row and stock_row[0] is not None and new_qty > stock_row[0]:
+                    return False
+                cursor.execute("UPDATE pedido_detalle SET cantidad=%s WHERE id_detalle=%s", (new_qty, row[0]))
+            else:
+                cursor.execute("SELECT precio FROM tools WHERE id_tool=%s", (tool_id,))
+                price_row = cursor.fetchone()
+                if not price_row:
+                    return False
+                precio = price_row[0] or 0
+                cursor.execute("SELECT stock FROM tools WHERE id_tool=%s", (tool_id,))
+                srow = cursor.fetchone()
+                if srow and srow[0] is not None and new_qty > srow[0]:
+                    return False
+                cursor.execute("INSERT INTO pedido_detalle (id_pedido,id_tool,cantidad,precio_unitario) VALUES (%s,%s,%s,%s)", (order_id, tool_id, new_qty, precio))
+        mysql.connection.commit()
+        return True
+    except Exception as e:
+        mysql.connection.rollback()
+        current_app.logger.error(f"Error estableciendo cantidad item: {e}")
+        return False
+    finally:
+        cursor.close()
+
+def remove_item(order_id, tool_id):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("DELETE FROM pedido_detalle WHERE id_pedido=%s AND id_tool=%s", (order_id, tool_id))
+        mysql.connection.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        mysql.connection.rollback()
+        current_app.logger.error(f"Error eliminando item: {e}")
+        return False
+    finally:
+        cursor.close()
+
+def get_cart_items(order_id):
+    cursor = mysql.connection.cursor(DictCursor)
+    try:
+        cursor.execute("""
+            SELECT d.id_tool, t.name, t.description, d.cantidad, d.precio_unitario,
+                   (d.cantidad * d.precio_unitario) AS subtotal_linea
+            FROM pedido_detalle d
+            JOIN tools t ON t.id_tool = d.id_tool
+            WHERE d.id_pedido=%s
+            ORDER BY d.id_detalle DESC
+        """, (order_id,))
+        return cursor.fetchall()
+    except Exception as e:
+        current_app.logger.error(f"Error obteniendo items del carrito: {e}")
+        return []
+    finally:
+        cursor.close()
+
+def get_cart_totals(order_id):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("SELECT COALESCE(SUM(cantidad*precio_unitario),0) FROM pedido_detalle WHERE id_pedido=%s", (order_id,))
+        total = cursor.fetchone()[0] or 0
+        cursor.execute("SELECT COALESCE(SUM(cantidad),0) FROM pedido_detalle WHERE id_pedido=%s", (order_id,))
+        count = cursor.fetchone()[0] or 0
+        return total, count
+    except Exception as e:
+        current_app.logger.error(f"Error obteniendo totales del carrito: {e}")
+        return 0,0
+    finally:
+        cursor.close()
+
+def clear_order_items(order_id):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("DELETE FROM pedido_detalle WHERE id_pedido=%s", (order_id,))
+        mysql.connection.commit()
+    except Exception as e:
+        mysql.connection.rollback()
+        current_app.logger.error(f"Error limpiando items de pedido {order_id}: {e}")
+    finally:
+        cursor.close()
+
+def finalize_order(order_id, total):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("UPDATE pedidos SET monto_total=%s, estado_pedido='enviado' WHERE id_pedido=%s", (total, order_id))
+        mysql.connection.commit()
+    except Exception as e:
+        mysql.connection.rollback()
+        current_app.logger.error(f"Error finalizando pedido {order_id}: {e}")
+    finally:
+        cursor.close()
+
+def insert_transaction(order_id, amount, metodo='Webpay Plus'):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("INSERT INTO transacciones (id_pedido, monto_transaccion, metodo_pago) VALUES (%s,%s,%s)", (order_id, amount, metodo))
+        mysql.connection.commit()
+        return True
+    except Exception as e:
+        mysql.connection.rollback()
+        current_app.logger.error(f"Error registrando transaccion pedido {order_id}: {e}")
+        return False
+    finally:
+        cursor.close()

@@ -13,10 +13,12 @@
 </head>
 <body>
   <!-- NAVBAR PRINCIPAL -->
-  <nav class="navbar is-warning" role="navigation" aria-label="main navigation" style="box-shadow:0 2px 8px rgba(0,0,0,.08);">
+  <nav class="navbar app-navbar" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
-      <a class="navbar-item" href="{{ url_for('bp.inicio') }}">
-        <img src="{{ url_for('static', filename='Imagenes/Marcas/ferremas.png') }}" alt="Ferremas" />
+      <a class="navbar-item logo-wrap" href="{{ url_for('bp.inicio') }}" aria-label="Ir al inicio">
+        <span class="logo-circle">
+          <img src="{{ url_for('static', filename='Imagenes/Marcas/ferremas.png') }}" alt="Ferremas" class="logo-img" />
+        </span>
       </a>
       <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMain">
         <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
@@ -24,44 +26,25 @@
     </div>
     <div id="navbarMain" class="navbar-menu">
       <div class="navbar-start">
-        <form class="form-inline">
-          <input class="form-control mr-sm-2" id="label_search" type="search" placeholder="¡Hola! ¿Qué estás buscando?" aria-label="Buscar productos">
-        </form>
+        <!-- Buscador eliminado por requerimiento -->
       </div>
-      <div class="navbar-end">
-        <div class="usuario-navbar">
-          <h1>Bienvenido, {{ session.get('usuario') or 'Invitado' }}</h1>
+      <div class="navbar-end nav-action-group">
+        <div class="nav-user-block">
+          <span class="icon-circle"><i class="bi bi-person"></i></span>
+          {% if session.get('usuario') %}
+            <div class="user-text">Hola, <a href="{{ url_for('bp.cliente') }}" class="link-inline">{{ session.get('usuario') }}</a>
+              <span class="separator-dot">•</span>
+              <a href="{{ url_for('bp.logout') }}" class="link-inline">Salir</a>
+            </div>
+          {% else %}
+            <div class="user-text">¡Hola! <a href="{{ url_for('bp.login') }}" class="link-inline">Ingresa</a> o <a href="{{ url_for('bp.registro') }}" class="link-inline">regístrate</a></div>
+          {% endif %}
         </div>
-        <div class="navbar-item">
-          <div class="buttons">
-            {% if session.get('usuario') %}
-              <a href="{{ url_for('bp.cliente') }}" class="button is-light is-rounded">Perfil</a>
-              <a href="{{ url_for('bp.logout') }}" class="button is-light is-rounded">Salir</a>
-            {% else %}
-              <a href="{{ url_for('bp.login') }}" class="button is-light is-rounded">Ingresar</a>
-            {% endif %}
-            <a href="{{ url_for('bp.carrito') }}" class="button is-light is-rounded"><i class="bi bi-cart"></i></a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </nav>
-
-  <!-- NAVBAR CATEGORÍAS -->
-  <nav class="navbar is-dark" role="navigation" aria-label="categorias" style="box-shadow:0 4px 12px -4px rgba(0,0,0,.2);">
-    <div class="navbar-menu" id="navbarCats">
-      <div class="navbar-start">
-        <div class="navbar-item has-dropdown is-hoverable">
-          <a class="navbar-link">Categorías</a>
-          <div class="navbar-dropdown">
-            <a class="navbar-item" href="{{ url_for('bp.inicio') }}#herramientas-manuales">Herramientas manuales</a>
-            <a class="navbar-item" href="{{ url_for('bp.inicio') }}#materiales-basicos">Materiales básicos</a>
-            <a class="navbar-item" href="{{ url_for('bp.inicio') }}#equipos-seguridad">Equipos de seguridad</a>
-            <a class="navbar-item" href="{{ url_for('bp.inicio') }}#tornillos-anclajes">Tornillos y anclajes</a>
-            <a class="navbar-item" href="{{ url_for('bp.inicio') }}#fijaciones-adhesivos">Fijaciones y Adhesivos</a>
-            <a class="navbar-item" href="{{ url_for('bp.inicio') }}#equipos-medicion">Equipos de medición</a>
-          </div>
-        </div>
+        <div class="nav-separator" aria-hidden="true"></div>
+        <a href="{{ url_for('bp.carrito') }}" class="nav-cart-block">
+          <span class="icon-circle cart-icon"><i class="bi bi-cart"></i></span>
+          <span id="cart-count" class="cart-badge">{{ cart_count|default(0) }}</span>
+        </a>
       </div>
     </div>
   </nav>
@@ -81,34 +64,45 @@
   {% endwith %}
 
   <!-- MAIN CONTENT -->
-  {% block content %}{% endblock %}
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
 
   <!-- FOOTER -->
-  <footer class="footer">
-    <div class="secciones-footer">
-      <div class="seccion-contactos">
-        <h2>Contáctanos</h2>
-        <a href="https://maps.app.goo.gl/HwFHvTRBiNXT5yFv9" target="_blank" rel="noopener"><i class="bi bi-building-fill"></i> Antonio Varas 666, Providencia.</a>
-        <p><i class="bi bi-envelope"></i> ferremas@gmail.com</p>
-        <p><i class="bi bi-telephone-fill"></i> +56 2 23540400</p>
-      </div>
-      <div class="seccion-rrss">
-        <h2>Redes sociales</h2>
-        <a href="#"><i class="bi bi-facebook"></i> Facebook</a>
-        <a href="#"><i class="bi bi-instagram"></i> Instagram</a>
-        <a href="#"><i class="bi bi-youtube"></i> Youtube</a>
-      </div>
-      <div class="seccion-metodos-de-pago">
-        <h2>Métodos de pago</h2>
-        <p>Débito</p>
-        <p>Crédito</p>
-        <p>Transferencia</p>
-      </div>
-      <div class="footer-webpay">
-        <figure><img src="{{ url_for('static', filename='Imagenes/Marcas/webpay.png') }}" alt="Webpay" /></figure>
+  <footer class="site-footer mt-5">
+    <div class="footer-top container py-4 py-md-5">
+      <div class="row g-4">
+        <div class="col-12 col-md-4">
+          <h5 class="fw-semibold mb-3">Contáctanos</h5>
+          <ul class="list-unstyled small m-0 footer-list">
+            <li><a href="https://maps.app.goo.gl/HwFHvTRBiNXT5yFv9" target="_blank" rel="noopener" class="footer-link"><i class="bi bi-building-fill me-2"></i>Antonio Varas 666, Providencia</a></li>
+            <li><span class="footer-text"><i class="bi bi-envelope me-2"></i>ferremas@gmail.com</span></li>
+            <li><span class="footer-text"><i class="bi bi-telephone-fill me-2"></i>+56 2 23540400</span></li>
+          </ul>
+        </div>
+        <div class="col-6 col-md-2">
+          <h5 class="fw-semibold mb-3">Redes</h5>
+          <ul class="list-unstyled small m-0 footer-list">
+            <li><a href="#" class="footer-link"><i class="bi bi-facebook me-2"></i>Facebook</a></li>
+            <li><a href="#" class="footer-link"><i class="bi bi-instagram me-2"></i>Instagram</a></li>
+            <li><a href="#" class="footer-link"><i class="bi bi-youtube me-2"></i>Youtube</a></li>
+          </ul>
+        </div>
+        <div class="col-6 col-md-3">
+          <h5 class="fw-semibold mb-3">Pago</h5>
+          <ul class="list-unstyled small m-0 footer-list">
+            <li class="footer-text">Débito</li>
+            <li class="footer-text">Crédito</li>
+            <li class="footer-text">Transferencia</li>
+          </ul>
+        </div>
+        <div class="col-12 col-md-3 d-flex flex-column align-items-md-end">
+          <figure class="m-0 footer-brand"><img src="{{ url_for('static', filename='Imagenes/Marcas/webpay.png') }}" alt="Webpay" class="img-fluid" style="max-height:60px"></figure>
+          <p class="small text-muted mt-3 mb-0">Pagos seguros Webpay Plus</p>
+        </div>
       </div>
     </div>
-    <div class="copyright">&copy; 2024 Ferremas</div>
+    <div class="footer-bottom text-center py-3 small">&copy; 2024 Ferremas. Todos los derechos reservados.</div>
   </footer>
 
   {% block extra_js %}
@@ -116,6 +110,10 @@
     document.addEventListener('DOMContentLoaded', function(){
       const alerts=document.querySelectorAll('.alert');
       alerts.forEach(a=>setTimeout(()=>{if(a.classList.contains('show')){const inst=bootstrap.Alert.getOrCreateInstance(a);inst.close();}},4000));
+
+  // Ajustar offset si nav fija
+  const nav=document.querySelector('.app-navbar');
+  if(nav){ const h=nav.offsetHeight; document.documentElement.style.setProperty('--nav-offset', h+'px'); }
     });
   </script>
   {% endblock %}

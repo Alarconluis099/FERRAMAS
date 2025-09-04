@@ -1,83 +1,92 @@
 {% extends 'base.html' %}
 {% block title %}Ferremas - Carrito{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{{ url_for ('static', filename = 'css/style_carrito.css')}}">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/style_carrito.css') }}">{% endblock %}
 {% block content %}
+<section class="carrito-wrapper container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h2 class="m-0">Carrito de compras</h2>
+    <span class="text-muted small">{{ pedidos|length }} producto(s)</span>
+  </div>
 
-      <div class="card">
-        <div class="row">
-            <div class="col-md-8 cart">
-                <div class="title">
-                    <div class="row">
-                        <div class="col"><h4><b>Carro de compras</b></h4></div>
-                        <div class="col align-self-center text-right text-muted">{{ pedidos|length }} producto(s)</div>
-                        <div class="info-producto">
-                            <ul>
-                                {% for pedido in pedidos %}
-                                    <li>
-                                      <div class="informacion-producto">
-                                        <p>{{ pedido['nom_pedido'] }}</p> <!-- Nombre -->
-                                        <p>{{ pedido['desc_pedido'] }}</p> <!-- Categoria -->
-                                      </div>
-
-
-                                      <div class="acciones-producto">
-                                        <p>${{ pedido['precio_pedido'] }}</p>  <!-- Precio unitario -->
-                                        <p>Total: ${{ (pedido['precio_pedido'] * pedido['cantidad_total']) if pedido['precio_pedido'] is not none else '' }}</p>
-
-                                        <form method="POST" action="{{ url_for('bp.disminuir_cantidad', id_pedido=pedido['id_pedido']) }}">
-                                            <button type="submit">-</button>
-                                        </form>
-                                        <p>{{ pedido['cantidad_total'] }}</p>  <!-- Cantidad -->
-                                        <form method="POST" action="{{ url_for('bp.aumentar_cantidad', product_id=pedido['id_pedido']) }}">
-                                            <button type="submit">+</button>
-                                        </form>
-                                      </div>
-
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    
-            <div class="col-md-4 summary">
-                <div><h5><b>Resumen de compra</b></h5></div>
-                <hr>
-                <div class="row">
-          {% set subtotal = 0 %}
-          {% for pedido in pedidos %}
-            {% set linea = (pedido['precio_pedido'] * pedido['cantidad_total']) %}
-            {% set subtotal = subtotal + linea %}
-            <div class="col" style="padding-left:0;">{{ pedido['nom_pedido'] }}</div>
-            <div class="col text-right">$ {{ linea }}</div>
-          {% endfor %}
-          <div class="col-12" style="padding-top:6px; border-top:1px solid #ccc;">Subtotal: $ {{ subtotal }}</div>
-              </div>
-                <div class="row" style="border-top: 1px solid rgba(0,0,0,.1); padding: 2vh 0;">
-                    <div class="col">Descuento aplicado:</div>
-                    <div class="col text-right">{{ descuento }}%</div>
-                </div>
-                <div class="row" style="border-top: 1px solid rgba(0,0,0,.1); padding: 2vh 0;">
-                    <div class="col">TOTAL DE SU COMPRA:</div>
-                    <div class="col text-right">${{ total_con_descuento }}</div> 
-                </div>  
-                <form action="{{ url_for('tbk.webpay_plus_create') if payment_available else url_for('_tbk_missing_create') }}" method="POST">
-                    <input type="hidden" name="amount" value="{{ total_con_descuento|int }}">
-                    {% if usuario %}
-                      <button class="btn" type="submit">IR A PAGAR</button>
-                    {% else %}
-                      <button class="btn" type="button" disabled>INICIA SESIÓN PARA PAGAR</button>
-                    {% endif %}
-                </form>
-                <div class="informacion-importante">
-                  <h1>*Debes tener una cuenta para proceder al pago*</h1>
-                </div>
-            </div>
-        </div>
+  {% if pedidos|length == 0 %}
+    <div class="carrito-vacio text-center p-5 border rounded bg-light">
+      <p class="lead mb-3">Tu carrito está vacío</p>
+      <a class="btn btn-dark" href="{{ url_for('bp.inicio') }}#herramientas-manuales">Explorar productos</a>
     </div>
-    
-    
-    
-
+  {% else %}
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="table-responsive">
+        <table class="table align-middle carrito-tabla">
+          <thead class="table-secondary">
+            <tr>
+              <th style="min-width:240px;">Producto</th>
+              <th class="text-center" style="width:140px;">Cantidad</th>
+              <th class="text-end" style="width:120px;">Precio</th>
+              <th class="text-end" style="width:140px;">Total</th>
+              <th class="text-center" style="width:40px;">&nbsp;</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set subtotal = 0 %}
+            {% for pedido in pedidos %}
+              {% set linea = (pedido['precio_unitario'] * pedido['cantidad']) %}
+              {% set subtotal = subtotal + linea %}
+              <tr>
+                <td data-label="Producto">
+                  <div class="d-flex align-items-start gap-2">
+                    <div class="thumb-wrapper d-none d-sm-block">
+                      <!-- Placeholder icon (could map to real imagenes segun producto) -->
+                      <div class="thumb-fallback">{{ (pedido['name'] or '')[:1]|upper }}</div>
+                    </div>
+                    <div class="flex-grow-1">
+                      <div class="fw-semibold nombre-item mb-1">{{ pedido['name'] }}</div>
+                      <div class="small categoria-item">{{ pedido['description'] }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center" data-label="Cantidad">
+                  <div class="d-inline-flex align-items-center gap-1 cantidad-control">
+                    <form method="POST" action="{{ url_for('bp.disminuir_cantidad', id_tool=pedido['id_tool']) }}" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-outline-secondary" aria-label="Disminuir">-</button>
+                    </form>
+                    <span class="mx-1 fw-semibold">{{ pedido['cantidad'] }}</span>
+                    <form method="POST" action="{{ url_for('bp.aumentar_cantidad', id_tool=pedido['id_tool']) }}" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-outline-secondary" aria-label="Aumentar">+</button>
+                    </form>
+                  </div>
+                </td>
+                <td class="text-end" data-label="Precio">${{ pedido['precio_unitario'] }}</td>
+                <td class="text-end fw-semibold" data-label="Total">${{ linea }}</td>
+                <td class="text-center" data-label="Eliminar">
+                  <form method="POST" action="{{ url_for('bp.eliminar_item', id_tool=pedido['id_tool']) }}" onsubmit="return confirm('¿Eliminar este producto?');">
+                    <button class="btn btn-sm btn-outline-danger" aria-label="Eliminar">&times;</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="resumen border rounded p-3 h-100 d-flex flex-column shadow-sm">
+        <h5 class="mb-3">Resumen</h5>
+        <div class="d-flex justify-content-between small mb-2"><span>Subtotal</span><span>${{ subtotal }}</span></div>
+        <div class="d-flex justify-content-between small mb-2"><span>Descuento</span><span>{{ descuento }}%</span></div>
+        <div class="d-flex justify-content-between fw-bold fs-6 py-2 border-top border-bottom mb-3"><span>Total</span><span>${{ total_con_descuento }}</span></div>
+        <form action="{{ url_for('tbk.webpay_plus_create') if payment_available else url_for('_tbk_missing_create') }}" method="POST" class="mt-auto">
+          <input type="hidden" name="amount" value="{{ total_con_descuento|int }}">
+          {% if usuario %}
+            <button class="btn btn-dark w-100" type="submit" {% if total_con_descuento|int <= 0 %}disabled{% endif %}>Proceder al pago</button>
+          {% else %}
+            <a class="btn btn-outline-secondary w-100" href="{{ url_for('bp.login') }}">Inicia sesión para pagar</a>
+          {% endif %}
+        </form>
+        <p class="text-muted small mt-3 mb-0">Los precios incluyen IVA. El descuento se calcula sobre el subtotal.</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</section>
 {% endblock %}
