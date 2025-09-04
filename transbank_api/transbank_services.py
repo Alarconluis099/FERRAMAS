@@ -108,11 +108,13 @@ def webpay_plus_commit():
     # return render_template('tbk_commit.html', token=token, response=response)
 
     if response.get('status') == 'AUTHORIZED':
+        current_app.logger.info('[TBK COMMIT] AUTORIZADO token=%s', token)
         # Identificar pedido abierto del usuario y procesar
         try:
             user = session.get('usuario')
             order_id = None
             if user:
+                current_app.logger.info('[TBK COMMIT] Usuario en sesión: %s', user)
                 cur = mysql.connection.cursor()
                 cur.execute("SELECT id_user, COALESCE(descuento_porcentaje,0) FROM users WHERE usuario=%s", (user,))
                 row = cur.fetchone()
@@ -121,10 +123,12 @@ def webpay_plus_commit():
                     from app.models import get_user_open_order
                     order_id = get_user_open_order(row[0])
                     descuento_pct = int(row[1] or 0)
+                    current_app.logger.info('[TBK COMMIT] order_id=%s descuento_pct=%s', order_id, descuento_pct)
                 cur.close()
             if order_id:
                 items = get_cart_items(order_id)
                 total, _ = get_cart_totals(order_id)
+                current_app.logger.info('[TBK COMMIT] items=%s total=%s', len(items), total)
                 # Descontar stock por item
                 cur2 = mysql.connection.cursor()
                 for it in items:
@@ -140,6 +144,8 @@ def webpay_plus_commit():
                     cur3.execute("UPDATE users SET descuento_porcentaje=0 WHERE usuario=%s", (user,))
                     mysql.connection.commit()
                     cur3.close()
+            else:
+                current_app.logger.warning('[TBK COMMIT] No se encontró pedido abierto para usuario=%s', user)
         except Exception:
             current_app.logger.exception('Fallo procesando pedido tras pago')
         flash('Gracias por su compra', 'success')
@@ -155,10 +161,12 @@ def callback():
 
     
     if response.get('status') == 'AUTHORIZED':
+        current_app.logger.info('[TBK CALLBACK] AUTORIZADO token=%s', token_ws)
         try:
             user = session.get('usuario')
             order_id = None
             if user:
+                current_app.logger.info('[TBK CALLBACK] Usuario en sesión: %s', user)
                 cur = mysql.connection.cursor()
                 cur.execute("SELECT id_user, COALESCE(descuento_porcentaje,0) FROM users WHERE usuario=%s", (user,))
                 row = cur.fetchone()
@@ -166,10 +174,12 @@ def callback():
                 if row:
                     order_id = get_user_open_order(row[0])
                     descuento_pct = int(row[1] or 0)
+                    current_app.logger.info('[TBK CALLBACK] order_id=%s descuento_pct=%s', order_id, descuento_pct)
                 cur.close()
             if order_id:
                 items = get_cart_items(order_id)
                 total, _ = get_cart_totals(order_id)
+                current_app.logger.info('[TBK CALLBACK] items=%s total=%s', len(items), total)
                 cur2 = mysql.connection.cursor()
                 for it in items:
                     cur2.execute("UPDATE tools SET stock = GREATEST(stock - %s,0) WHERE id_tool=%s", (it['cantidad'], it['id_tool']))
@@ -183,6 +193,8 @@ def callback():
                     cur3.execute("UPDATE users SET descuento_porcentaje=0 WHERE usuario=%s", (user,))
                     mysql.connection.commit()
                     cur3.close()
+            else:
+                current_app.logger.warning('[TBK CALLBACK] No se encontró pedido abierto para usuario=%s', user)
         except Exception:
             current_app.logger.exception('Fallo procesando pedido tras pago (callback)')
         flash('Gracias por su compra', 'success')

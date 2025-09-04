@@ -5,6 +5,7 @@ from app import app
 from .models import (
     fetch_all_tools,
     fetch_tools_by_code,
+    fetch_tools_filtered,
     insert_tools,
     delete_tools,
     update_tools,
@@ -25,6 +26,7 @@ from .models import (
     fetch_sales_metrics,
     fetch_top_products,
     update_order_status,
+    _debug_fetch_pedidos_raw,
 )
 from . import mysql
 import random
@@ -161,10 +163,22 @@ def guardar_registro():
             cur2.close()
         except Exception:
             pass
-    cursor.execute(
-        "INSERT INTO users (correo, contraseña, usuario, descuento_porcentaje, role) VALUES (%s,%s,%s,%s,%s)",
-        (correo, hashed, username, 15, role)
-    )
+    try:
+        cursor.execute(
+            "INSERT INTO users (correo, contraseña, usuario, descuento_porcentaje, role) VALUES (%s,%s,%s,%s,%s)",
+            (correo, hashed, username, 15, role)
+        )
+    except Exception as e:
+        # Si la columna role no existe aún (migración falló), intenta sin esa columna
+        if 'Unknown column' in str(e) and "'role'" in str(e):
+            cursor.execute(
+                "INSERT INTO users (correo, contraseña, usuario, descuento_porcentaje) VALUES (%s,%s,%s,%s)",
+                (correo, hashed, username, 15)
+            )
+        else:
+            cursor.close()
+            flash('Error creando usuario.', 'error')
+            return redirect(url_for('bp.registro'))
     mysql.connection.commit()
     cursor.close()
     flash('Cuenta creada. Ahora puedes iniciar sesión.', 'success')
@@ -191,11 +205,31 @@ def iniciar_sesion():
             return redirect(url_for('bp.iniciar_sesion'))
 
         cursor = mysql.connection.cursor()
-        cursor.execute(
-            "SELECT id_user, usuario, contraseña, COALESCE(descuento_porcentaje,0), COALESCE(role,'') FROM users WHERE correo = %s",
-            (correo_normalizado,)
-        )
-        result = cursor.fetchone()
+        try:
+            cursor.execute(
+                "SELECT id_user, usuario, contraseña, COALESCE(descuento_porcentaje,0), COALESCE(role,'') FROM users WHERE correo = %s",
+                (correo_normalizado,)
+            )
+            result = cursor.fetchone()
+            role_indexed = True
+        except Exception as e:
+            # Fallback si aún no existe la columna 'role'
+            if 'Unknown column' in str(e) and "'role'" in str(e):
+                cursor.execute(
+                    "SELECT id_user, usuario, contraseña, COALESCE(descuento_porcentaje,0) FROM users WHERE correo = %s",
+                    (correo_normalizado,)
+                )
+                row = cursor.fetchone()
+                if row:
+                    # Simular tupla con role vacío
+                    result = (*row, '')
+                else:
+                    result = None
+                role_indexed = False
+            else:
+                cursor.close()
+                flash('Error en autenticación.', 'error')
+                return redirect(url_for('bp.iniciar_sesion'))
         if not result:
             cursor.close()
             flash('Correo y/o contraseña inválidos.', 'error')
@@ -229,15 +263,8 @@ def iniciar_sesion():
             flash('Correo y/o contraseña inválidos.', 'error')
             return redirect(url_for('bp.iniciar_sesion'))
 
-        # Promoción automática: si el username es 'admin' y aún no tiene role admin
-        if usuario_nombre == 'admin' and role != 'admin':
-            try:
-                up2 = mysql.connection.cursor()
-                up2.execute("UPDATE users SET role='admin' WHERE id_user=%s", (usuario_id,))
-                mysql.connection.commit()
-                up2.close()
-            except Exception:
-                mysql.connection.rollback()
+    # Auto-promoción desactivada para evitar logins inesperados como admin tras flujos externos.
+    # if usuario_nombre == 'admin' and role != 'admin': ...
         session['usuario'] = usuario_nombre
         session.permanent = True
         # descuento_pct se mantiene para lógica futura; ya disponible en variable
@@ -414,7 +441,56 @@ def carrito():
 @bp.route('/inicio')
 def inicio():
     usuario = session.get('usuario')
-    return render_template('inicio.html', tools=fetch_all_tools(), usuario=usuario, cart_count=_get_cart_count())
+    # Paginación tradicional con control de "items por página".
+    all_tools = fetch_all_tools()
+    total = len(all_tools)
+    # Leer per_page desde query (fallback 12) y sanitizar
+    try:
+        per_page = int(request.args.get('per_page', 12))
+    except ValueError:
+        per_page = 12
+    allowed_opts = [12,20,40,80]
+    if per_page not in allowed_opts:
+        # normaliza al más cercano inferior existente
+        per_page = max([o for o in allowed_opts if o <= per_page] or [12])
+    page = 1  # inicial siempre 1 en render SSR; navegación posterior con JS
+    initial = all_tools[:per_page]
+    has_more = total > per_page
+    return render_template(
+        'inicio.html',
+        tools=initial,
+        total_tools=total,
+        per_page=per_page,
+        page=page,
+        allowed_per_page=allowed_opts,
+        has_more=has_more,
+        usuario=usuario,
+        cart_count=_get_cart_count()
+    )
+
+@bp.route('/api/tools')
+def api_tools_paginated():
+    # Filtros: q (texto), precio_min, precio_max, order
+    try:
+        page = int(request.args.get('page','1'))
+        per_page = int(request.args.get('per_page','20'))
+    except ValueError:
+        return jsonify({'ok':False,'error':'Parámetros inválidos'}), 400
+    q = request.args.get('q') or None
+    order = request.args.get('order') or None
+    def parse_int_or_none(key):
+        v = request.args.get(key)
+        if v is None or v == '':
+            return None
+        try:
+            return int(v)
+        except ValueError:
+            return None
+    precio_min = parse_int_or_none('precio_min')
+    precio_max = parse_int_or_none('precio_max')
+    items, total = fetch_tools_filtered(page=page, per_page=per_page, q=q, precio_min=precio_min, precio_max=precio_max, order=order)
+    has_more = page * per_page < total
+    return jsonify({'ok':True,'page':page,'per_page':per_page,'total':total,'has_more':has_more,'items':items})
 
 @bp.route('/admin')
 @admin_required
@@ -428,6 +504,26 @@ def admin_dashboard():
     metrics7 = fetch_sales_metrics(7)
     top_products = fetch_top_products()
     return render_template('admin_dashboard.html', tools=tools, users=users, low_stock=low_stock, recent_orders=recent_orders, metrics7=metrics7, top_products=top_products, usuario=session.get('usuario'), cart_count=_get_cart_count())
+
+@bp.route('/admin/debug/schema')
+@admin_required
+def admin_debug_schema():
+    info = {}
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("SHOW COLUMNS FROM users")
+        info['users_columns'] = [row[0] for row in cur.fetchall()]
+        cur.execute("SHOW COLUMNS FROM pedidos")
+        info['pedidos_columns'] = [row[0] for row in cur.fetchall()]
+        cur.close()
+    except Exception as e:
+        info['error'] = str(e)
+    return jsonify(info)
+
+@bp.route('/admin/debug/pedidos')
+@admin_required
+def admin_debug_pedidos():
+    return jsonify(_debug_fetch_pedidos_raw())
 
 @bp.route('/admin/pedidos')
 @admin_required
@@ -443,13 +539,15 @@ def admin_order_detail(order_id):
         flash('Pedido no encontrado', 'error')
         return redirect(url_for('bp.admin_orders'))
     total_calc = sum([(it.get('cantidad') or 0) * (it.get('precio_unitario') or 0) for it in items])
-    return render_template('admin_order_detail.html', pedido=header, items=items, total_calc=total_calc, usuario=session.get('usuario'), cart_count=_get_cart_count())
+    # Maintain old keys (pedido) for backward compatibility if any fragment still references it
+    return render_template('admin_order_detail.html', order=header, pedido=header, items=items, total_calc=total_calc, usuario=session.get('usuario'), cart_count=_get_cart_count())
 
 @bp.route('/admin/pedidos/<int:order_id>/estado', methods=['POST'])
 @admin_required
 def admin_update_order_status(order_id):
     new_status = request.form.get('estado')
-    valid = {'pendiente','enviado','cancelado'}
+    # Expand valid statuses aligned with new template options
+    valid = {'pendiente','procesando','enviado','completado','cancelado'}
     if new_status not in valid:
         flash('Estado inválido', 'error')
         return redirect(url_for('bp.admin_order_detail', order_id=order_id))

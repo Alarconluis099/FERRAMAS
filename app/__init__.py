@@ -28,13 +28,9 @@ def enforce_session_boot_id():
         session['_boot_id'] = current_boot
         return
     if stored != current_boot:
-        # Guardar claves esenciales antes de limpiar (solo las que usamos realmente)
-        preserved_usuario = session.get('usuario')
-        # Limpiar solo metadatos no esenciales manteniendo usuario
+        # Reinicio detectado: invalidar completamente la sesión (logout forzado)
         session.clear()
         session['_boot_id'] = current_boot
-        if preserved_usuario:
-            session['usuario'] = preserved_usuario
 
 mysql = MySQL(app)
 
@@ -52,7 +48,16 @@ def _ensure_role_column():
         # Non-fatal; just print warning
         print(f"[MIGRATION] Could not ensure role column: {e}")
 
-_ensure_role_column()
+try:
+    # Ensure role column inside an app context to avoid context errors on import
+    with app.app_context():
+        _ensure_role_column()
+except Exception as e:
+    print(f"[MIGRATION] Deferred ensuring role column: {e}")
+
+# Exponer utilidad para forzar migración desde otros módulos si se inicializó antes
+def ensure_role_column_again():
+    _ensure_role_column()
 
 from .routes import bp
 app.register_blueprint(bp)

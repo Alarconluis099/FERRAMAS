@@ -2,6 +2,7 @@
 {% block title %}Admin - Pedidos{% endblock %}
 {% block extra_css %}<style>
 :root{--admin-accent:#f59f0b;--admin-accent-rgb:245,159,11;--admin-border:#e2e8f0;--admin-muted:#6b7280;}
+body &,.orders-wrapper, .orders-wrapper table, .orders-wrapper button, .orders-wrapper input, .orders-wrapper select{font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;}
 .orders-wrapper h1{background:linear-gradient(90deg,var(--admin-accent),#ffcc55);background-clip:text;-webkit-background-clip:text;color:transparent;font-weight:600;letter-spacing:.5px;}
 .orders-table-box{background:#fff;border:1px solid var(--admin-border);border-radius:1rem;padding:1rem 1.1rem;box-shadow:0 3px 10px -2px rgba(0,0,0,.08);} 
 table.table-sm thead{background:linear-gradient(90deg,#f1f5f9,#e2e8f0);} 
@@ -25,13 +26,13 @@ table.table-sm tbody tr:hover{background:#fff7eb;}
         {% for o in orders %}
           <tr>
             <td>{{ o.id_pedido }}</td>
-            <td>{{ o.id_user }}</td>
+            <td>{{ o.username or o.id_user }}</td>
             <td>
               <span class="estado-pill estado-{{ o.estado_pedido }}">{{ o.estado_pedido|capitalize }}</span>
             </td>
             <td>${{ o.monto_total or o.subtotal_calc }}</td>
             <td>{{ o.total_items }}</td>
-            <td>{{ o.created_at }}</td>
+            <td>{{ o.created_at or '' }}</td>
             <td class="text-end"><a href="{{ url_for('bp.admin_order_detail', order_id=o.id_pedido) }}" class="btn-detalle">Detalle</a></td>
           </tr>
         {% endfor %}

@@ -35,12 +35,64 @@
   <!-- Categorias - distribuir en fila con texto + logo arriba -->
 
   <!--Listado dinámico de productos (todos los de la base) -->
-  <section class="seccion-productos" id="productos">
+  <section class="seccion-productos" id="productos" style="display:flex;gap:1.5rem;align-items:flex-start;">
+    <aside style="width:250px;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;padding:1rem;font-size:.8rem;position:sticky;top:80px;height:fit-content;">
+      <h3 style="font-size:1rem;margin-top:0;">Filtros</h3>
+      <form id="filter-form" onsubmit="return false;" style="display:flex;flex-direction:column;gap:.75rem;">
+        <div>
+          <label style="font-weight:600;font-size:.7rem;letter-spacing:.5px;">Palabras clave</label>
+          <input type="text" id="f-q" class="form-control form-control-sm" placeholder="Buscar..." style="font-size:.75rem;">
+        </div>
+        <div>
+          <label style="font-weight:600;font-size:.7rem;">Precio mínimo</label>
+          <input type="number" id="f-precio-min" class="form-control form-control-sm" min="0" placeholder="0" style="font-size:.75rem;">
+        </div>
+        <div>
+          <label style="font-weight:600;font-size:.7rem;">Precio máximo</label>
+          <input type="number" id="f-precio-max" class="form-control form-control-sm" min="0" placeholder="" style="font-size:.75rem;">
+        </div>
+        <div>
+          <label style="font-weight:600;font-size:.7rem;">Ordenar por</label>
+          <select id="f-order" class="form-select form-select-sm" style="font-size:.75rem;">
+            <option value="">Recientes</option>
+            <option value="precio_asc">Precio: menor a mayor</option>
+            <option value="precio_desc">Precio: mayor a menor</option>
+            <option value="nombre_asc">Nombre A-Z</option>
+            <option value="nombre_desc">Nombre Z-A</option>
+            <option value="stock_desc">Stock: mayor a menor</option>
+            <option value="stock_asc">Stock: menor a mayor</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <button id="btn-apply" class="btn btn-primary btn-sm" style="font-size:.7rem;">Aplicar</button>
+          <button id="btn-clear" class="btn btn-outline-secondary btn-sm" style="font-size:.7rem;" type="button">Limpiar</button>
+        </div>
+      </form>
+    </aside>
+    <div style="flex:1;min-width:0;">
     <h2>Productos disponibles</h2>
-    <div class="contenedor-productos">
+    <div class="barra-paginacion" style="display:flex;flex-wrap:wrap;align-items:center;gap:1rem;margin:.25rem 0 1rem 0;font-size:.8rem;background:#f7f7f7;padding:.5rem 1rem;border-radius:4px;">
+      <div id="range-info">Mostrando <strong>{{ tools|length }}</strong> de <strong>{{ total_tools }}</strong> productos</div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:.75rem;">
+        <label style="display:flex;align-items:center;gap:.35rem;">
+          <span>Items por pág.</span>
+          <select id="per-page-select" style="padding:2px 6px;font-size:.8rem;">
+            {% for opt in allowed_per_page %}
+              <option value="{{ opt }}" {% if opt == per_page %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <div class="controles-pagina" style="display:flex;align-items:center;gap:.35rem;">
+          <button id="btn-prev" class="btn btn-sm btn-secondary" disabled style="padding:2px 8px;font-size:.7rem;">◀</button>
+          <span id="page-indicator">1–{{ tools|length }} de {{ total_tools }}</span>
+          <button id="btn-next" class="btn btn-sm btn-secondary" {% if not has_more %}disabled{% endif %} style="padding:2px 8px;font-size:.7rem;">▶</button>
+        </div>
+      </div>
+    </div>
+  <div class="contenedor-productos" id="productos-grid" data-total="{{ total_tools }}" data-per-page="{{ per_page }}" data-page="{{ page }}">
       {% if tools %}
         {% for tool in tools %}
-          <div class="producto">
+          <div class="producto" data-tool-id="{{ tool.id_tool }}">
             {# Selección de imagen básica por id; ajustar según tus assets #}
             {% set img_map = {
               100: 'imagenes/marcas/martillo.jpg',
@@ -69,9 +121,11 @@
           </div>
         {% endfor %}
       {% else %}
-        <p>No hay productos registrados.</p>
+    <p>No hay productos registrados.</p>
       {% endif %}
     </div>
+  <!-- Paginación controlada por barra superior -->
+  </div>
   </section>
 
   <!-- Marcas -->
@@ -88,9 +142,9 @@
 {% endblock %}
 {% block extra_js %}{{ super() }}
 <script>
-document.addEventListener('DOMContentLoaded',()=>{
+function bindAddToCart(root=document){
   const cartCountEl=document.getElementById('cart-count');
-  document.querySelectorAll('.producto form').forEach(form=>{
+  root.querySelectorAll('.producto form').forEach(form=>{
     form.addEventListener('submit',e=>{
       e.preventDefault();
       const fd=new FormData(form);
@@ -117,6 +171,100 @@ document.addEventListener('DOMContentLoaded',()=>{
         }
       }).catch(()=>alert('Error de red'));
     });
+  });
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  bindAddToCart();
+  const grid=document.getElementById('productos-grid');
+  const total=parseInt(grid.dataset.total,10)||0;
+  let perPage=parseInt(grid.dataset.perPage,10)||12;
+  let page=1;
+  const perPageSelect=document.getElementById('per-page-select');
+  const btnPrev=document.getElementById('btn-prev');
+  const btnNext=document.getElementById('btn-next');
+  const pageIndicator=document.getElementById('page-indicator');
+  const rangeInfo=document.getElementById('range-info');
+  // Filtros
+  const fForm=document.getElementById('filter-form');
+  const fQ=document.getElementById('f-q');
+  const fPMin=document.getElementById('f-precio-min');
+  const fPMax=document.getElementById('f-precio-max');
+  const fOrder=document.getElementById('f-order');
+  const btnApply=document.getElementById('btn-apply');
+  const btnClear=document.getElementById('btn-clear');
+  let currentFilters={q:null,precio_min:null,precio_max:null,order:null};
+
+  function buildQuery(params){
+    const usp=new URLSearchParams();
+    Object.entries(params).forEach(([k,v])=>{ if(v!==null && v!=='' && v!==undefined) usp.append(k,v); });
+    return usp.toString();
+  }
+  async function loadPage(newPage, newPerPage){
+    const query=buildQuery({
+      page:newPage,
+      per_page:newPerPage,
+      q:currentFilters.q,
+      precio_min:currentFilters.precio_min,
+      precio_max:currentFilters.precio_max,
+      order:currentFilters.order
+    });
+    const url=`{{ url_for('bp.api_tools_paginated') }}?${query}`;
+    const resp=await fetch(url);
+    const data=await resp.json();
+    if(!data.ok) throw new Error('API');
+    // Limpiar grid y montar nuevos
+    grid.innerHTML='';
+    data.items.forEach(tool=>{
+      const div=document.createElement('div');
+      div.className='producto';
+      div.setAttribute('data-tool-id', tool.id_tool);
+      const imgSrc='Imagenes/Marcas/ferremas.png';
+      div.innerHTML=`<img src='${imgSrc}' alt='${tool.name}'>
+        <h3 title='${tool.name}'>${tool.name}</h3>
+        <p>${tool.description || 'Sin descripción'}</p>
+        <div class='precio'>$ ${tool.precio}</div>
+        ${(tool.stock===null||tool.stock>0)?`<form method='POST' action='#'>
+          <input type='hidden' name='product_id' value='${tool.id_tool}'>
+          <input type='hidden' name='product_name' value='${tool.name}'>
+          <input type='hidden' name='product_description' value='${tool.description||''}'>
+          <input type='hidden' name='product_price' value='${tool.precio}'>
+          <input type='number' name='cantidad' value='1' min='1' class='form-control form-control-sm mb-1' style='font-size:.65rem;'>
+          <button type='submit' class='btn-add'>Añadir al carrito</button>
+        </form>`:`<div class='agotado'>Agotado</div>`}`;
+      grid.appendChild(div);
+      bindAddToCart(div);
+    });
+    page=data.page; perPage=data.per_page;
+    const startIdx = (page-1)*perPage + 1;
+    const endIdx = Math.min(page*perPage, total);
+    pageIndicator.textContent = `${startIdx}–${endIdx} de ${total}`;
+    rangeInfo.innerHTML = `Mostrando <strong>${data.items.length}</strong> de <strong>${total}</strong> productos`;
+    btnPrev.disabled = page<=1;
+    btnNext.disabled = !data.has_more;
+  }
+
+  perPageSelect.addEventListener('change',()=>{
+    perPage=parseInt(perPageSelect.value,10)||12;
+    loadPage(1, perPage).catch(e=>console.warn(e));
+  });
+  btnApply.addEventListener('click',()=>{
+    currentFilters.q = fQ.value.trim()||null;
+    currentFilters.precio_min = fPMin.value?parseInt(fPMin.value,10):null;
+    currentFilters.precio_max = fPMax.value?parseInt(fPMax.value,10):null;
+    currentFilters.order = fOrder.value||null;
+    loadPage(1, perPage).catch(e=>console.warn(e));
+  });
+  btnClear.addEventListener('click',()=>{
+    fQ.value=''; fPMin.value=''; fPMax.value=''; fOrder.value='';
+    currentFilters={q:null,precio_min:null,precio_max:null,order:null};
+    loadPage(1, perPage).catch(e=>console.warn(e));
+  });
+  btnPrev.addEventListener('click',()=>{
+    if(page>1){ loadPage(page-1, perPage).catch(e=>console.warn(e)); }
+  });
+  btnNext.addEventListener('click',()=>{
+    loadPage(page+1, perPage).catch(e=>console.warn(e));
   });
 });
 </script>

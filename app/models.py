@@ -4,6 +4,32 @@ import MySQLdb
 from MySQLdb.cursors import DictCursor
 from datetime import datetime, timedelta
 
+# --- Runtime detection of timestamp column in pedidos (created_at vs fecha_pedido) ---
+_PEDIDOS_TS_COL = None  # caches actual column name if exists
+
+def _detect_pedidos_timestamp():
+    """Return the name of the timestamp column in pedidos (created_at or fecha_pedido) or None.
+    Caches the result to avoid repeated SHOW COLUMNS.
+    """
+    global _PEDIDOS_TS_COL
+    if _PEDIDOS_TS_COL is not None:
+        return _PEDIDOS_TS_COL
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("SHOW COLUMNS FROM pedidos")
+        cols = [r[0] for r in cur.fetchall()]
+        cur.close()
+        if 'created_at' in cols:
+            _PEDIDOS_TS_COL = 'created_at'
+        elif 'fecha_pedido' in cols:
+            _PEDIDOS_TS_COL = 'fecha_pedido'
+        else:
+            _PEDIDOS_TS_COL = None
+    except Exception:
+        _PEDIDOS_TS_COL = None
+    return _PEDIDOS_TS_COL
+
+
 """Compatibilidad: funciones antiguas asociadas a la tabla 'pedido' (eliminada).
 Se mantienen como no-op / retornos vacíos para no romper imports existentes.
 """
@@ -25,6 +51,55 @@ def fetch_all_tools():
     except Exception as e:
         current_app.logger.error(f"Error fetching tools: {e}")
         return []
+    finally:
+        cursor.close()
+
+def fetch_tools_filtered(page=1, per_page=12, q=None, precio_min=None, precio_max=None, order=None):
+    """Return paginated & filtered tools plus total count.
+    order accepted values: precio_asc, precio_desc, nombre_asc, nombre_desc, stock_asc, stock_desc
+    Returns (items_list, total_count)
+    """
+    if page < 1: page = 1
+    if per_page < 1: per_page = 12
+    if per_page > 200: per_page = 200
+    params = []
+    where_clauses = []
+    if q:
+        where_clauses.append("(name LIKE %s OR description LIKE %s)")
+        like = f"%{q}%"
+        params.extend([like, like])
+    if precio_min is not None:
+        where_clauses.append("precio >= %s")
+        params.append(precio_min)
+    if precio_max is not None:
+        where_clauses.append("precio <= %s")
+        params.append(precio_max)
+    where_sql = (" WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+    order_map = {
+        'precio_asc': 'precio ASC',
+        'precio_desc': 'precio DESC',
+        'nombre_asc': 'name ASC',
+        'nombre_desc': 'name DESC',
+        'stock_asc': 'stock ASC',
+        'stock_desc': 'stock DESC'
+    }
+    order_sql = order_map.get(order, 'id_tool DESC')
+    offset = (page - 1) * per_page
+    cursor = mysql.connection.cursor(DictCursor)
+    try:
+        # Count total filtered
+        cursor.execute(f"SELECT COUNT(*) AS c FROM tools{where_sql}", tuple(params))
+        total = cursor.fetchone().get('c', 0)
+        # Fetch page
+        cursor.execute(
+            f"SELECT id_tool, name, description, stock, precio FROM tools{where_sql} ORDER BY {order_sql} LIMIT %s OFFSET %s",
+            tuple(params + [per_page, offset])
+        )
+        items = cursor.fetchall()
+        return items, total
+    except Exception as e:
+        current_app.logger.error(f"Error fetching filtered tools: {e}")
+        return [], 0
     finally:
         cursor.close()
 
@@ -338,15 +413,36 @@ def fetch_all_orders():
     """Return list of pedidos with computed totals and item counts."""
     cursor = mysql.connection.cursor(DictCursor)
     try:
-        cursor.execute("""
-            SELECT p.id_pedido, p.id_user, p.monto_total, p.estado_pedido, p.created_at,
-                   COALESCE(SUM(d.cantidad),0) AS total_items,
-                   COALESCE(SUM(d.cantidad*d.precio_unitario),0) AS subtotal_calc
-            FROM pedidos p
-            LEFT JOIN pedido_detalle d ON d.id_pedido = p.id_pedido
-            GROUP BY p.id_pedido
-            ORDER BY p.id_pedido DESC
-        """)
+        ts_col = _detect_pedidos_timestamp()
+        # Build aggregate subquery to avoid ONLY_FULL_GROUP_BY issues
+        base_agg = """
+            SELECT id_pedido,
+                   SUM(cantidad) AS total_items,
+                   SUM(cantidad*precio_unitario) AS subtotal_calc
+            FROM pedido_detalle
+            GROUP BY id_pedido
+        """
+        ts_select = f", p.{ts_col} AS created_at" if ts_col else ""
+        try:
+            cursor.execute(f"""
+                SELECT p.id_pedido, p.id_user, u.usuario AS username, p.monto_total, p.estado_pedido{ts_select},
+                       COALESCE(a.total_items,0) AS total_items,
+                       COALESCE(a.subtotal_calc,0) AS subtotal_calc
+                FROM pedidos p
+                LEFT JOIN ({base_agg}) a ON a.id_pedido = p.id_pedido
+                LEFT JOIN users u ON u.id_user = p.id_user
+                ORDER BY p.id_pedido DESC
+            """)
+        except Exception:
+            # Fallback sin join (no debería ocurrir, pero por seguridad)
+            cursor.execute(f"""
+                SELECT p.id_pedido, p.id_user, p.monto_total, p.estado_pedido{ts_select},
+                       COALESCE(a.total_items,0) AS total_items,
+                       COALESCE(a.subtotal_calc,0) AS subtotal_calc
+                FROM pedidos p
+                LEFT JOIN ({base_agg}) a ON a.id_pedido = p.id_pedido
+                ORDER BY p.id_pedido DESC
+            """)
         rows = cursor.fetchall()
         # If monto_total is NULL or 0 but estado finalized, use subtotal_calc
         for r in rows:
@@ -385,12 +481,21 @@ def fetch_sales_metrics(days=7):
     """Return aggregate sales metrics for the last N days (estado_pedido='enviado')."""
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("""
-            SELECT COALESCE(SUM(monto_total),0) AS total_monto,
-                   COUNT(*) AS total_orders
-            FROM pedidos
-            WHERE estado_pedido='enviado' AND created_at >= (NOW() - INTERVAL %s DAY)
-        """, (days,))
+        ts_col = _detect_pedidos_timestamp()
+        if ts_col:
+            cursor.execute(f"""
+                SELECT COALESCE(SUM(monto_total),0) AS total_monto,
+                       COUNT(*) AS total_orders
+                FROM pedidos
+                WHERE estado_pedido='enviado' AND {ts_col} >= (NOW() - INTERVAL %s DAY)
+            """, (days,))
+        else:
+            cursor.execute("""
+                SELECT COALESCE(SUM(monto_total),0) AS total_monto,
+                       COUNT(*) AS total_orders
+                FROM pedidos
+                WHERE estado_pedido='enviado'
+            """)
         row = cursor.fetchone()
         total_monto = row[0] if row else 0
         total_orders = row[1] if row else 0
@@ -408,22 +513,46 @@ def fetch_sales_metrics(days=7):
 def fetch_top_products(limit=5, days=30):
     cursor = mysql.connection.cursor(DictCursor)
     try:
-        cursor.execute("""
-            SELECT d.id_tool, t.name, SUM(d.cantidad) AS unidades
-            FROM pedido_detalle d
-            JOIN pedidos p ON p.id_pedido=d.id_pedido
-            JOIN tools t ON t.id_tool=d.id_tool
-            WHERE p.estado_pedido='enviado' AND p.created_at >= (NOW() - INTERVAL %s DAY)
-            GROUP BY d.id_tool, t.name
-            ORDER BY unidades DESC
-            LIMIT %s
-        """, (days, limit))
+        ts_col = _detect_pedidos_timestamp()
+        if ts_col:
+            cursor.execute(f"""
+                SELECT d.id_tool, t.name, SUM(d.cantidad) AS unidades
+                FROM pedido_detalle d
+                JOIN pedidos p ON p.id_pedido=d.id_pedido
+                JOIN tools t ON t.id_tool=d.id_tool
+                WHERE p.estado_pedido='enviado' AND p.{ts_col} >= (NOW() - INTERVAL %s DAY)
+                GROUP BY d.id_tool, t.name
+                ORDER BY unidades DESC
+                LIMIT %s
+            """, (days, limit))
+        else:
+            cursor.execute("""
+                SELECT d.id_tool, t.name, SUM(d.cantidad) AS unidades
+                FROM pedido_detalle d
+                JOIN pedidos p ON p.id_pedido=d.id_pedido
+                JOIN tools t ON t.id_tool=d.id_tool
+                WHERE p.estado_pedido='enviado'
+                GROUP BY d.id_tool, t.name
+                ORDER BY unidades DESC
+                LIMIT %s
+            """, (limit,))
         return cursor.fetchall()
     except Exception as e:
         current_app.logger.error(f"Error top products: {e}")
         return []
     finally:
         cursor.close()
+
+# Debug helper (not used in templates) to inspect pedidos rows directly
+def _debug_fetch_pedidos_raw():
+    cur = mysql.connection.cursor(DictCursor)
+    try:
+        cur.execute("SELECT * FROM pedidos ORDER BY id_pedido DESC LIMIT 50")
+        return cur.fetchall()
+    except Exception:
+        return []
+    finally:
+        cur.close()
 
 def update_order_status(order_id, new_status):
     cursor = mysql.connection.cursor()
