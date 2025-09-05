@@ -30,15 +30,9 @@ def _detect_pedidos_timestamp():
     return _PEDIDOS_TS_COL
 
 
-"""Compatibilidad: funciones antiguas asociadas a la tabla 'pedido' (eliminada).
-Se mantienen como no-op / retornos vacíos para no romper imports existentes.
+"""Nota: Se eliminaron funciones legacy fetch_all_pedido*, fetch_pedido_by_id por no usarse.
+Si se requieren en el futuro, restaurar desde historial git.
 """
-
-def fetch_all_pedido():  # legacy placeholder
-    return []
-
-def fetch_all_pedidos_ready():  # legacy placeholder
-    return []
 
 def fetch_all_tools():
     """Return all tools (schema sin id_tools_type)."""
@@ -120,8 +114,7 @@ def fetch_tool_suggestions(q, limit=8):
     finally:
         cursor.close()
 
-def fetch_pedido_by_id(code):  # legacy placeholder
-    return None
+# (Eliminado: fetch_pedido_by_id legacy)
 
 def fetch_tools_by_code(code):
     cursor = mysql.connection.cursor(DictCursor)
@@ -241,6 +234,18 @@ def get_usuario_by_usuario(usuario):
             cursor.close()
         except Exception:
             pass
+
+def get_user_discount(usuario):
+    """Devuelve el porcentaje de descuento vigente (int) para un usuario o 0 si no existe."""
+    if not usuario:
+        return 0
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT COALESCE(descuento_porcentaje,0) FROM users WHERE usuario=%s", (usuario,))
+        row = cur.fetchone(); cur.close()
+        return int(row[0] or 0) if row else 0
+    except Exception:
+        return 0
 
 # ==================== NUEVO ESQUEMA NORMALIZADO ====================
 
@@ -404,7 +409,28 @@ def clear_order_items(order_id):
 def finalize_order(order_id, total):
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute("UPDATE pedidos SET monto_total=%s, estado_pedido='enviado' WHERE id_pedido=%s", (total, order_id))
+        # Calcular items antes de cerrar
+        try:
+            cursor.execute("SELECT COALESCE(SUM(cantidad),0) FROM pedido_detalle WHERE id_pedido=%s", (order_id,))
+            items_total = cursor.fetchone()[0] or 0
+        except Exception:
+            items_total = 0
+        # Detectar si existe columna total_items_final
+        try:
+            cursor.execute("SHOW COLUMNS FROM pedidos LIKE 'total_items_final'")
+            has_col = cursor.fetchone() is not None
+        except Exception:
+            has_col = False
+        if has_col:
+            cursor.execute(
+                "UPDATE pedidos SET monto_total=%s, estado_pedido='completado', total_items_final=%s WHERE id_pedido=%s",
+                (total, items_total, order_id)
+            )
+        else:
+            cursor.execute(
+                "UPDATE pedidos SET monto_total=%s, estado_pedido='completado' WHERE id_pedido=%s",
+                (total, order_id)
+            )
         mysql.connection.commit()
     except Exception as e:
         mysql.connection.rollback()
@@ -431,6 +457,13 @@ def fetch_all_orders():
     cursor = mysql.connection.cursor(DictCursor)
     try:
         ts_col = _detect_pedidos_timestamp()
+        # Detectar si existe snapshot de items final
+        has_snapshot = False
+        try:
+            cursor.execute("SHOW COLUMNS FROM pedidos LIKE 'total_items_final'")
+            has_snapshot = cursor.fetchone() is not None
+        except Exception:
+            has_snapshot = False
         # Build aggregate subquery to avoid ONLY_FULL_GROUP_BY issues
         base_agg = """
             SELECT id_pedido,
@@ -440,9 +473,10 @@ def fetch_all_orders():
             GROUP BY id_pedido
         """
         ts_select = f", p.{ts_col} AS created_at" if ts_col else ""
+        snapshot_select = ", p.total_items_final" if has_snapshot else ""
         try:
             cursor.execute(f"""
-                SELECT p.id_pedido, p.id_user, u.usuario AS username, p.monto_total, p.estado_pedido{ts_select},
+                SELECT p.id_pedido, p.id_user, u.usuario AS username, p.monto_total, p.estado_pedido{ts_select}{snapshot_select},
                        COALESCE(a.total_items,0) AS total_items,
                        COALESCE(a.subtotal_calc,0) AS subtotal_calc
                 FROM pedidos p
@@ -453,7 +487,7 @@ def fetch_all_orders():
         except Exception:
             # Fallback sin join (no debería ocurrir, pero por seguridad)
             cursor.execute(f"""
-                SELECT p.id_pedido, p.id_user, p.monto_total, p.estado_pedido{ts_select},
+                SELECT p.id_pedido, p.id_user, p.monto_total, p.estado_pedido{ts_select}{snapshot_select},
                        COALESCE(a.total_items,0) AS total_items,
                        COALESCE(a.subtotal_calc,0) AS subtotal_calc
                 FROM pedidos p
@@ -465,6 +499,9 @@ def fetch_all_orders():
         for r in rows:
             if (r.get('monto_total') is None or r.get('monto_total') == 0) and r.get('subtotal_calc'):
                 r['monto_total'] = r['subtotal_calc']
+            # Si total_items = 0 (o None) pero hay snapshot, usarlo
+            if has_snapshot and (r.get('total_items') in (0, None)) and r.get('total_items_final') not in (None, 0):
+                r['total_items'] = r['total_items_final']
         return rows
     except Exception as e:
         current_app.logger.error(f"Error fetching orders: {e}")

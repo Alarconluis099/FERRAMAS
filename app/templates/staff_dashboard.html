@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Panel Staff - Gestión de Productos</h2>
+<p>Rol: staff/admin</p>
+<section>
+  <h3>Productos ({{ tools|length }})</h3>
+  <table class="table">
+    <thead><tr><th>ID</th><th>Nombre</th><th>Stock</th><th>Precio</th><th>Acciones</th></tr></thead>
+    <tbody>
+    {% for t in tools %}
+      <tr{% if (t.stock or 0) <= 5 %} class="table-warning"{% endif %}>
+        <td>{{ t.id_tool }}</td>
+        <td>{{ t.name }}</td>
+        <td>{{ t.stock }}</td>
+        <td>${{ t.precio }}</td>
+        <td>
+          <form method="post" action="{{ url_for('bp.admin_update_product', tool_id=t.id_tool) }}" style="display:inline">
+            <input type="hidden" name="_action" value="update" />
+            <input type="text" name="name" value="{{ t.name }}" size="10" />
+            <input type="number" name="stock" value="{{ t.stock }}" style="width:70px" />
+            <input type="number" name="precio" value="{{ t.precio }}" style="width:90px" />
+            <button class="btn btn-sm btn-primary">Guardar</button>
+          </form>
+          <form method="post" action="{{ url_for('bp.admin_update_product', tool_id=t.id_tool) }}" style="display:inline" onsubmit="return confirm('Eliminar?')">
+            <input type="hidden" name="_action" value="delete" />
+            <button class="btn btn-sm btn-danger">X</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+<section>
+  <h3>Crear nuevo producto</h3>
+  <form method="post" action="{{ url_for('bp.admin_create_product') }}">
+    <input name="name" placeholder="Nombre" required />
+    <input name="stock" type="number" placeholder="Stock" value="0" />
+    <input name="precio" type="number" placeholder="Precio" value="0" />
+    <input name="description" placeholder="Descripción" />
+    <button class="btn btn-success">Crear</button>
+  </form>
+</section>
+<section>
+  <h4>Stock Bajo (<=5)</h4>
+  <ul>
+    {% for t in low_stock %}<li>{{ t.name }} ({{ t.stock }})</li>{% else %}<li>Sin alertas</li>{% endfor %}
+  </ul>
+</section>
+{% endblock %}

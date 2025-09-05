@@ -174,13 +174,13 @@
                 <h2 class="h6 mb-3 text-summary">Resumen</h2>
                 <ul class="list-unstyled small summary-list mb-2">
                     <li><strong>ID Usuario:</strong> {{ order.id_user }}</li>
-                    <li><strong>Estado:</strong> <span class="estado-pill estado-{{ order.estado_pedido }}">{{
-                            order.estado_pedido|capitalize }}</span></li>
+                    {% set est = (order.estado_pedido or '').strip() %}
+                    <li><strong>Estado:</strong> <span class="estado-pill estado-{{ est if est else 'sin-estado' }}">{{ est|capitalize if est else '—' }}</span></li>
                     <li><strong>Monto Total:</strong> <span class="badge-total">${{ order.monto_total }}</span></li>
                     <li><strong>Creado:</strong> {{ order.created_at }}</li>
                     <li><strong>Actualizado:</strong> {{ order.updated_at }}</li>
                 </ul>
-                <form method="post" class="d-flex flex-wrap gap-2 align-items-end mt-2">
+                <form method="post" action="{{ url_for('bp.admin_update_order_status', order_id=order.id_pedido) }}" class="d-flex flex-wrap gap-2 align-items-end mt-2">
                     <div>
                         <label class="small text-muted d-block mb-1">Actualizar estado</label>
                         <select name="estado" class="select-estado">

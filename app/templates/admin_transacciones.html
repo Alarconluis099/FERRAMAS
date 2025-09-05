@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h2>Transacciones</h2>
+  <div class="table-responsive">
+    <table class="table table-sm">
+      <thead class="table-secondary">
+        <tr>
+          <th>ID</th><th>Pedido</th><th>Monto</th><th>Método</th><th>Status</th><th>Token</th><th>Creado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transacciones %}
+        <tr>
+          <td>{{ t.id_transaccion }}</td>
+          <td>{{ t.id_pedido }}</td>
+          <td>${{ t.monto_transaccion }}</td>
+          <td>{{ t.metodo_pago }}</td>
+          <td>{% if t.status == 'AUTHORIZED' %}<span class="badge bg-success">{{ t.status }}</span>{% elif t.status == 'pending' %}<span class="badge bg-warning text-dark">pending</span>{% else %}<span class="badge bg-danger">{{ t.status or 'N/A' }}</span>{% endif %}</td>
+          <td style="max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ t.token }}">{{ t.token }}</td>
+          <td>{{ t.created_at }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center text-muted">Sin transacciones</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

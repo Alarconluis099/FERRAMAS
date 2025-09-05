@@ -38,6 +38,15 @@
         </form>
       </div>
   <div class="navbar-end nav-action-group">
+        {% if session.get('rol') in ['admin','staff'] %}
+          <div class="nav-role-links me-3">
+            {% if session.get('rol') == 'admin' %}
+              <a href="{{ url_for('bp.admin_dashboard') }}" class="btn btn-sm btn-outline-secondary">Admin</a>
+              <a href="{{ url_for('bp.admin_transacciones_html') }}" class="btn btn-sm btn-outline-secondary">Transacciones</a>
+            {% endif %}
+            <a href="{{ url_for('bp.staff_dashboard') }}" class="btn btn-sm btn-outline-secondary">Staff</a>
+          </div>
+        {% endif %}
         <div class="nav-user-block">
           <span class="icon-circle"><i class="bi bi-person"></i></span>
           {% if session.get('usuario') %}

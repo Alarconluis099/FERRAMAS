@@ -1,6 +1,6 @@
 from flask import flash, Blueprint, request, jsonify, render_template, redirect, url_for, session, current_app
 from app import mysql
-from app.models import get_user_open_order, get_cart_items, get_cart_totals, clear_order_items, finalize_order, insert_transaction
+from app.models import get_user_open_order, get_cart_items, get_cart_totals, finalize_order, insert_transaction
 import random
 from transbank.webpay.webpay_plus.transaction import Transaction
 from transbank.error.transbank_error import TransbankError
@@ -84,21 +84,32 @@ def webpay_plus_create():
 
     buy_order = str(random.randrange(1000000, 99999999))
     session_id = str(random.randrange(1000000, 99999999))
-    return_url = 'http://localhost:5000/tbk/commit'
+    return_url = current_app.config.get('RETURN_URL_TBK', 'http://localhost:5000/tbk/commit')
 
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
     try:
         response = tx.create(buy_order, session_id, total_con_descuento, return_url)
+        token = response['token']
+        # Guardar fila "pending" para poder recuperar pedido aunque se pierda la cookie de sesión
+        try:
+            curp = mysql.connection.cursor()
+            curp.execute("INSERT INTO transacciones (id_pedido, monto_transaccion, metodo_pago, token, status) VALUES (%s,%s,%s,%s,%s)", (order_id, total_con_descuento, 'Webpay Plus', token, 'pending'))
+            mysql.connection.commit(); curp.close()
+        except Exception:
+            mysql.connection.rollback()
+            current_app.logger.warning('[TBK CREATE] No se pudo registrar transacción pending (token=%s)', token)
+        return redirect(response['url'] + '?token_ws=' + token)
     except Exception:
         current_app.logger.exception('Error creando transacción Webpay')
         flash('Error iniciando pago. Intenta nuevamente.', 'error')
         return redirect(url_for('bp.carrito'))
 
-    return redirect(response['url'] + '?token_ws=' + response['token'])
-
 @bp_tbk.route("/commit", methods=["GET", "POST"])
 def webpay_plus_commit():
-    token = request.args.get("token_ws")
+    token = request.args.get("token_ws") or request.form.get('token_ws')
+    if not token:
+        flash('Token de pago no recibido.', 'error')
+        return redirect(url_for('bp.inicio'))
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
     response = tx.commit(token)
 
@@ -107,7 +118,8 @@ def webpay_plus_commit():
 
     # return render_template('tbk_commit.html', token=token, response=response)
 
-    if response.get('status') == 'AUTHORIZED':
+    status_resp = response.get('status')
+    if status_resp == 'AUTHORIZED':
         current_app.logger.info('[TBK COMMIT] AUTORIZADO token=%s', token)
         # Identificar pedido abierto del usuario y procesar
         try:
@@ -125,6 +137,16 @@ def webpay_plus_commit():
                     descuento_pct = int(row[1] or 0)
                     current_app.logger.info('[TBK COMMIT] order_id=%s descuento_pct=%s', order_id, descuento_pct)
                 cur.close()
+            # Fallback: si no hay sesión (cookie SameSite bloqueada en POST) buscamos por token
+            if not order_id:
+                curtok = mysql.connection.cursor()
+                curtok.execute("SELECT id_pedido FROM transacciones WHERE token=%s", (token,))
+                rowt = curtok.fetchone(); curtok.close()
+                if rowt:
+                    order_id = rowt[0]
+                    current_app.logger.info('[TBK COMMIT] Recuperado order_id=%s desde token', order_id)
+                else:
+                    current_app.logger.warning('[TBK COMMIT] No se encontró transacción pending para token=%s', token)
             if order_id:
                 items = get_cart_items(order_id)
                 total, _ = get_cart_totals(order_id)
@@ -136,8 +158,23 @@ def webpay_plus_commit():
                 mysql.connection.commit()
                 cur2.close()
                 finalize_order(order_id, total)
-                insert_transaction(order_id, total)
-                clear_order_items(order_id)
+                # Actualizar transacción pending -> AUTHORIZED (si existe); si no, insertar
+                try:
+                    curtx = mysql.connection.cursor()
+                    curtx.execute("UPDATE transacciones SET status='AUTHORIZED', monto_transaccion=%s WHERE token=%s", (total, token))
+                    if curtx.rowcount == 0:
+                        curtx.execute("INSERT INTO transacciones (id_pedido, monto_transaccion, metodo_pago, token, status) VALUES (%s,%s,%s,%s,%s)", (order_id, total, 'Webpay Plus', token, 'AUTHORIZED'))
+                    mysql.connection.commit(); curtx.close()
+                except Exception:
+                    mysql.connection.rollback(); current_app.logger.exception('[TBK COMMIT] Error actualizando transacción token=%s', token)
+                    # Intento de emergencia: insertar registro mínimo sin token (evita perder evidencia)
+                    try:
+                        curtx2 = mysql.connection.cursor()
+                        curtx2.execute("INSERT INTO transacciones (id_pedido, monto_transaccion, metodo_pago, status) VALUES (%s,%s,%s,%s)", (order_id, total, 'Webpay Plus', 'AUTHORIZED'))
+                        mysql.connection.commit(); curtx2.close()
+                    except Exception:
+                        mysql.connection.rollback(); current_app.logger.exception('[TBK COMMIT] Fallback insert también falló order_id=%s', order_id)
+                # No borramos items para preservar historial.
                 # Consumir descuento solo tras compra exitosa
                 if descuento_pct > 0:
                     cur3 = mysql.connection.cursor()
@@ -150,6 +187,14 @@ def webpay_plus_commit():
             current_app.logger.exception('Fallo procesando pedido tras pago')
         flash('Gracias por su compra', 'success')
     else:
+        current_app.logger.warning('[TBK COMMIT] Estado no autorizado token=%s status=%s', token, status_resp)
+        # Actualizar transacción a failed si existe
+        try:
+            curf = mysql.connection.cursor()
+            curf.execute("UPDATE transacciones SET status=%s WHERE token=%s", (status_resp or 'FAILED', token))
+            mysql.connection.commit(); curf.close()
+        except Exception:
+            mysql.connection.rollback(); current_app.logger.exception('[TBK COMMIT] No se pudo marcar transacción fallida token=%s', token)
         flash('PAGO FALLIDO', 'error')
     return redirect(url_for('bp.inicio'))
     
@@ -187,7 +232,7 @@ def callback():
                 cur2.close()
                 finalize_order(order_id, total)
                 insert_transaction(order_id, total)
-                clear_order_items(order_id)
+                # No borramos items para preservar historial.
                 if descuento_pct > 0:
                     cur3 = mysql.connection.cursor()
                     cur3.execute("UPDATE users SET descuento_porcentaje=0 WHERE usuario=%s", (user,))

@@ -28,7 +28,8 @@ table.table-sm tbody tr:hover{background:#fff7eb;}
             <td>{{ o.id_pedido }}</td>
             <td>{{ o.username or o.id_user }}</td>
             <td>
-              <span class="estado-pill estado-{{ o.estado_pedido }}">{{ o.estado_pedido|capitalize }}</span>
+              {% set est = (o.estado_pedido or '').strip() %}
+              <span class="estado-pill estado-{{ est if est else 'sin-estado' }}">{{ est|capitalize if est else '—' }}</span>
             </td>
             <td>${{ o.monto_total or o.subtotal_calc }}</td>
             <td>{{ o.total_items }}</td>
