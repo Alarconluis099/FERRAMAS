@@ -1,321 +1,101 @@
+{% extends 'base.html' %}
 {% block extra_css %}<style>
-    :root {
-        --admin-accent: #f59f0b;
-        --admin-accent-rgb: 245, 159, 11;
-        --admin-danger: #dc3545;
-        --admin-ok: #198754;
-        --admin-surface: #ffffff;
-        --admin-surface-alt: #fafafa;
-        --admin-border: #e2e8f0;
-        --admin-text: #1f2937;
-        --admin-muted: #6b7280;
-        --admin-gradient: linear-gradient(135deg, #fff 0%, #f8fafc 60%, #ffffff 100%);
-    }
-
-    .admin-wrapper {
-        color: var(--admin-text);
-    }
-
-    .admin-header h1 {
-        background: linear-gradient(90deg, var(--admin-accent), #ffcc55);
-        background-clip: text;
-        -webkit-background-clip: text;
-        color: transparent;
-        font-weight: 600;
-        letter-spacing: .5px;
-    }
-
-    .admin-cards {
-        display: grid;
-        gap: 1.1rem;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-        margin-bottom: 1.25rem;
-    }
-
-    .admin-card {
-        position: relative;
-        overflow: hidden;
-        border-radius: 1rem;
-        padding: 1rem 1.1rem;
-        background: var(--admin-gradient);
-        border: 1px solid var(--admin-border);
-        box-shadow: 0 4px 10px -2px rgba(0, 0, 0, .08);
-        transition: .3s;
-    }
-
-    .admin-card:before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        opacity: .08;
-        background: radial-gradient(circle at 20% 25%, rgba(var(--admin-accent-rgb), .9), transparent 60%);
-    }
-
-    .admin-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px -4px rgba(0, 0, 0, .12);
-    }
-
-    .admin-card .label {
-        font-size: .68rem;
-        text-transform: uppercase;
-        letter-spacing: .08em;
-        font-weight: 600;
-        color: var(--admin-muted);
-    }
-
-    .admin-card .value {
-        font-size: 1.9rem;
-        font-weight: 600;
-        line-height: 1.1;
-        margin-top: .2rem;
-        color: #111827;
-    }
-
-    .admin-card .sub {
-        font-size: .6rem;
-        color: var(--admin-muted);
-    }
-
-    .admin-table-wrapper {
-        background: var(--admin-surface);
-        border: 1px solid var(--admin-border);
-        border-radius: 1rem;
-        padding: 1rem 1.1rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 3px 10px -2px rgba(0, 0, 0, .08);
-    }
-
-    table.table-sm thead {
-        background: linear-gradient(90deg, #f1f5f9, #e2e8f0);
-    }
-
-    table.table-sm thead th {
-        border: 0;
-        color: #475569;
-        font-size: .65rem;
-        text-transform: uppercase;
-        letter-spacing: .07em;
-        font-weight: 600;
-    }
-
-    table.table-sm tbody tr {
-        transition: .25s;
-        background: transparent;
-    }
-
-    table.table-sm tbody tr:hover {
-        background: #fff7eb;
-    }
-
-    table.table-sm td,
-    table.table-sm th {
-        padding: .55rem .7rem;
-        vertical-align: middle;
-    }
-
-    table.table-sm td:last-child {
-        white-space: nowrap;
-    }
-
-    .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: .3ch;
-        padding: .4em .65em;
-        font-size: .6rem;
-        border-radius: .75rem;
-        font-weight: 600;
-        line-height: 1;
-        letter-spacing: .5px;
-        background: #f1f5f9;
-        color: #334155;
-        border: 1px solid #e2e8f0;
-    }
-
-    .badge-danger {
-        background: #fee2e2;
-        color: #b91c1c;
-        border-color: #fecaca;
-    }
-
-    .badge-ok {
-        background: #dcfce7;
-        color: #166534;
-        border-color: #bbf7d0;
-    }
-
-    .action-btn {
-        border: none;
-        background: var(--admin-accent);
-        color: #1f2937;
-        padding: .45rem .75rem;
-        border-radius: .55rem;
-        font-size: .68rem;
-        font-weight: 600;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: .4ch;
-        box-shadow: 0 3px 10px -2px rgba(var(--admin-accent-rgb), .35);
-        transition: .25s;
-    }
-
-    .action-btn.secondary { background: #e2e8f0; color: #374151; box-shadow: none; }
-    /* FIXED: separated create form styling (previously nested incorrectly) */
-    .create-form form .form-control { height:2rem; padding:.35rem .55rem; font-size:.68rem; border-radius:.55rem; }
-    .create-form form .form-label { margin-bottom:.25rem; }
-    .product-create-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.9rem .85rem;align-items:end;}
-    .product-create-grid .field-submit{min-width:120px;}
-    @media (min-width:992px){.product-create-grid{grid-template-columns:repeat(5,1fr);} }
-    .btn-create { background:var(--admin-accent); color:#1f2937; border:none; font-weight:600; font-size:.68rem; padding:.55rem .9rem; border-radius:.55rem; box-shadow:0 3px 8px -2px rgba(var(--admin-accent-rgb),.35); }
-    .btn-create:hover { filter:brightness(1.05); }
-    details form input.form-control-sm { height:2rem; font-size:.65rem; padding:.3rem .55rem; border-radius:.5rem; }
-    summary.action-btn.secondary { background:#e2e8f0; color:#374151; }
-
-    .action-btn.danger {
-        background: var(--admin-danger);
-        color: #fff;
-        box-shadow: 0 3px 10px -2px rgba(220, 53, 69, .35);
-    }
-
-    .action-btn.success {
-        background: var(--admin-ok);
-        color: #fff;
-    }
-
-    .action-btn:hover {
-        filter: brightness(1.05);
-    }
-
-    .action-btn:active {
-        transform: translateY(1px);
-    }
-
-    details summary.action-btn {
-        list-style: none;
-    }
-
-    details summary.action-btn::-webkit-details-marker {
-        display: none;
-    }
-
-    details {
-        display: inline-block;
-    }
-
-    details[open] summary.action-btn {
-        border-bottom-left-radius: .25rem;
-        border-bottom-right-radius: .25rem;
-    }
-
-    details form {
-        background: var(--admin-surface-alt);
-        border: 1px solid var(--admin-border);
-        padding: .65rem .75rem;
-        border-radius: .6rem;
-        margin-top: .6rem;
-    }
-
-    .create-form {
-        background: var(--admin-surface);
-        border: 1px solid var(--admin-border);
-        border-radius: 1rem;
-        padding: 1rem 1.1rem;
-        margin-bottom: 1.75rem;
-        box-shadow: 0 3px 10px -2px rgba(0, 0, 0, .08);
-    }
-
-    .create-form label {
-        font-size: .6rem;
-        text-transform: uppercase;
-        letter-spacing: .07em;
-        font-weight: 600;
-        color: var(--admin-muted);
-    }
-
-    .create-form input {
-        background: #fff;
-        border: 1px solid #d1d5db;
-        color: #1f2937;
-        font-size: .78rem;
-    }
-
-    .create-form input:focus {
-        border-color: var(--admin-accent);
-        box-shadow: 0 0 0 .15rem rgba(var(--admin-accent-rgb), .25);
-    font-family: inherit;
-    }
-
-    .admin-section-title {
-        font-size: .75rem;
-        text-transform: uppercase;
-        letter-spacing: .1em;
-        font-weight: 700;
-        color: #475569;
-        display: flex;
-        align-items: center;
-        gap: .5ch;
-        margin: 0 0 .9rem;
-    }
-
-    .admin-section-title:before {
-        content: "";
-        width: .65rem;
-        height: .65rem;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--admin-accent), #ffcf66);
-    }
-
-    td[data-neg] {
-        color: #b91c1c;
-    }
-
-    td[data-pos] {
-        color: #166534;
-    }
-
-    .top-products-table td {
-        padding: .45rem .6rem;
-    }
-
-    @media (max-width:992px) {
-        .admin-cards {
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        }
-
-        .admin-card .value {
-            font-size: 1.55rem;
-        }
-    }
+/* --- Estilos renovados panel admin (en línea para mantener un solo archivo) --- */
+:root { --adm-accent:#ffb347; --adm-accent-rgb:255,179,71; --adm-accent-alt:#ff9d2f; --adm-bg-grad:linear-gradient(140deg,#fff 0%,#fff7eb 60%,#ffffff 100%); --adm-border:#e5e7eb; --adm-muted:#6b7280; --adm-text:#1f2937; --adm-danger:#dc3545; --adm-ok:#198754; }
+.admin-hero { background:linear-gradient(90deg,#ffad32,#ffb347); border:1px solid #ffa028; padding:1.4rem 1.6rem; border-radius:1.2rem; position:relative; overflow:hidden; box-shadow:0 6px 20px -6px rgba(0,0,0,.18); }
+.admin-hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 78% 22%,rgba(255,255,255,.55),transparent 70%);mix-blend-mode:overlay;pointer-events:none;}
+.admin-hero h1{font-size:1.6rem;margin:0;font-weight:700;color:#fff;letter-spacing:.5px;text-shadow:0 2px 4px rgba(0,0,0,.25);} 
+.admin-hero p{margin:.35rem 0 0;font-size:.85rem;color:#fffbe9;font-weight:500;letter-spacing:.3px;}
+.admin-hero .hero-actions{margin-left:auto;display:flex;gap:.6rem;flex-wrap:wrap;}
+.admin-subnav{display:flex;gap:.6rem;flex-wrap:wrap;margin:1.25rem 0 1.4rem;}
+.admin-subnav a{background:#fff;border:1px solid var(--adm-border);color:#444;font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;border-radius:.7rem;padding:.55rem .85rem;text-decoration:none;box-shadow:0 2px 4px rgba(0,0,0,.06);transition:.25s;}
+.admin-subnav a:hover,.admin-subnav a.active{background:#fffbf4;border-color:#ffd7a2;color:#c25400;box-shadow:0 4px 12px -4px rgba(0,0,0,.18);} 
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem;margin-top:1rem;}
+.metric{position:relative;border:1px solid var(--adm-border);background:var(--adm-bg-grad);border-radius:1rem;padding:.9rem 1rem;overflow:hidden;display:flex;flex-direction:column;gap:.25rem;box-shadow:0 4px 12px -4px rgba(0,0,0,.12);transition:.3s;}
+.metric:before{content:"";position:absolute;inset:0;opacity:.08;background:radial-gradient(circle at 22% 18%,rgba(var(--adm-accent-rgb),.9),transparent 65%);} 
+.metric:hover{transform:translateY(-3px);box-shadow:0 10px 24px -6px rgba(0,0,0,.18);} 
+.metric .m-icon{width:38px;height:38px;border-radius:.85rem;display:inline-flex;align-items:center;justify-content:center;background:#ffffff;border:1px solid #ffe0b3;color:#c24f00;font-size:1.15rem;box-shadow:0 4px 10px -3px rgba(0,0,0,.25);} 
+.metric small{font-size:.55rem;font-weight:700;letter-spacing:.09em;color:var(--adm-muted);} 
+.metric .val{font-size:1.9rem;font-weight:600;line-height:1.05;color:#111;} 
+.metric .sub{font-size:.6rem;color:var(--adm-muted);} 
+.panel-section{margin-top:2.2rem;} 
+.section-head{display:flex;align-items:center;gap:.6rem;margin:0 0 .9rem;} 
+.section-head h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin:0;color:#475569;display:flex;align-items:center;gap:.45rem;} 
+.section-head h2:before{content:"";width:.65rem;height:.65rem;border-radius:50%;background:linear-gradient(135deg,#ffb347,#ffd36a);} 
+.card-box{background:#fff;border:1px solid var(--adm-border);border-radius:1.1rem;padding:1.05rem 1.15rem;margin-bottom:1.8rem;box-shadow:0 4px 14px -6px rgba(0,0,0,.12);} 
+.table-sm thead{background:linear-gradient(90deg,#f1f5f9,#e2e8f0);} 
+.table-sm thead th{border:0;font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:#475569;font-weight:600;} 
+.table-sm tbody tr{transition:.25s;} .table-sm tbody tr:hover{background:#fff9f0;} 
+.badge{display:inline-flex;align-items:center;gap:.25ch;padding:.42em .62em;font-size:.58rem;border-radius:.75rem;font-weight:600;letter-spacing:.4px;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;} 
+.badge-danger{background:#fee2e2;color:#b91c1c;border-color:#fecaca;} .badge-ok{background:#dcfce7;color:#166534;border-color:#bbf7d0;} 
+.action-btn{border:none;background:var(--adm-accent);color:#1f2937;padding:.45rem .75rem;border-radius:.55rem;font-size:.68rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.4ch;box-shadow:0 3px 10px -2px rgba(var(--adm-accent-rgb),.35);transition:.25s;} 
+.action-btn.secondary{background:#e2e8f0;color:#374151;box-shadow:none;} 
+.action-btn.danger{background:var(--adm-danger);color:#fff;box-shadow:0 3px 10px -2px rgba(220,53,69,.35);} 
+.action-btn.success{background:var(--adm-ok);color:#fff;} 
+.action-btn:hover{filter:brightness(1.05);} .action-btn:active{transform:translateY(1px);} 
+details summary.action-btn{list-style:none;} details summary.action-btn::-webkit-details-marker{display:none;} details{display:inline-block;} details[open] summary.action-btn{border-bottom-left-radius:.25rem;border-bottom-right-radius:.25rem;} details form{background:#fafafa;border:1px solid var(--adm-border);padding:.65rem .75rem;border-radius:.6rem;margin-top:.55rem;} 
+.product-create-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.9rem .85rem;align-items:end;} @media (min-width:992px){.product-create-grid{grid-template-columns:repeat(5,1fr);} } 
+.btn-create{background:var(--adm-accent);color:#1f2937;border:none;font-weight:600;font-size:.68rem;padding:.55rem .9rem;border-radius:.55rem;box-shadow:0 3px 8px -2px rgba(var(--adm-accent-rgb),.35);} .btn-create:hover{filter:brightness(1.05);} 
+.create-form{background:#fff;border:1px solid var(--adm-border);border-radius:1rem;padding:1rem 1.1rem;margin-bottom:1.4rem;box-shadow:0 3px 10px -2px rgba(0,0,0,.08);} .create-form label{font-size:.58rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:var(--adm-muted);} .create-form form .form-control{height:2rem;padding:.35rem .55rem;font-size:.68rem;border-radius:.55rem;} 
+.filter-bar{display:flex;flex-wrap:wrap;gap:.6rem;margin:0 0 .8rem;align-items:center;} .filter-bar input{max-width:260px;} 
+.status-pedido[data-status]{font-weight:600;font-size:.6rem;padding:.35em .55em;border-radius:.65rem;border:1px solid #e2e8f0;background:#f8fafc;letter-spacing:.4px;} .status-pedido[data-status="pendiente"]{background:#fff4cd;border-color:#ffe49b;color:#924f00;} .status-pedido[data-status="procesando"]{background:#e0f2fe;border-color:#bae6fd;color:#075985;} .status-pedido[data-status="enviado"]{background:#fef9c3;border-color:#fde68a;color:#854d0e;} .status-pedido[data-status="completado"]{background:#dcfce7;border-color:#bbf7d0;color:#166534;} .status-pedido[data-status="cancelado"]{background:#fee2e2;border-color:#fecaca;color:#b91c1c;} 
+.top-products-table td{padding:.45rem .6rem;} 
+@media (max-width:992px){.metric-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}.metric .val{font-size:1.55rem;} }
 </style>{% endblock %}
 {% block content %}
-<section class="container-fluid py-4 admin-wrapper px-4">
-    <div class="admin-header mb-4">
-        <h1 class="mb-0">Panel administrador</h1>
+<section class="container-fluid py-4 px-4">
+    <div class="admin-hero d-flex flex-wrap align-items-start gap-3">
+        <div class="flex-grow-1">
+            <h1>Panel de administración</h1>
+            <p>Resumen rápido y gestión central de tu tienda.</p>
+        </div>
+        <div class="hero-actions">
+            <a href="{{ url_for('bp.inicio') }}" class="btn btn-light btn-sm fw-semibold"><i class="bi bi-arrow-left"></i> Inicio</a>
+            <a href="{{ url_for('bp.admin_transacciones_html') }}" class="btn btn-outline-light btn-sm fw-semibold"><i class="bi bi-receipt"></i> Transacciones</a>
+            <a href="{{ url_for('bp.admin_orders') }}" class="btn btn-outline-light btn-sm fw-semibold"><i class="bi bi-box-seam"></i> Pedidos</a>
+        </div>
     </div>
-    <div class="admin-cards">
-        <div class="admin-card">
-            <div class="label">Productos</div>
-            <div class="value">{{ tools|length }}</div>
+
+    <div class="metric-grid">
+        <div class="metric">
+            <div class="d-flex justify-content-between align-items-start">
+                <small>PRODUCTOS</small><div class="m-icon"><i class="bi bi-box"></i></div>
+            </div>
+            <div class="val">{{ tools|length }}</div>
+            <div class="sub">Activos en catálogo</div>
         </div>
-        <div class="admin-card">
-            <div class="label">Usuarios</div>
-            <div class="value">{{ users|length }}</div>
+        <div class="metric">
+            <div class="d-flex justify-content-between align-items-start">
+                <small>USUARIOS</small><div class="m-icon"><i class="bi bi-people"></i></div>
+            </div>
+            <div class="val">{{ users|length }}</div>
+            <div class="sub">Registrados</div>
         </div>
-        <div class="admin-card">
-            <div class="label">Stock bajo</div>
-            <div class="value">{{ low_stock|length }}</div>
-            <div class="sub">&le; 5 uds</div>
+        <div class="metric">
+            <div class="d-flex justify-content-between align-items-start">
+                <small>STOCK BAJO</small><div class="m-icon"><i class="bi bi-exclamation-triangle"></i></div>
+            </div>
+            <div class="val">{{ low_stock|length }}</div>
+            <div class="sub">≤ 5 unidades</div>
         </div>
-        <div class="admin-card">
-            <div class="label">Ventas {{ metrics7.days }}d</div>
-            <div class="value">${{ metrics7.total_monto }}</div>
+        <div class="metric">
+            <div class="d-flex justify-content-between align-items-start">
+                <small>VENTAS {{ metrics7.days }}D</small><div class="m-icon"><i class="bi bi-cash-stack"></i></div>
+            </div>
+            <div class="val">${{ metrics7.total_monto }}</div>
             <div class="sub">{{ metrics7.total_orders }} pedidos</div>
         </div>
     </div>
 
-    <h2 class="admin-section-title mt-4">Productos</h2>
+    <nav class="admin-subnav" aria-label="Secciones panel">
+        <a href="#sec-productos" class="active">Productos</a>
+        <a href="#sec-usuarios">Usuarios</a>
+        <a href="#sec-pedidos">Pedidos</a>
+        <a href="#sec-top">Top 30 días</a>
+    </nav>
+
+    <div id="sec-productos" class="panel-section">
+    <div class="section-head"><h2>Productos</h2></div>
     <div class="create-form">
         <form class="product-create-grid" method="POST" action="{{ url_for('bp.admin_create_product') }}">
             <div class="field">
@@ -339,9 +119,13 @@
                 <button class="btn-create w-100" type="submit">Crear</button>
             </div>
         </form>
-    </div>
-    <div class="admin-table-wrapper w-100">
-        <table class="table table-sm align-middle">
+        </div>
+        <div class="card-box w-100">
+                <div class="filter-bar">
+                    <input id="filtroProductos" type="text" class="form-control form-control-sm" placeholder="Filtrar por nombre..." aria-label="Filtrar productos">
+                    <span class="text-muted small" id="filtroResumen"></span>
+                </div>
+                <table class="table table-sm align-middle" id="tablaProductos">
             <thead class="table-secondary">
                 <tr>
                     <th>ID</th>
@@ -395,10 +179,12 @@
             </tbody>
         </table>
     </div>
+    </div>
 
-    <h2 class="admin-section-title">Usuarios</h2>
-    <div class="admin-table-wrapper w-100">
-        <table class="table table-sm align-middle">
+    <div id="sec-usuarios" class="panel-section">
+    <div class="section-head"><h2>Usuarios</h2></div>
+    <div class="card-box w-100">
+        <table class="table table-sm align-middle" id="tablaUsuarios">
             <thead class="table-secondary">
                 <tr>
                     <th>ID</th>
@@ -432,12 +218,15 @@
                     </td>
                 </tr>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <h2 class="admin-section-title">Pedidos recientes</h2>
-    <div class="admin-table-wrapper w-100">
-        <table class="table table-sm align-middle">
+                        </tbody>
+                </table>
+        </div>
+        </div>
+
+        <div id="sec-pedidos" class="panel-section">
+        <div class="section-head"><h2>Pedidos recientes</h2></div>
+        <div class="card-box w-100">
+                <table class="table table-sm align-middle" id="tablaPedidos">
             <thead class="table-secondary">
                 <tr>
                     <th>ID</th>
@@ -454,7 +243,7 @@
                 <tr>
                     <td>{{ o.id_pedido }}</td>
                         <td>{{ o.username or o.id_user }}</td>
-                    <td>{{ o.estado_pedido }}</td>
+                                        <td><span class="status-pedido" data-status="{{ o.estado_pedido }}">{{ o.estado_pedido }}</span></td>
                     <td>${{ o.monto_total or o.subtotal_calc }}</td>
                     <td>{{ o.total_items }}</td>
                         <td>{{ o.created_at or '' }}</td>
@@ -466,10 +255,12 @@
         </table>
         <div><a href="{{ url_for('bp.admin_orders') }}" class="btn btn-sm btn-outline-secondary">Ver todos</a></div>
     </div>
+        </div>
 
-    <h2 class="admin-section-title">Top productos (30 días)</h2>
-    <div class="admin-table-wrapper w-100">
-        <table class="table table-sm top-products-table">
+        <div id="sec-top" class="panel-section">
+        <div class="section-head"><h2>Top productos (30 días)</h2></div>
+        <div class="card-box w-100">
+                <table class="table table-sm top-products-table" id="tablaTop">
             <thead class="table-secondary">
                 <tr>
                     <th>ID</th>
@@ -488,5 +279,33 @@
             </tbody>
         </table>
     </div>
+        </div>
 </section>
+{% endblock %}
+{% block extra_js %}{{ super() }}
+<script>
+// Navegación activa por hash
+document.addEventListener('DOMContentLoaded', () => {
+    const navLinks=[...document.querySelectorAll('.admin-subnav a')];
+    function setActive(){
+        const h=location.hash||'#sec-productos';
+        navLinks.forEach(a=>a.classList.toggle('active', a.getAttribute('href')===h));
+    }
+    window.addEventListener('hashchange',setActive); setActive();
+
+    // Filtro productos
+    const filtro=document.getElementById('filtroProductos');
+    const tabla=document.getElementById('tablaProductos');
+    const resumen=document.getElementById('filtroResumen');
+    if(filtro && tabla){
+        const rows=[...tabla.querySelectorAll('tbody tr')];
+        function apply(){
+            const q=filtro.value.trim().toLowerCase();
+            let vis=0;rows.forEach(r=>{const name=r.children[1].textContent.toLowerCase();const show=!q||name.includes(q);r.style.display=show?'':'none'; if(show) vis++;});
+            resumen.textContent = q?`${vis} coincidencia(s)`:'';
+        }
+        filtro.addEventListener('input', apply);
+    }
+});
+</script>
 {% endblock %}

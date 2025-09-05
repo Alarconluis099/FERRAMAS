@@ -105,17 +105,35 @@ def _backfill_total_items_final():
     """Rellena total_items_final donde sea NULL usando suma de pedido_detalle."""
     try:
         cur = mysql.connection.cursor()
-        cur.execute("""
+        # Detectar columnas existentes
+        cur.execute("SHOW COLUMNS FROM pedidos")
+        cols = [r[0] for r in cur.fetchall()]
+        pk_col = 'id_pedido' if 'id_pedido' in cols else ('id' if 'id' in cols else None)
+        if not pk_col:
+            cur.close(); return
+        # Verificar columna snapshot
+        cur.execute("SHOW COLUMNS FROM pedidos LIKE 'total_items_final'")
+        if not cur.fetchone():
+            # crear columna si falta
+            cur.execute("ALTER TABLE pedidos ADD COLUMN total_items_final INT NULL")
+            mysql.connection.commit()
+        # La tabla detalle referencia id_pedido según modelo; si no existe, abortar
+        join_on = f"p.{pk_col} = d.id_pedido"
+        sql = f"""
             UPDATE pedidos p
             LEFT JOIN (
                 SELECT id_pedido, COALESCE(SUM(cantidad),0) AS cnt
                 FROM pedido_detalle
                 GROUP BY id_pedido
-            ) d ON p.id = d.id_pedido
+            ) d ON {join_on}
             SET p.total_items_final = d.cnt
             WHERE p.total_items_final IS NULL
-        """)
-        mysql.connection.commit()
+        """
+        try:
+            cur.execute(sql)
+            mysql.connection.commit()
+        except Exception as e:
+            print(f"[MIGRATION] Could not backfill total_items_final rows: {e}")
         cur.close()
     except Exception as e:
         print(f"[MIGRATION] Could not backfill total_items_final: {e}")
@@ -124,14 +142,23 @@ def _backfill_estado_pedido():
     """Marca como 'completado' pedidos con transacción AUTHORIZED si estado vacío."""
     try:
         cur = mysql.connection.cursor()
-        cur.execute("""
+        cur.execute("SHOW COLUMNS FROM pedidos")
+        cols = [r[0] for r in cur.fetchall()]
+        pk_col = 'id_pedido' if 'id_pedido' in cols else ('id' if 'id' in cols else None)
+        if not pk_col:
+            cur.close(); return
+        sql = f"""
             UPDATE pedidos p
-            JOIN transacciones t ON t.id_pedido = p.id
+            JOIN transacciones t ON t.id_pedido = p.{pk_col}
             SET p.estado_pedido = 'completado'
             WHERE (p.estado_pedido IS NULL OR p.estado_pedido = '')
               AND t.status = 'AUTHORIZED'
-        """)
-        mysql.connection.commit()
+        """
+        try:
+            cur.execute(sql)
+            mysql.connection.commit()
+        except Exception as e:
+            print(f"[MIGRATION] Could not backfill estado_pedido rows: {e}")
         cur.close()
     except Exception as e:
         print(f"[MIGRATION] Could not backfill estado_pedido: {e}")

@@ -118,6 +118,11 @@ def iniciar_sesion():
             flash('Credenciales inválidas.', 'error'); return redirect(url_for('bp.iniciar_sesion'))
         from datetime import timedelta
         session['usuario'] = usuario_nombre
+        # Guardar rol en sesión para que la barra de navegación pueda mostrar enlaces admin/staff
+        try:
+            session['rol'] = role or ('admin' if usuario_nombre == 'admin' else None)
+        except Exception:
+            session['rol'] = ('admin' if usuario_nombre == 'admin' else None)
         remember = request.form.get('remember_me') == '1'
         if remember:
             session.permanent = True; app.permanent_session_lifetime = timedelta(days=30)
@@ -133,7 +138,9 @@ def iniciar_sesion():
 
 @auth_bp.route('/logout')
 def logout():
-    session.pop('usuario', None); return redirect(url_for('bp.inicio'))
+    session.pop('usuario', None)
+    session.pop('rol', None)
+    return redirect(url_for('bp.inicio'))
 
 @auth_bp.route('/Login')
 def login_alias():

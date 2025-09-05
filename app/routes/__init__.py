@@ -95,6 +95,12 @@ def admin_update_order_status(order_id):
 	from .admin import admin_update_order_status as _au
 	return _au(order_id)
 
+@bp.route('/admin/transacciones/vista')
+def admin_transacciones_html():
+	# Alias para plantilla que llama url_for('bp.admin_transacciones_html')
+	from .admin import admin_transacciones_html as _ath
+	return _ath()
+
 @bp.route('/admin/producto', methods=['POST'])
 def admin_create_product():
 	from .admin import admin_create_product as _ac
@@ -124,10 +130,26 @@ def cliente():
 	from .cart import cliente as _cl
 	return _cl()
 
-@bp.route('/staff')
-def staff():
+@bp.route('/staff', endpoint='staff_dashboard')
+def staff_dashboard_alias():
 	from .admin import staff_dashboard as _s
 	return _s()
+
+# Aliases carrito (acciones cantidad) usados por templates legacy
+@bp.route('/disminuir_cantidad/<int:id_tool>', methods=['POST'])
+def disminuir_cantidad(id_tool):
+	from .cart import disminuir_cantidad as _dc
+	return _dc(id_tool)
+
+@bp.route('/aumentar_cantidad/<int:id_tool>', methods=['POST'])
+def aumentar_cantidad(id_tool):
+	from .cart import aumentar_cantidad as _ac
+	return _ac(id_tool)
+
+@bp.route('/eliminar_item/<int:id_tool>', methods=['POST'])
+def eliminar_item(id_tool):
+	from .cart import eliminar_item as _ei
+	return _ei(id_tool)
 
 # --- Wrappers de compatibilidad: exponen funciones que tests parchean ---
 def fetch_tools_filtered(*a, **kw):

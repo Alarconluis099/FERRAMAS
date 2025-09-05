@@ -58,6 +58,11 @@
             <div class="user-text">¡Hola! <a href="{{ url_for('bp.login') }}" class="link-inline">Ingresa</a> o <a href="{{ url_for('bp.registro') }}" class="link-inline">regístrate</a></div>
           {% endif %}
         </div>
+        {% if session.get('rol') == 'admin' %}
+        <a href="{{ url_for('bp.admin_dashboard') }}" class="btn btn-warning btn-sm ms-2 d-none d-md-inline-block" title="Panel de administración">
+          <i class="bi bi-speedometer2"></i> Panel
+        </a>
+        {% endif %}
         <div class="nav-separator" aria-hidden="true"></div>
         <a href="{{ url_for('bp.carrito') }}" class="nav-cart-block">
           <span class="icon-circle cart-icon"><i class="bi bi-cart"></i></span>
