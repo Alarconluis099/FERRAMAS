@@ -1,5 +1,10 @@
-flask
-flask-mysqldb
-transbank-sdk
-flask-testing
-pytest
+Flask>=3.0.0
+flask-mysqldb>=1.0.1
+transbank-sdk>=5.0.0
+python-dotenv>=1.0.0
+Werkzeug>=3.0.0
+itsdangerous>=2.1.0
+Jinja2>=3.1.0
+pytest>=8.0.0
+pytest-cov>=4.1.0
+flask-testing>=0.8.1

@@ -1,3 +1,34 @@
+# WebFerramas
+
+Aplicación Flask para catálogo y carrito de ferretería.
+
+## Configuración rápida
+
+1. Crear entorno virtual
+2. Instalar dependencias: `pip install -r requirements.txt`
+3. Copiar `.env.example` a `.env` y ajustar credenciales
+4. Ejecutar app: `python run.py`
+
+## Variables (.env)
+```
+SECRET_KEY=...
+MYSQL_USER=...
+MYSQL_PASSWORD=...
+MYSQL_DB=ferramas
+MYSQL_HOST=localhost
+```
+
+## Tests
+```
+pytest -q
+```
+
+## Próximas mejoras (roadmap)
+- Chips de filtros activos
+- Separar JS en módulos
+- CSRF + validación server-side consistente
+- Caché de assets y minificación
+- Accesibilidad (slider aria y foco)
 Repositorio:
 
 	✦ https://github.com/LucasOG7/WebFerramas
