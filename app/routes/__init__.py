@@ -51,6 +51,11 @@ def inicio():
 	# Limitar a primeros 12 (paginación real ahora via /api/tools)
 	return render_template('inicio.html', tools=tools[:12], total_tools=len(tools), per_page=12, page=1, allowed_per_page=[12,20,40,80], has_more=len(tools)>12, usuario=usuario, search_query=query, cart_count=0)
 
+# Ruta raíz para evitar 404 cuando se entra a http://host:puerto/
+@bp.route('/')
+def root_index():
+	return redirect(url_for('bp.inicio'))
+
 # --- Alias para mantener endpoint 'bp.iniciar_sesion' que usaban tests legacy ---
 @bp.route('/iniciar_sesion', methods=['GET','POST'])
 def iniciar_sesion():

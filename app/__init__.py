@@ -23,7 +23,7 @@ def create_app():
 app = create_app()
 
 limiter = None
-if Limiter is not None:
+if Limiter is not None and app.config.get('ENABLE_RATE_LIMITS'):
     limiter = Limiter(get_remote_address, app=app, default_limits=["200 per hour", "50 per minute"])
 
 # Genera un identificador único por arranque del servidor para invalidar sesiones previas

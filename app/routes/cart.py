@@ -153,7 +153,12 @@ def carrito():
     descuento_porcentaje = get_user_discount(usuario)
     factor = Decimal(1) - (Decimal(descuento_porcentaje)/Decimal(100))
     total_con_descuento = (subtotal * factor).quantize(Decimal('1')) if subtotal else Decimal(0)
-    payment_available = 'tbk.webpay_plus_create' in (session.get('_app_view_functions') or {})
+    # Detectar si el endpoint de Transbank está realmente registrado
+    try:
+        from flask import current_app
+        payment_available = 'tbk.webpay_plus_create' in current_app.view_functions
+    except Exception:
+        payment_available = False
     if not pedidos: return redirect(url_for('bp.inicio'))
     return render_template('carrito.html', pedidos=pedidos, usuario=usuario, descuento=descuento_porcentaje, total_con_descuento=total_con_descuento, subtotal=subtotal, payment_available=payment_available, cart_count=_get_cart_count())
 

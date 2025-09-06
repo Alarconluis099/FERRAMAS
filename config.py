@@ -28,6 +28,8 @@ class BaseConfig:
     SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
     # Feature flags
     LEGACY_PLAIN_PASSWORD_ALLOWED = os.getenv('LEGACY_PLAIN_PASSWORD_ALLOWED', 'true').lower() == 'true'
+    # Rate limiting (desactivar fácilmente en local)
+    ENABLE_RATE_LIMITS = os.getenv('ENABLE_RATE_LIMITS', 'true').lower() == 'true'
     # Flask core flags (override en subclases)
     DEBUG = False
     TESTING = False
@@ -45,6 +47,7 @@ class BaseConfig:
 class DevConfig(BaseConfig):
     DEBUG = os.getenv('FLASK_DEBUG', 'true').lower() == 'true'
     LEGACY_PLAIN_PASSWORD_ALLOWED = True
+    ENABLE_RATE_LIMITS = os.getenv('ENABLE_RATE_LIMITS', 'false').lower() == 'true'
 
 
 class ProdConfig(BaseConfig):
