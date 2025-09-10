@@ -70,8 +70,14 @@ def login():
 
 @bp.route('/Registro')
 def registro():
-	from .auth import registro_alias as _reg
+	from .auth import registro as _reg
 	return _reg()
+
+# Alias para formulario de registro (plantilla usa url_for('bp.guardar_registro'))
+@bp.route('/guardar_registro', methods=['POST'], endpoint='guardar_registro')
+def guardar_registro():
+	from .auth import guardar_registro as _gr
+	return _gr()
 
 # Alias logout esperado en templates como 'bp.logout'
 @bp.route('/logout')
