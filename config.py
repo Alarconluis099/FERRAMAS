@@ -10,13 +10,37 @@ except ImportError:  # fallback si no está instalado todavía
 load_dotenv()  # intenta cargar .env si existe
 
 
+import re
+
+def parse_mysql_url(url):
+    # Ejemplo: mysql://user:pass@host:port/dbname
+    m = re.match(r'mysql://([^:]+):([^@]+)@([^:/]+)(?::(\d+))?/([^?]+)', url)
+    if not m:
+        return {}
+    return {
+        'MYSQL_USER': m.group(1),
+        'MYSQL_PASSWORD': m.group(2),
+        'MYSQL_HOST': m.group(3),
+        'MYSQL_PORT': int(m.group(4) or 3306),
+        'MYSQL_DB': m.group(5)
+    }
+
 class BaseConfig:
     # DB
-    MYSQL_USER = os.getenv('MYSQL_USER', 'root')
-    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', '')
-    MYSQL_DB = os.getenv('MYSQL_DB', 'ferramas')
-    MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
-    MYSQL_PORT = int(os.getenv('MYSQL_PORT', '3306'))
+    _db_url = os.getenv('DATABASE_URL')
+    if _db_url:
+        _db_parsed = parse_mysql_url(_db_url)
+        MYSQL_USER = _db_parsed.get('MYSQL_USER', 'root')
+        MYSQL_PASSWORD = _db_parsed.get('MYSQL_PASSWORD', '')
+        MYSQL_DB = _db_parsed.get('MYSQL_DB', 'ferramas')
+        MYSQL_HOST = _db_parsed.get('MYSQL_HOST', 'localhost')
+        MYSQL_PORT = int(_db_parsed.get('MYSQL_PORT', 3306))
+    else:
+        MYSQL_USER = os.getenv('MYSQL_USER', 'root')
+        MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', '')
+        MYSQL_DB = os.getenv('MYSQL_DB', 'ferramas')
+        MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
+        MYSQL_PORT = int(os.getenv('MYSQL_PORT', '3306'))
     # App
     SECRET_KEY = os.getenv('SECRET_KEY', 'change-me')
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
