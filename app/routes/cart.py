@@ -165,5 +165,5 @@ def carrito():
 @cart_bp.route('/Cliente')
 def cliente():
     usuario = session.get('usuario')
-    if not usuario: return redirect(url_for('auth.iniciar_sesion'))
+    if not usuario: return redirect(url_for('bp.auth.iniciar_sesion'))
     return render_template('Cliente.html', usuario=usuario, cart_count=_get_cart_count())
