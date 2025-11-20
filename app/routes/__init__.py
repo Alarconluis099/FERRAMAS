@@ -45,11 +45,11 @@ def inicio():
 	usuario = session.get('usuario')
 	# Parámetros simples de búsqueda inicial
 	query = (request.args.get('q') or '').strip().lower()
-	tools = fetch_all_tools()
-	if query:
-		tools = [t for t in tools if query in (t.get('name','').lower()) or query in (t.get('description','') or '').lower()]
-	# Limitar a primeros 12 (paginación real ahora via /api/tools)
-	return render_template('inicio.html', tools=tools[:12], total_tools=len(tools), per_page=12, page=1, allowed_per_page=[12,20,40,80], has_more=len(tools)>12, usuario=usuario, search_query=query, cart_count=0)
+	# Usar fetch_tools_filtered para evitar traer toda la tabla en memoria
+	from app.models import fetch_tools_filtered as _fetch_filtered
+	items, total = _fetch_filtered(page=1, per_page=12, q=query)
+	# items ya viene limitado a per_page
+	return render_template('inicio.html', tools=items, total_tools=total, per_page=12, page=1, allowed_per_page=[12,20,40,80], has_more=(total>12), usuario=usuario, search_query=query, cart_count=0)
 
 # Ruta raíz para evitar 404 cuando se entra a http://host:puerto/
 @bp.route('/')

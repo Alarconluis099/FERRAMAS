@@ -9,6 +9,10 @@ except ImportError:  # fallback si no está instalado (tests mínimos)
     def get_remote_address():  # type: ignore
         return '127.0.0.1'
 from config import get_config
+try:
+    from flask_caching import Cache
+except Exception:
+    Cache = None
 
 
 def create_app():
@@ -25,6 +29,14 @@ app = create_app()
 limiter = None
 if Limiter is not None and app.config.get('ENABLE_RATE_LIMITS'):
     limiter = Limiter(get_remote_address, app=app, default_limits=["200 per hour", "50 per minute"])
+
+# Inicializar cache si está disponible. Usamos SimpleCache por defecto para desarrollo.
+cache = None
+if Cache is not None:
+    try:
+        cache = Cache(app, config={'CACHE_TYPE': app.config.get('CACHE_TYPE', 'SimpleCache')})
+    except Exception as e:
+        print(f"[CACHE] Could not initialize cache: {e}")
 
 # Genera un identificador único por arranque del servidor para invalidar sesiones previas
 BOOT_ID = uuid.uuid4().hex

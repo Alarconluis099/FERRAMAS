@@ -23,9 +23,36 @@ def api_tools_paginated():
     precio_min = parse_int_or_none('precio_min'); precio_max = parse_int_or_none('precio_max')
     # Import diferido para permitir que tests monkeypatch en app.routes.fetch_tools_filtered
     from app import routes as routes_pkg  # type: ignore
+
+    # Intentar usar cache si está disponible para consultas idénticas
+    cache = None
+    try:
+        from app import cache as _c
+        cache = _c
+    except Exception:
+        cache = None
+
+    cache_key = None
+    if cache is not None:
+        try:
+            qs = request.query_string.decode('utf-8') if isinstance(request.query_string, (bytes, bytearray)) else str(request.query_string)
+            cache_key = f"api_tools:{qs}:p{page}:pp{per_page}"
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return jsonify(cached)
+        except Exception:
+            cache_key = None
+
     items, total = routes_pkg.fetch_tools_filtered(page=page, per_page=per_page, q=q, precio_min=precio_min, precio_max=precio_max, order=order)
     has_more = page * per_page < total
-    return jsonify({'ok':True,'page':page,'per_page':per_page,'total':total,'has_more':has_more,'items':items})
+    payload = {'ok':True,'page':page,'per_page':per_page,'total':total,'has_more':has_more,'items':items}
+    if cache is not None and cache_key:
+        try:
+            # Cachear objetos serializables (listas/dicts)
+            cache.set(cache_key, payload, timeout=30)
+        except Exception:
+            pass
+    return jsonify(payload)
 
 @api_bp.route('/api/tool_suggestions')
 def api_tool_suggestions():
