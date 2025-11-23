@@ -44,7 +44,8 @@ class BaseConfig:
     # App
     SECRET_KEY = os.getenv('SECRET_KEY', 'change-me')
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
-    RETURN_URL_TBK = os.getenv('RETURN_URL_TBK', 'http://localhost:5000/tbk/commit')
+    # Usa la IP del servidor por defecto en vez de localhost
+    RETURN_URL_TBK = os.getenv('RETURN_URL_TBK', 'http://192.168.1.94:5000/tbk/commit')
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
     # Seguridad cookies
     SESSION_COOKIE_HTTPONLY = True

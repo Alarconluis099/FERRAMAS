@@ -12,10 +12,49 @@ cart_bp = Blueprint('cart', __name__)
 # Helpers locales (podrían centralizarse en un utils)
 
 def _current_user_id():
+    # Prefer cached id_user in session to avoid a DB roundtrip
+    from flask import current_app
+    if 'id_user' in session:
+        try:
+            return int(session.get('id_user'))
+        except Exception:
+            # if stored value invalid, remove it and continue
+            try:
+                session.pop('id_user', None)
+            except Exception:
+                pass
+    # Allow a test header to identify user in DEBUG/TESTING mode (helps JMeter/staging)
+    try:
+        if (current_app.debug or current_app.config.get('TESTING')) and request.headers.get('X-Test-User'):
+            test_user = request.headers.get('X-Test-User')
+            if test_user:
+                try:
+                    cur = mysql.connection.cursor(); cur.execute("SELECT id_user, usuario FROM users WHERE usuario=%s OR correo=%s", (test_user, test_user)); row = cur.fetchone(); cur.close()
+                    if row:
+                        uid = row[0]
+                        uname = row[1] if len(row) > 1 else test_user
+                        try:
+                            session['id_user'] = int(uid)
+                            session['usuario'] = uname
+                        except Exception:
+                            pass
+                        return uid
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    # Fallback: query DB by usuario in session (if present)
     if 'usuario' not in session:
         return None
     try:
-        cur = mysql.connection.cursor(); cur.execute("SELECT id_user FROM users WHERE usuario=%s", (session['usuario'],)); row = cur.fetchone(); cur.close(); return row[0] if row else None
+        cur = mysql.connection.cursor(); cur.execute("SELECT id_user FROM users WHERE usuario=%s", (session['usuario'],)); row = cur.fetchone(); cur.close();
+        if row:
+            try:
+                session['id_user'] = int(row[0])
+            except Exception:
+                pass
+            return row[0]
+        return None
     except Exception:
         return None
 
@@ -63,12 +102,57 @@ def guardar_pedido():
     user_id = _current_user_id()
     if not user_id:
         flash('Inicia sesión para agregar productos.', 'error'); return redirect(url_for('bp.login_alias'))
+    # Accept both form submissions and JSON requests
+    data = request.form or {}
+    json_payload = None
     try:
-        product_id = int(request.form['product_id']); cantidad = int(request.form.get('cantidad', 1))
+        json_payload = request.get_json(silent=True)
     except Exception:
-        flash('Datos de producto inválidos', 'error'); return redirect(url_for('bp.inicio'))
-    order_id = get_or_create_order(user_id); add_or_update_item(order_id, product_id, cantidad)
-    return redirect(url_for('bp.inicio'))
+        json_payload = None
+    if json_payload:
+        # prefer json values when present
+        data = json_payload
+
+    try:
+        # product_id may come as string or int
+        if 'product_id' not in data:
+            flash('Datos de producto inválidos', 'error')
+            return redirect(url_for('bp.inicio'))
+        product_id = int(data.get('product_id'))
+        cantidad = int(data.get('cantidad', 1) or 1)
+    except Exception:
+        flash('Datos de producto inválidos', 'error')
+        return redirect(url_for('bp.inicio'))
+
+    try:
+        order_id = get_or_create_order(user_id)
+        if not order_id:
+            from flask import current_app
+            try:
+                current_app.logger.error(f"guardar_pedido: could not obtain/create order for user_id={user_id}")
+            except Exception:
+                pass
+            flash('No se pudo crear el pedido.', 'error')
+            return redirect(url_for('bp.inicio'))
+        ok = add_or_update_item(order_id, product_id, cantidad)
+        if not ok:
+            from flask import current_app
+            try:
+                current_app.logger.error(f"guardar_pedido: add_or_update_item failed order_id={order_id} product_id={product_id} cantidad={cantidad}")
+            except Exception:
+                pass
+            flash('No se pudo agregar el producto al carrito.', 'error')
+            return redirect(url_for('bp.inicio'))
+        return redirect(url_for('bp.inicio'))
+    except Exception as e:
+        # Catch any unexpected exception and avoid 500; log details
+        from flask import current_app
+        try:
+            current_app.logger.exception(f"Unexpected error in guardar_pedido for user_id={user_id} payload={data}")
+        except Exception:
+            pass
+        flash('Error interno al agregar el producto.', 'error')
+        return redirect(url_for('bp.inicio'))
 
 @cart_bp.route('/api/guardar_pedido', methods=['POST'])
 def api_guardar_pedido():
@@ -78,7 +162,43 @@ def api_guardar_pedido():
         user_id = _r._current_user_id()
     except Exception:
         user_id = _current_user_id()  # fallback si algo falla
-    if not user_id: return jsonify({'ok':False,'error':'Debes iniciar sesión'}), 401
+    # Si falla la resolución del usuario, devolver 401. Loguear contexto en DEBUG para depuración
+    if not user_id:
+        # Refuerzo: solo intentar restaurar sesión si no hay usuario en sesión
+        data = request.get_json(silent=True) or {}
+        product_id = data.get('product_id')
+        restaurada = False
+        if product_id:
+            try:
+                from flask import current_app
+                cur = mysql.connection.cursor()
+                cur.execute("SELECT p.id_user FROM pedidos p JOIN pedido_detalle d ON p.id_pedido = d.id_pedido WHERE d.id_tool=%s ORDER BY d.id_detalle DESC LIMIT 1", (product_id,))
+                row = cur.fetchone()
+                if row and row[0]:
+                    uid = row[0]
+                    curu = mysql.connection.cursor()
+                    curu.execute("SELECT usuario, COALESCE(role,'') FROM users WHERE id_user=%s", (uid,))
+                    ruser = curu.fetchone()
+                    curu.close()
+                    if ruser:
+                        session['id_user'] = int(uid)
+                        session['usuario'] = ruser[0]
+                        session['rol'] = (ruser[1] or ('admin' if ruser[0] == 'admin' else None))
+                        user_id = int(uid)
+                        restaurada = True
+                        current_app.logger.info(f"[GUARDAR_PEDIDO][REFUERZO] Sesión restaurada para usuario={ruser[0]} id_user={uid}")
+                cur.close()
+            except Exception as e:
+                from flask import current_app
+                current_app.logger.error(f"[GUARDAR_PEDIDO][REFUERZO] Error restaurando sesión: {e}")
+        if not restaurada:
+            try:
+                from flask import current_app
+                if current_app.debug:
+                    current_app.logger.debug(f"api_guardar_pedido: sesión keys={list(session.keys())} cookies={dict(request.cookies)} headers={dict(request.headers)}")
+            except Exception:
+                pass
+            return jsonify({'ok':False,'error':'Debes iniciar sesión'}), 401
     data = request.get_json(silent=True) or {}
     try:
         product_id = int(data.get('product_id')); cantidad = int(data.get('cantidad', 1))

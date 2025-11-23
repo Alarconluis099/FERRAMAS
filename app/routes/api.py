@@ -60,9 +60,23 @@ def api_tool_suggestions():
     if not q: return jsonify({'ok':True,'items':[]})
     return jsonify({'ok':True,'items':fetch_tool_suggestions(q)})
 
-# Herramientas CRUD JSON
+# Herramientas CRUD JSON (respuesta limitada/paginada para evitar payloads enormes)
 @api_bp.route('/tools', methods=['GET'])
-def get_tools(): return jsonify(fetch_all_tools())
+def get_tools():
+    # Compatibilidad legacy: si no hay query params, devolver lista completa (tests esperan esto)
+    if not request.args:
+        return jsonify(fetch_all_tools())
+
+    try:
+        page = int(request.args.get('page', '1'))
+        per_page = int(request.args.get('per_page', '100'))
+    except Exception:
+        page = 1; per_page = 100
+    if per_page < 1: per_page = 1
+    if per_page > 1000: per_page = 1000
+    # Reusar fetch_tools_filtered para devolver una lista limitada y metadata
+    items, total = fetch_tools_filtered(page=page, per_page=per_page)
+    return jsonify({'ok': True, 'page': page, 'per_page': per_page, 'total': total, 'items': items})
 
 @api_bp.route('/tools/<code>', methods=['GET'])
 def get_tool(code): return jsonify(fetch_tools_by_code(code))

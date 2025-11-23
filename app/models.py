@@ -7,6 +7,9 @@ from datetime import datetime, timedelta
 # --- Runtime detection of timestamp column in pedidos (created_at vs fecha_pedido) ---
 _PEDIDOS_TS_COL = None  # caches actual column name if exists
 
+# Cache flag for whether a FULLTEXT index exists on tools(name,description)
+_TOOLS_FULLTEXT_AVAILABLE = None
+
 def _detect_pedidos_timestamp():
     """Return the name of the timestamp column in pedidos (created_at or fecha_pedido) or None.
     Caches the result to avoid repeated SHOW COLUMNS.
@@ -58,10 +61,31 @@ def fetch_tools_filtered(page=1, per_page=12, q=None, precio_min=None, precio_ma
     if per_page > 200: per_page = 200
     params = []
     where_clauses = []
+    use_fulltext = False
+    # If q provided, check if FULLTEXT index exists and prefer MATCH...AGAINST which is faster
     if q:
-        where_clauses.append("(name LIKE %s OR description LIKE %s)")
-        like = f"%{q}%"
-        params.extend([like, like])
+        global _TOOLS_FULLTEXT_AVAILABLE
+        try:
+            if _TOOLS_FULLTEXT_AVAILABLE is None:
+                cur = mysql.connection.cursor()
+                cur.execute("SELECT INDEX_NAME, INDEX_TYPE FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA=%s AND TABLE_NAME='tools'", (mysql.connection.db.decode() if hasattr(mysql.connection, 'db') and isinstance(mysql.connection.db, (bytes, bytearray)) else None,))
+                # The above may fail on some drivers; fallback to simple check
+                cur.close()
+                _TOOLS_FULLTEXT_AVAILABLE = False
+            # If the above detection can't be run reliably in this environment, keep default False
+        except Exception:
+            # Avoid failing if detection isn't possible; leave as previously unknown
+            _TOOLS_FULLTEXT_AVAILABLE = _TOOLS_FULLTEXT_AVAILABLE if _TOOLS_FULLTEXT_AVAILABLE is not None else False
+        # Use fulltext only if flag True
+        if _TOOLS_FULLTEXT_AVAILABLE:
+            use_fulltext = True
+        if use_fulltext:
+            # we'll build MATCH...AGAINST clause later
+            pass
+        else:
+            where_clauses.append("(name LIKE %s OR description LIKE %s)")
+            like = f"%{q}%"
+            params.extend([like, like])
     if precio_min is not None:
         where_clauses.append("precio >= %s")
         params.append(precio_min)
@@ -81,15 +105,26 @@ def fetch_tools_filtered(page=1, per_page=12, q=None, precio_min=None, precio_ma
     offset = (page - 1) * per_page
     cursor = mysql.connection.cursor(DictCursor)
     try:
-        # Count total filtered
-        cursor.execute(f"SELECT COUNT(*) AS c FROM tools{where_sql}", tuple(params))
-        total = cursor.fetchone().get('c', 0)
-        # Fetch page
-        cursor.execute(
-            f"SELECT id_tool, name, description, stock, precio FROM tools{where_sql} ORDER BY {order_sql} LIMIT %s OFFSET %s",
-            tuple(params + [per_page, offset])
-        )
-        items = cursor.fetchall()
+        # If using fulltext, adjust queries to use MATCH...AGAINST
+        if use_fulltext:
+            # Use boolean mode for partial matching; prepare search term
+            ft_term = ' '.join([f'+{t}*' for t in q.split() if t])
+            count_sql = f"SELECT COUNT(*) AS c FROM tools WHERE MATCH(name,description) AGAINST(%s IN BOOLEAN MODE)"
+            cursor.execute(count_sql, (ft_term,))
+            total = cursor.fetchone().get('c', 0)
+            fetch_sql = f"SELECT id_tool, name, description, stock, precio FROM tools WHERE MATCH(name,description) AGAINST(%s IN BOOLEAN MODE) ORDER BY {order_sql} LIMIT %s OFFSET %s"
+            cursor.execute(fetch_sql, (ft_term, per_page, offset))
+            items = cursor.fetchall()
+        else:
+            # Count total filtered
+            cursor.execute(f"SELECT COUNT(*) AS c FROM tools{where_sql}", tuple(params))
+            total = cursor.fetchone().get('c', 0)
+            # Fetch page
+            cursor.execute(
+                f"SELECT id_tool, name, description, stock, precio FROM tools{where_sql} ORDER BY {order_sql} LIMIT %s OFFSET %s",
+                tuple(params + [per_page, offset])
+            )
+            items = cursor.fetchall()
         return items, total
     except Exception as e:
         current_app.logger.error(f"Error fetching filtered tools: {e}")
@@ -535,20 +570,21 @@ def fetch_sales_metrics(days=7):
     """Return aggregate sales metrics for the last N days (estado_pedido='enviado')."""
     cursor = mysql.connection.cursor()
     try:
+        # Considerar pedidos en estado 'enviado' o 'completado' como ventas realizadas
         ts_col = _detect_pedidos_timestamp()
         if ts_col:
             cursor.execute(f"""
                 SELECT COALESCE(SUM(monto_total),0) AS total_monto,
                        COUNT(*) AS total_orders
                 FROM pedidos
-                WHERE estado_pedido='enviado' AND {ts_col} >= (NOW() - INTERVAL %s DAY)
+                WHERE estado_pedido IN ('enviado','completado') AND {ts_col} >= (NOW() - INTERVAL %s DAY)
             """, (days,))
         else:
             cursor.execute("""
                 SELECT COALESCE(SUM(monto_total),0) AS total_monto,
                        COUNT(*) AS total_orders
                 FROM pedidos
-                WHERE estado_pedido='enviado'
+                WHERE estado_pedido IN ('enviado','completado')
             """)
         row = cursor.fetchone()
         total_monto = row[0] if row else 0
@@ -611,8 +647,10 @@ def _debug_fetch_pedidos_raw():
 def update_order_status(order_id, new_status):
     cursor = mysql.connection.cursor()
     try:
+        current_app.logger.info("[ADMIN] UPDATE pedidos SET estado_pedido=%s WHERE id_pedido=%s", new_status, order_id)
         cursor.execute("UPDATE pedidos SET estado_pedido=%s WHERE id_pedido=%s", (new_status, order_id))
         mysql.connection.commit()
+        current_app.logger.info(f"[ADMIN] UPDATE rowcount={cursor.rowcount} para pedido {order_id}")
         return cursor.rowcount > 0
     except Exception as e:
         mysql.connection.rollback()

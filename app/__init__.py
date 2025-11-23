@@ -26,6 +26,24 @@ def create_app():
 
 app = create_app()
 
+# Logueo adicional en modo DEBUG: registrar Set-Cookie para endpoints de login/test
+from flask import request
+
+
+@app.after_request
+def _log_set_cookie(response):
+    try:
+        # Solo en debug/test para no filtrar headers sensibles en producción
+        if app.debug or app.config.get('TESTING'):
+            # Interesar sólo endpoints relacionados con autenticación / pruebas
+            if request.path in ('/iniciar_sesion', '/Login', '/__test/login_as'):
+                sc = response.headers.get('Set-Cookie')
+                if sc:
+                    app.logger.debug(f"[SET-COOKIE] path={request.path} Set-Cookie={sc}")
+    except Exception:
+        pass
+    return response
+
 limiter = None
 if Limiter is not None and app.config.get('ENABLE_RATE_LIMITS'):
     limiter = Limiter(get_remote_address, app=app, default_limits=["200 per hour", "50 per minute"])
@@ -183,6 +201,34 @@ try:
         _ensure_pedidos_snapshot_column()
         _backfill_total_items_final()
         _backfill_estado_pedido()
+        # Ensure common performance indexes exist on users table (correo, usuario)
+        def _ensure_user_indexes():
+            try:
+                cur = mysql.connection.cursor()
+                db_name = app.config.get('MYSQL_DB')
+                # comprobar índice en columna 'correo'
+                cur.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA=%s AND TABLE_NAME='users' AND COLUMN_NAME='correo'", (db_name,))
+                if (cur.fetchone() or [0])[0] == 0:
+                    try:
+                        cur.execute("CREATE INDEX idx_users_correo ON users (correo)")
+                    except Exception:
+                        pass
+                # comprobar índice en columna 'usuario'
+                cur.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA=%s AND TABLE_NAME='users' AND COLUMN_NAME='usuario'", (db_name,))
+                if (cur.fetchone() or [0])[0] == 0:
+                    try:
+                        cur.execute("CREATE INDEX idx_users_usuario ON users (usuario)")
+                    except Exception:
+                        pass
+                try:
+                    mysql.connection.commit()
+                except Exception:
+                    pass
+                cur.close()
+            except Exception as e:
+                print(f"[MIGRATION] Could not ensure user indexes: {e}")
+
+        _ensure_user_indexes()
 except Exception as e:
     print(f"[MIGRATION] Deferred ensuring role/transacciones/pedidos columns: {e}")
 
